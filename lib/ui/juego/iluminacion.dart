@@ -33,11 +33,14 @@ class Luz {
 /// Va por encima de los sprites y por debajo de los efectos: los números de
 /// daño, los tajos y los proyectiles se ven aunque caigan en la oscuridad.
 class Iluminacion extends Component with HasGameReference<UmbralJuego> {
-  Iluminacion() : super(priority: prioridadEfectos - 100);
+  /// [oscuridad] es la opacidad de la noche: los interiores son algo menos
+  /// cerrados que el bosque.
+  Iluminacion({double oscuridad = 0.96})
+      : _pinturaOscuridad = Paint()
+          ..color = Colores.abismo.withValues(alpha: oscuridad),
+        super(priority: prioridadEfectos - 100);
 
   final List<Luz> fijas = [];
-
-  static const _oscuridad = Color(0xF50D0B10);
 
   /// (fracción del radio, cuánto borra de la oscuridad). Del anillo exterior
   /// al centro, que queda limpio.
@@ -55,7 +58,7 @@ class Iluminacion extends Component with HasGameReference<UmbralJuego> {
   final _velas = Expando<Luz>();
 
   final _pinturaCapa = Paint();
-  final _pinturaOscuridad = Paint()..color = _oscuridad;
+  final Paint _pinturaOscuridad;
   final _borrar = Paint()
     ..blendMode = BlendMode.dstOut
     ..isAntiAlias = false;
@@ -93,7 +96,7 @@ class Iluminacion extends Component with HasGameReference<UmbralJuego> {
       if (e.tipo.id == 'larva-cirio') {
         final vela = _velas[e] ??=
             Luz(Vector2.zero(), radio: _luzVela, tinte: Colores.brasa, parpadeo: 2);
-        anotar(vela, e.centro - Vector2(0, 6));
+        anotar(vela, e.centro - Vector2(0, 4));
       }
     }
 
@@ -107,6 +110,11 @@ class Iluminacion extends Component with HasGameReference<UmbralJuego> {
     }
     canvas.restore();
 
+    // El tinte no sale del escenario: alrededor de una sala no hay nada que
+    // iluminar.
+    canvas
+      ..save()
+      ..clipRect(game.zona.limites);
     for (final (luz, x, y, r) in luces) {
       final tinte = luz.tinte;
       if (tinte == null) continue;
@@ -115,6 +123,7 @@ class Iluminacion extends Component with HasGameReference<UmbralJuego> {
         _circulo(canvas, x, y, (r * fraccion).round(), _tenir);
       }
     }
+    canvas.restore();
   }
 
   void _circulo(Canvas canvas, double x, double y, int radio, Paint pintura) {

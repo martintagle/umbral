@@ -84,5 +84,4 @@ Tocones con runas en (52,6), (30,29), (12,17) y (6,35). Comprobé por búsqueda 
 - Conectar los encuentros con el combate por turnos. En el prototipo, "Luchar" solo elimina al enemigo.
 - Animaciones al caminar en cuatro direcciones (hoy los sprites miran de frente y se reflejan al ir a la izquierda).
 - Bordes de agua con autotiling.
-- Interiores (capilla, chozas, torre, cripta).
 - Guardado de partida.

@@ -36,6 +36,12 @@ class TipoEnemigo {
   final double erratico;
   final Color colorProyectil;
 
+  /// Radio del cuerpo para golpes y choques, en píxeles de arte.
+  final double radio;
+
+  /// Altura del centro del cuerpo sobre los pies.
+  final double alturaCentro;
+
   const TipoEnemigo({
     required this.id,
     required this.nombre,
@@ -53,7 +59,9 @@ class TipoEnemigo {
     this.regeneracion = 0,
     this.erratico = 0,
     this.colorProyectil = Colores.ceniza,
-  });
+    this.radio = 6,
+    double? alturaCentro,
+  }) : alturaCentro = alturaCentro ?? (vuela ? 10 : 6);
 
   String get sprite => 'sprites/enemigos/$id.png';
 }
@@ -67,7 +75,7 @@ abstract final class Enemigos {
     dano: 7,
     velocidad: 52,
     deteccion: 105,
-    alcance: 14,
+    alcance: 10,
     preparacion: 0.35,
     recarga: 1.1,
     vuela: true,
@@ -82,7 +90,7 @@ abstract final class Enemigos {
     dano: 17,
     velocidad: 36,
     deteccion: 100,
-    alcance: 34,
+    alcance: 26,
     preparacion: 0.6,
     recarga: 1.6,
     embestida: 170,
@@ -127,7 +135,7 @@ abstract final class Enemigos {
     dano: 6,
     velocidad: 30,
     deteccion: 90,
-    alcance: 16,
+    alcance: 11,
     preparacion: 0.25,
     recarga: 0.6,
     ralentiza: 1.0,
@@ -141,12 +149,30 @@ abstract final class Enemigos {
     dano: 10,
     velocidad: 28,
     deteccion: 95,
-    alcance: 16,
+    alcance: 11,
     preparacion: 0.45,
     recarga: 1.3,
     regeneracion: 5,
   );
 
+  /// Jefe de la sala del trono de la cripta. Lento, pero cada golpe pesa y
+  /// salta sobre el jugador desde lejos.
+  static const reyHueco = TipoEnemigo(
+    id: 'jefe-rey-hueco',
+    nombre: 'El Rey Hueco',
+    vida: 650,
+    dano: 26,
+    velocidad: 24,
+    deteccion: 120,
+    alcance: 30,
+    preparacion: 0.8,
+    recarga: 1.5,
+    embestida: 140,
+    radio: 11,
+    alturaCentro: 14,
+  );
+
+  /// Las criaturas que aparecen en el mundo (el jefe va aparte).
   static const todos = [
     ojoErrante,
     fauce,

@@ -69,7 +69,7 @@ Las fuentes no están incluidas en el proyecto: hay que descargarlas de Google F
 
 ## Iconografía
 
-Cuadrícula de 16×16 píxeles de arte, contorno `abismo`, máximo tres colores de la paleta más un brillo. Pendiente: aún no hay set de iconos.
+Cuadrícula de 16×16 píxeles de arte, contorno `abismo`, máximo tres colores de la paleta más un brillo. Set de 34 iconos en `assets/iconos/iconos.png` (8 columnas) con su índice por nombre en `assets/iconos/iconos.json`; vista ampliada en [`vistas/iconos.png`](vistas/iconos.png).
 
 ---
 
@@ -141,6 +141,12 @@ Image.asset(
 )
 ```
 
+## Más documentación
+
+- [`mundo.md`](mundo.md): mapa del mundo explorable, reglas de paso y progresión.
+- [`interiores.md`](interiores.md): las seis salas interiores y su formato.
+- [`interfaz/componentes.md`](interfaz/componentes.md): botones, menús y las pantallas de estadísticas y herrería. Catálogo visual en [`interfaz/index.html`](interfaz/index.html).
+
 ## Pendiente
 
-Animaciones (caminar, atacar, recibir daño, morir) de personajes y enemigos; retratos para diálogos; set de iconos; suelos y caminos en mosaico (tiles); muros modulares para interiores; variantes de élite de los enemigos.
+Animaciones dibujadas cuadro a cuadro (caminar, atacar, recibir daño, morir) de personajes y enemigos: el juego por ahora las hace por código, deformando y moviendo el sprite; retratos para diálogos; bordes de agua con autotiling; variantes de élite de los enemigos.

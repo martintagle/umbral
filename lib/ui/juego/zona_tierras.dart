@@ -5,9 +5,12 @@ import 'package:flame/cache.dart';
 import 'package:flame/components.dart';
 
 import '../tema/tema_umbral.dart';
+import '../widgets/boton_umbral.dart';
 import 'efectos.dart';
 import 'enemigo.dart';
+import 'escenario.dart';
 import 'iluminacion.dart';
+import 'mapa_interiores.dart';
 import 'mapa_mundo.dart';
 import 'tipos_enemigo.dart';
 import 'umbral_juego.dart';
@@ -17,7 +20,7 @@ const _lado = MapaMundo.tile;
 /// Tierras del Umbral, la primera zona: el mapa de `assets/mapas/mundo.json`
 /// en plena noche. Las coordenadas están en píxeles de arte desde la esquina
 /// superior izquierda del mapa.
-class ZonaTierras extends World with HasGameReference<UmbralJuego> {
+class ZonaTierras extends Escenario {
   static const id = 'tierras-del-umbral';
   static const puntoDeGuardado = 'altar-de-brasas';
 
@@ -36,24 +39,46 @@ class ZonaTierras extends World with HasGameReference<UmbralJuego> {
   ];
 
   late final MapaMundo mapa;
+  @override
   late final Rect limites;
   late final Vector2 posicionAltar;
   final List<Rect> _obstaculos = [];
   Letrero? _letreroLeido;
 
+  /// Puertas de las estructuras que tienen interior: el punto justo delante
+  /// de la puerta y la sala a la que llevan.
+  final List<(Vector2, Sala)> puertas = [];
+
+  static const _distanciaPuerta = 14.0;
+
   Vector2 get inicio => mapa.inicio;
 
-  Iterable<Enemigo> get enemigosVivos =>
-      children.whereType<Enemigo>().where((e) => e.vivo);
+  @override
+  String regionEn(Vector2 pies) => mapa.regionEn(pies);
 
   /// Lo llama el juego al cargar, antes de colocar al jugador: así las
   /// colisiones ya existen cuando se comprueba la posición guardada.
-  void preparar(MapaMundo mapa, Images imagenes) {
+  void preparar(MapaMundo mapa, MapaInteriores interiores, Images imagenes) {
     final tileset = imagenes.fromCache('tiles/tileset.png');
     this.mapa = mapa;
     limites = Rect.fromLTWH(0, 0, mapa.anchoPx, mapa.altoPx);
     final iluminacion = Iluminacion();
     _obstaculos.clear();
+
+    // La k-ésima estructura con un sprite lleva a la k-ésima sala de entrada
+    // de ese sprite: la choza del norte a la Choza en ruinas y la del sur a
+    // la Herrería abandonada.
+    final usadas = <String, int>{};
+    for (final e in mapa.estructuras) {
+      final salas = interiores.entradas(e.sprite);
+      final k = usadas.update(e.sprite, (n) => n + 1, ifAbsent: () => 0);
+      if (k < salas.length) {
+        puertas.add((
+          Vector2((e.x + e.w / 2) * _lado, (e.y + e.h) * _lado + 3),
+          salas[k],
+        ));
+      }
+    }
 
     add(_Suelo(mapa, tileset));
     for (var y = 0; y < mapa.alto; y++) {
@@ -108,8 +133,7 @@ class ZonaTierras extends World with HasGameReference<UmbralJuego> {
     reiniciarEnemigos();
   }
 
-  /// Quita a todos los enemigos y los vuelve a poner en su sitio, con la vida
-  /// llena. Se usa al descansar y al morir.
+  @override
   void reiniciarEnemigos() {
     for (final e in children.whereType<Enemigo>().toList()) {
       e.removeFromParent();
@@ -128,7 +152,6 @@ class ZonaTierras extends World with HasGameReference<UmbralJuego> {
   void update(double dt) {
     super.update(dt);
     final pies = game.jugador.position;
-    game.region.value = mapa.regionEn(pies);
 
     // Al acercarse a un letrero se lee una vez, hasta alejarse de él.
     final cerca = mapa.letreros
@@ -143,7 +166,27 @@ class ZonaTierras extends World with HasGameReference<UmbralJuego> {
     }
   }
 
+  @override
+  List<AccionContexto> accionesEn(Vector2 pies) {
+    if (cercaDelAltar(pies)) {
+      return [
+        AccionContexto('Descansar', game.descansar,
+            icono: 'altar', estilo: EstiloBoton.acento),
+        game.accionSubirNivel(icono: 'vigor'),
+      ];
+    }
+    for (final (punto, sala) in puertas) {
+      if (punto.distanceTo(pies) < _distanciaPuerta) {
+        return [
+          AccionContexto('Entrar', () => game.entrar(sala, punto)),
+        ];
+      }
+    }
+    return const [];
+  }
+
   /// [pies] es la caja de colisión; los enemigos además evitan los tocones.
+  @override
   bool libre(Rect pies, {bool enemigo = false}) {
     final solido = enemigo ? mapa.solidoEnemigo : mapa.solido;
     for (final esquina in [
@@ -161,12 +204,8 @@ class ZonaTierras extends World with HasGameReference<UmbralJuego> {
   }
 
   /// Para proyectiles: chocan con muros, árboles, estructuras y el borde.
+  @override
   bool bloquea(double x, double y) => mapa.bloqueaProyectil(x, y);
-
-  void limitar(Vector2 p) {
-    p.x = p.x.clamp(limites.left + 8, limites.right - 8);
-    p.y = p.y.clamp(limites.top + 24, limites.bottom - 4);
-  }
 
   bool cercaDelAltar(Vector2 pies) => pies.distanceTo(posicionAltar) < 42;
 }

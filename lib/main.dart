@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 
 import 'ui/pantallas/titulo_pantalla.dart';
 import 'ui/tema/tema_umbral.dart';
+import 'ui/widgets/icono_umbral.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Iconos.cargar();
   runApp(const UmbralApp());
 }
 

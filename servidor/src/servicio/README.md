@@ -32,6 +32,8 @@
 | POST | `/api/partidas` | `partidaNegocio.crearPartida` → `{ partida, combate }` |
 | PUT | `/api/partidas/activa` | `partidaNegocio.seleccionarPartidaActiva` |
 | POST | `/api/partidas/:partidaId/progreso` | `partidaNegocio.registrarProgreso` → `{ partida, combate }` |
+| POST | `/api/partidas/:partidaId/atributos` | `partidaNegocio.subirAtributos` (`{ vida, fuerza, destreza, inteligencia }`, se paga con experiencia) → `{ partida, combate }` |
+| POST | `/api/partidas/:partidaId/mejora` | `partidaNegocio.mejorarEquipo` (`{ pieza: 'arma' \| 'armadura' }`) → `{ partida, combate }` |
 | DELETE | `/api/partidas/:partidaId` | `partidaNegocio.eliminarPartida` |
 
 Las rutas con sesión necesitan la cabecera `Authorization: Bearer <token>`.

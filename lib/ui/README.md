@@ -13,10 +13,10 @@ Muestra las pantallas, recoge lo que escribe el usuario y **solo se comunica con
 | Carpeta / archivo | Contenido |
 |---|---|
 | `pantallas/` | Una pantalla por archivo: `<nombre>_pantalla.dart` (por ejemplo, `usuario_lista_pantalla.dart`, `usuario_formulario_pantalla.dart`). |
-| `widgets/` | Componentes visuales reutilizables entre pantallas (botones, campos de texto, tarjetas). |
+| `widgets/` | Componentes visuales reutilizables entre pantallas, según `docs/diseno/interfaz/componentes.md`: `BotonUmbral` (variantes principal, secundario, acento y peligro, con icono y costo), `BotonIcono`, `SelectorUmbral`, `confirmar` (ventana de confirmación), `IconoUmbral` (set de `assets/iconos/`, cargado en `main`), paneles, campos y sprites. |
 | `validaciones/validaciones.dart` | Funciones de validación locales reutilizables, pensadas para usarlas como `validator` en `TextFormField`. Devuelven `null` si el valor es válido o el texto del error si no lo es. |
 | `tema/` | Tokens del sistema de diseño (`docs/diseno/tokens.json`): colores, tipografías, espaciado, radios y sombra dura. |
-| `juego/` | El juego en tiempo real, hecho con Flame: la zona (el mapa de `assets/mapas/mundo.json`, de noche, con la luz del jugador y las antorchas en `iluminacion.dart`), jugador, enemigos, proyectiles y efectos. Juega con los valores de combate que da el servidor y anota en `registro_progreso.dart` lo que pasa (exp, oro, enemigos, muertes, tiempo). Al descansar, revivir o salir, la pantalla envía ese registro con `PartidaServicio` y el servidor aplica la subida de nivel. |
+| `juego/` | El juego en tiempo real, hecho con Flame. Cada lugar es un `Escenario`: el mundo (`zona_tierras.dart`, el mapa de `assets/mapas/mundo.json`, de noche, con la luz del jugador y las antorchas en `iluminacion.dart`) o una sala interior (`sala_interior.dart`, de `assets/interiores/interiores.json`). Se entra por la puerta de las chozas, la capilla, la torre y la cripta; la cripta baja por una escalera a la sala del trono del Rey Hueco. También están el jugador, los enemigos, los proyectiles y los efectos. Personajes y criaturas se dibujan a la mitad de su tamaño de arte (`escalaSprites`) con un zoom de cámara par, y se animan por código al atacar, recibir daño y morir. Los ataques gastan estamina, que se recupera sola. Juega con los valores de combate que da el servidor y anota en `registro_progreso.dart` lo que pasa (exp, oro, enemigos, muertes, tiempo). Al descansar, revivir o salir, la pantalla envía ese registro con `PartidaServicio` y el servidor aplica la subida de nivel. |
 | `clases_ui.dart` | Nombre, arma, descripción y sprite de cada clase. Las estadísticas vienen del servicio. |
 
 ## Pantallas
@@ -27,9 +27,13 @@ Muestra las pantallas, recoge lo que escribe el usuario y **solo se comunica con
 | `login_pantalla.dart` | Iniciar sesión con correo o usuario, o crear cuenta. |
 | `partidas_pantalla.dart` | Lista de partidas: jugar, borrar o crear una nueva. |
 | `nuevo_personaje_pantalla.dart` | Elegir clase, apariencia y nombre, con las estadísticas de la clase. |
-| `juego_pantalla.dart` | El juego con su HUD: vida, experiencia, oro, cruceta, ataque, descansar y menú de pausa. |
+| `juego_pantalla.dart` | El juego con su HUD: vida, estamina, experiencia, oro, cruceta, ataque, las acciones del lugar (descansar, entrar, abrir...) y menú de pausa. Abre las dos pantallas siguientes después de guardar. |
+| `estadisticas_pantalla.dart` | Altar de brasas: gasta experiencia para subir vigor, fuerza, destreza o intelecto. Cada punto es un nivel y cuesta más que el anterior, como en Elden Ring. Muestra el costo total y lo que queda antes de confirmar. Se abre en el altar de la aldea y en el de la capilla. |
+| `herreria_pantalla.dart` | Yunque de la Herrería abandonada: mejora el arma que porta el personaje o su armadura con oro. Cada mejora cuesta más que la anterior. |
 
-En el juego también se puede usar el teclado: WASD o flechas para moverse, espacio o J para atacar, E para descansar en el altar y Escape para el menú.
+En el juego también se puede usar el teclado: WASD o flechas para moverse, espacio o J para atacar, E para la acción del lugar (descansar, entrar, usar el yunque...) y Escape para el menú.
+
+Economía: cada enemigo da experiencia y oro. La experiencia se gasta en el altar para subir de nivel y el oro, en la herrería. El personaje no lleva objetos: solo su arma y su armadura. Respecto al diseño de `docs/diseno/interfaz/componentes.md`, el altar cobra experiencia en vez de ceniza y sube los cuatro atributos que guarda el servidor (no hay espíritu ni fortuna), y la herrería no usa materiales. El cofre de la Choza en ruinas cura del todo una vez por descanso; el de la torre está vacío; la trampilla y la escalera al mirador solo muestran un aviso.
 
 ## Qué NO debe hacer
 

@@ -186,7 +186,7 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
                       const SizedBox(height: Espacios.paso4),
                       Text(clase.nombre,
                           textAlign: TextAlign.center, style: Textos.tituloZona()),
-                      Text(clase.arma.toUpperCase(),
+                      Text('NIVEL ${elegida.nivel} · ${clase.arma.toUpperCase()}',
                           textAlign: TextAlign.center,
                           style: Textos.etiqueta(color: Colores.brasa)),
                       const SizedBox(height: Espacios.paso2),
@@ -194,10 +194,10 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
                           textAlign: TextAlign.center,
                           style: Textos.cuerpo(color: Colores.ceniza)),
                       const SizedBox(height: Espacios.paso4),
-                      _Estadistica('Vida', a.vida),
+                      _Estadistica('Vigor', a.vida),
                       _Estadistica('Fuerza', a.fuerza),
                       _Estadistica('Destreza', a.destreza),
-                      _Estadistica('Inteligencia', a.inteligencia),
+                      _Estadistica('Intelecto', a.inteligencia),
                       const SizedBox(height: Espacios.paso2),
                       Wrap(
                         alignment: WrapAlignment.spaceBetween,
@@ -302,7 +302,9 @@ class _Estadistica extends StatelessWidget {
 
   const _Estadistica(this.nombre, this.valor);
 
-  static const _maximo = 20;
+  /// Los atributos llegan hasta 50, pero al empezar ninguno pasa de 8: la
+  /// barra se mide sobre 10 para que se vean las diferencias entre clases.
+  static const _maximo = 10;
 
   @override
   Widget build(BuildContext context) {

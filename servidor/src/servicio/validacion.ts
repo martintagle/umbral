@@ -21,6 +21,15 @@ export const crearPartida = z.object({ nombre: texto, clase: texto, apariencia: 
 
 export const partidaActiva = z.object({ partidaId: texto.nullable() });
 
+export const subirAtributos = z.object({
+  vida: entero(0),
+  fuerza: entero(0),
+  destreza: entero(0),
+  inteligencia: entero(0),
+});
+
+export const mejora = z.object({ pieza: z.enum(['arma', 'armadura']) });
+
 export const progreso = z.object({
   enemigosDerrotados: z.record(z.string().max(64), entero(0)),
   muertes: entero(0),

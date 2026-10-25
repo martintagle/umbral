@@ -36,6 +36,23 @@ partidaServicio.post('/:partidaId/progreso', async (req, res) => {
   res.json(partidaJugableJson(partida));
 });
 
+/** Sube atributos gastando experiencia: `{ vida, fuerza, destreza, inteligencia }`. */
+partidaServicio.post('/:partidaId/atributos', async (req, res) => {
+  const partida = await partidaNegocio.subirAtributos(
+    idDeSesion(res),
+    req.params.partidaId,
+    v.subirAtributos.parse(req.body),
+  );
+  res.json(partidaJugableJson(partida));
+});
+
+/** Sube un nivel el arma o la armadura a cambio de oro. */
+partidaServicio.post('/:partidaId/mejora', async (req, res) => {
+  const { pieza } = v.mejora.parse(req.body);
+  const partida = await partidaNegocio.mejorarEquipo(idDeSesion(res), req.params.partidaId, pieza);
+  res.json(partidaJugableJson(partida));
+});
+
 partidaServicio.delete('/:partidaId', async (req, res) => {
   await partidaNegocio.eliminarPartida(idDeSesion(res), req.params.partidaId);
   res.status(204).end();

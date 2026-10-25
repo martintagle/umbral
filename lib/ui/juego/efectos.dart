@@ -10,6 +10,12 @@ import 'umbral_juego.dart';
 /// Capa por encima de todo el mundo (los objetos se ordenan por su `y`).
 const prioridadEfectos = 1 << 20;
 
+/// Personajes y criaturas se dibujan a la mitad de su tamaño de arte: a 1:1
+/// una persona medía dos tiles y medio y no cabía por las puertas. El zoom de
+/// la cámara es siempre par, así que cada píxel del sprite sigue ocupando un
+/// número entero de píxeles de pantalla.
+const escalaSprites = 0.5;
+
 final Paint _pintura = Paint()..isAntiAlias = false;
 
 /// Pinta un cuadrado de [tamano] píxeles de arte alineado a la cuadrícula.
@@ -95,6 +101,70 @@ class Tajo extends PositionComponent {
       pixel(canvas, c * (radio - 2), s * (radio - 2), Colores.ceniza);
       if (i == pasos) pixel(canvas, c * radio, s * radio, Colores.brasa, 2);
     }
+  }
+}
+
+/// Tres rasguños en diagonal donde muerde o golpea una criatura.
+class Zarpazo extends PositionComponent {
+  final double _lado;
+  double _t = 0;
+  static const _duracion = 0.18;
+
+  Zarpazo(Vector2 centro, {required bool haciaLaDerecha})
+      : _lado = haciaLaDerecha ? 1 : -1,
+        super(position: centro, priority: prioridadEfectos - 1);
+
+  @override
+  void update(double dt) {
+    _t += dt;
+    if (_t >= _duracion) removeFromParent();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final largo = (6 * (_t / _duracion * 2).clamp(0.0, 1.0)).round();
+    for (var r = -1; r <= 1; r++) {
+      for (var i = 0; i < largo; i++) {
+        final x = (i - 3) * _lado + r * 3;
+        final y = (i - 3 - r).toDouble();
+        pixel(canvas, x, y, i == largo - 1 ? Colores.hueso : Colores.sangre);
+      }
+    }
+  }
+}
+
+/// El cuerpo de una criatura derrotada: se aplasta contra el suelo y se
+/// apaga antes de que salten los restos.
+class Desvanecer extends SpriteComponent {
+  final double _lado;
+  double _t = 0;
+  static const _duracion = 0.3;
+
+  /// [_lado] es 1 si la criatura miraba a la derecha y -1 si a la izquierda.
+  Desvanecer(Sprite sprite, Vector2 pies, this._lado)
+      : super(
+          sprite: sprite,
+          position: pies,
+          anchor: Anchor.bottomCenter,
+          priority: pies.y.round(),
+          paint: Paint()
+            ..filterQuality = FilterQuality.none
+            ..isAntiAlias = false
+            ..colorFilter =
+                const ColorFilter.mode(Colores.hueso, BlendMode.srcATop),
+        );
+
+  @override
+  void update(double dt) {
+    _t += dt;
+    final p = (_t / _duracion).clamp(0.0, 1.0);
+    scale.setValues(_lado * escalaSprites * (1 + p * 0.4),
+        escalaSprites * (1 - p * 0.85));
+    if (p > 0.25) {
+      paint.colorFilter = null;
+      paint.color = Color.fromRGBO(255, 255, 255, 1 - p);
+    }
+    if (_t >= _duracion) removeFromParent();
   }
 }
 

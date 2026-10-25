@@ -1,0 +1,176 @@
+/* Umbral — interfaz. Clases ui-* construidas solo con tokens.css. */
+.ui { font-family: var(--font-pixel); color: var(--hueso); -webkit-font-smoothing: none; }
+.ui *, .ui *::before, .ui *::after { box-sizing: border-box; }
+
+/* ---------- icono (hoja 8 columnas, 16 px de arte) ---------- */
+.ui-icono { --s: 32px; display: inline-block; flex: none; width: var(--s); height: var(--s); background-image: var(--ui-iconos); background-repeat: no-repeat; background-size: calc(var(--s) * 8) auto; background-position: calc(var(--c) * var(--s) * -1) calc(var(--r) * var(--s) * -1); image-rendering: pixelated; }
+.ui-icono.chico { --s: 16px; } .ui-icono.grande { --s: 48px; }
+
+/* ---------- panel ---------- */
+.ui-panel { background: var(--piedra); border: 4px solid var(--borde); border-radius: var(--radio-astilla); box-shadow: var(--sombra-dura); }
+.ui-panel.hundido { background: var(--abismo); box-shadow: none; }
+.ui-titulo { font-family: var(--font-gotica); font-weight: 400; font-size: 32px; line-height: 40px; margin: 0; color: var(--hueso); }
+.ui-encabezado { font-family: var(--font-pixel); font-weight: 600; font-size: 24px; line-height: 32px; margin: 0; }
+.ui-etiqueta { font-family: var(--font-cifras); font-size: 12px; line-height: 16px; letter-spacing: .04em; text-transform: uppercase; color: var(--ceniza); }
+.ui-cifra { font-family: var(--font-cifras); font-variant-numeric: tabular-nums; }
+
+/* ---------- botón ---------- */
+.ui-boton { --fondo: var(--sangre); --tinta: var(--hueso); --linea: var(--abismo);
+  appearance: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 8px 16px; font-family: var(--font-pixel); font-weight: 600; font-size: 16px; line-height: 24px;
+  color: var(--tinta); background: var(--fondo); border: 4px solid var(--linea); border-radius: var(--radio-astilla);
+  box-shadow: var(--sombra-dura); cursor: pointer; text-decoration: none; white-space: nowrap; position: relative;
+  transition: transform 60ms steps(1), box-shadow 60ms steps(1); }
+.ui-boton:hover { filter: brightness(1.12); }
+.ui-boton:focus-visible { outline: 4px solid var(--brasa); outline-offset: 2px; }
+.ui-boton:active, .ui-boton.presionado { transform: translate(4px, 4px); box-shadow: none; }
+.ui-boton.secundario { --fondo: var(--piedra); --linea: var(--borde); }
+.ui-boton.acento { --fondo: var(--brasa); --tinta: var(--abismo); }
+.ui-boton.magia { --fondo: var(--alma); --tinta: var(--abismo); }
+.ui-boton.fantasma { --fondo: transparent; --linea: transparent; box-shadow: none; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; }
+.ui-boton.fantasma:active { transform: none; color: var(--brasa); }
+.ui-boton.peligro { --fondo: var(--piedra); --linea: var(--sangre); }
+.ui-boton.peligro .ui-icono { filter: none; }
+.ui-boton.grande { min-height: 56px; padding: 10px 24px; font-size: 20px; }
+.ui-boton.chico { min-height: 32px; padding: 2px 10px; font-family: var(--font-cifras); font-weight: 400; font-size: 12px; line-height: 16px; border-width: 2px; box-shadow: 2px 2px 0 var(--abismo); }
+.ui-boton.chico::after { content: ""; position: absolute; inset: -8px -4px; }
+.ui-boton.ancho { width: 100%; }
+.ui-boton:disabled, .ui-boton.deshabilitado { --fondo: var(--piedra); --tinta: var(--ceniza); --linea: var(--piedra); box-shadow: none; cursor: not-allowed; filter: none; transform: none; border-style: dashed; border-color: var(--borde); }
+.ui-boton .costo { display: inline-flex; align-items: center; gap: 4px; padding: 0 6px 0 2px; margin-left: 4px; background: rgba(13, 11, 16, .35); border-radius: 2px; font-family: var(--font-cifras); font-weight: 400; font-size: 12px; }
+.ui-boton.acento .costo, .ui-boton.magia .costo { background: rgba(13, 11, 16, .18); }
+
+/* botón de icono */
+.ui-boton-icono { appearance: none; display: inline-grid; place-items: center; width: 48px; height: 48px; padding: 0; background: var(--piedra); border: 4px solid var(--borde); border-radius: var(--radio-astilla); box-shadow: var(--sombra-dura); cursor: pointer; position: relative; color: var(--hueso); }
+.ui-boton-icono:focus-visible { outline: 4px solid var(--brasa); outline-offset: 2px; }
+.ui-boton-icono:active { transform: translate(4px, 4px); box-shadow: none; }
+.ui-boton-icono.chico { width: 36px; height: 36px; border-width: 2px; box-shadow: 2px 2px 0 var(--abismo); }
+.ui-boton-icono.chico::after { content: ""; position: absolute; inset: -4px; }
+.ui-boton-icono.chico .ui-icono { --s: 16px; }
+.ui-boton-icono:disabled { opacity: .45; box-shadow: none; cursor: not-allowed; transform: none; }
+.ui-boton-icono .insignia { position: absolute; top: -10px; right: -10px; min-width: 20px; height: 20px; padding: 0 4px; display: grid; place-items: center; background: var(--sangre); color: var(--hueso); border: 2px solid var(--abismo); border-radius: 10px; font-family: var(--font-cifras); font-size: 10px; line-height: 1; }
+
+/* controles táctiles */
+.ui-palanca { width: 112px; height: 112px; border-radius: 50%; background: rgba(28, 24, 32, .72); border: 4px solid var(--borde); position: relative; }
+.ui-palanca .perilla { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; background: var(--borde); box-shadow: inset -4px -4px 0 rgba(13, 11, 16, .35); }
+.ui-palanca.activa .perilla { transform: translate(18px, -14px); background: var(--hueso); }
+.ui-tactil { appearance: none; width: 64px; height: 64px; border-radius: 50%; border: 4px solid var(--abismo); box-shadow: var(--sombra-dura); font-family: var(--font-cifras); font-size: 11px; line-height: 13px; display: grid; place-items: center; text-align: center; cursor: pointer; padding: 4px; }
+.ui-tactil.a { background: var(--sangre); color: var(--hueso); }
+.ui-tactil.b { background: var(--alma); color: var(--abismo); }
+.ui-tactil.c { background: var(--piedra); color: var(--hueso); border-color: var(--borde); width: 48px; height: 48px; }
+.ui-tactil:active, .ui-tactil.presionado { transform: translate(4px, 4px); box-shadow: none; }
+
+/* pestañas */
+.ui-pestanas { display: flex; gap: 4px; border-bottom: 4px solid var(--borde); }
+.ui-pestana { appearance: none; flex: 1 1 0; min-width: 0; min-height: 44px; padding: 6px 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--abismo); color: var(--ceniza); border: 4px solid var(--borde); border-bottom: 0; border-radius: var(--radio-astilla) var(--radio-astilla) 0 0; font-family: var(--font-cifras); font-size: 12px; cursor: pointer; margin-bottom: -4px; }
+.ui-pestana[aria-selected="true"] { background: var(--piedra); color: var(--brasa); border-bottom: 4px solid var(--piedra); }
+.ui-pestana:focus-visible { outline: 4px solid var(--brasa); outline-offset: -4px; }
+
+/* interruptor */
+.ui-interruptor { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; cursor: pointer; }
+.ui-interruptor input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.ui-interruptor .riel { flex: none; width: 56px; height: 28px; background: var(--abismo); border: 4px solid var(--borde); border-radius: var(--radio-astilla); position: relative; }
+.ui-interruptor .riel::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: var(--ceniza); transition: transform 80ms steps(2); }
+.ui-interruptor input:checked + .riel { border-color: var(--brasa); }
+.ui-interruptor input:checked + .riel::after { transform: translateX(28px); background: var(--brasa); }
+.ui-interruptor input:focus-visible + .riel { outline: 4px solid var(--brasa); outline-offset: 2px; }
+
+/* selector numérico */
+.ui-selector { display: inline-flex; align-items: center; gap: 6px; }
+.ui-selector .valor { min-width: 44px; text-align: center; font-family: var(--font-cifras); font-size: 16px; }
+.ui-selector .valor.sube { color: var(--brasa); }
+
+/* barras */
+.ui-barra { --v: 50%; --color: var(--sangre); height: 14px; background: var(--abismo); border: 2px solid var(--borde); position: relative; }
+.ui-barra::before { content: ""; position: absolute; inset: 0; width: var(--v); background: var(--color); box-shadow: inset 0 -3px 0 rgba(13, 11, 16, .3); }
+.ui-barra.pm { --color: var(--alma); }
+.ui-pips { display: flex; gap: 3px; }
+.ui-pips i { width: 10px; height: 10px; background: var(--abismo); border: 2px solid var(--borde); }
+.ui-pips i.lleno { background: var(--brasa); border-color: var(--brasa); }
+.ui-pips i.nuevo { background: var(--hueso); border-color: var(--brasa); }
+
+/* ---------- menús ---------- */
+.ui-menu { list-style: none; margin: 0; padding: 8px 0; display: flex; flex-direction: column; }
+.ui-opcion { appearance: none; width: 100%; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 16px 6px 36px; background: none; border: 0; color: var(--hueso); font-family: var(--font-pixel); font-size: 18px; line-height: 24px; text-align: left; cursor: pointer; position: relative; }
+.ui-opcion .atajo { margin-left: auto; font-family: var(--font-cifras); font-size: 11px; color: var(--ceniza); }
+.ui-opcion[aria-current="true"], .ui-opcion:focus-visible { background: rgba(224, 138, 44, .12); color: var(--brasa); outline: none; }
+.ui-opcion[aria-current="true"]::before, .ui-opcion:focus-visible::before { content: ""; position: absolute; left: 14px; top: 50%; margin-top: -6px; border: 6px solid transparent; border-left: 8px solid var(--brasa); }
+.ui-opcion:disabled { color: var(--ceniza); cursor: not-allowed; }
+.ui-opcion + .ui-opcion { border-top: 2px solid rgba(117, 106, 124, .35); }
+
+.ui-dialogo { padding: 14px 16px 12px; font-size: 16px; line-height: 24px; position: relative; }
+.ui-dialogo .orador { position: absolute; top: -18px; left: 12px; padding: 2px 10px; background: var(--abismo); border: 2px solid var(--borde); font-family: var(--font-cifras); font-size: 12px; color: var(--brasa); }
+.ui-dialogo .seguir { display: block; text-align: right; margin-top: 4px; font-family: var(--font-cifras); font-size: 11px; color: var(--ceniza); }
+.ui-respuestas { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+
+.ui-rejilla { display: grid; grid-template-columns: repeat(var(--cols, 5), 1fr); gap: 6px; }
+.ui-ranura { aspect-ratio: 1; max-width: 100%; display: grid; place-items: center; background: var(--abismo); border: 3px solid var(--borde); position: relative; cursor: pointer; padding: 0; }
+.ui-ranura[aria-selected="true"] { border-color: var(--brasa); box-shadow: 0 0 0 2px var(--abismo), 0 0 0 4px var(--brasa); }
+.ui-ranura .cant { position: absolute; right: 2px; bottom: 0; font-family: var(--font-cifras); font-size: 10px; color: var(--hueso); text-shadow: 1px 1px 0 var(--abismo); }
+.ui-ranura .nivel { position: absolute; left: 2px; top: 0; font-family: var(--font-cifras); font-size: 10px; color: var(--brasa); text-shadow: 1px 1px 0 var(--abismo); }
+.ui-ranura .equipado { position: absolute; right: -4px; top: -4px; width: 12px; height: 12px; background: var(--brasa); border: 2px solid var(--abismo); }
+.ui-ranura.vacia { opacity: .5; cursor: default; }
+
+/* ---------- pantallas ---------- */
+.ui-pantalla { width: 390px; min-height: 844px; background: var(--abismo); display: flex; flex-direction: column; gap: 12px; padding: 16px; position: relative; overflow: hidden; }
+.ui-pantalla::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(224, 138, 44, .10), transparent 60%); pointer-events: none; }
+.ui-cabecera { display: flex; align-items: center; gap: 12px; position: relative; }
+.ui-cabecera .ui-titulo { flex: 1; min-width: 0; }
+.ui-monedero { display: flex; gap: 12px; flex-wrap: wrap; }
+.ui-moneda { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-cifras); font-size: 14px; color: var(--hueso); font-variant-numeric: tabular-nums; }
+.ui-moneda.falta { color: var(--ceniza); text-decoration: line-through; }
+.ui-fila-stat { display: grid; grid-template-columns: 32px 1fr auto auto; align-items: center; gap: 10px; min-height: 52px; padding: 4px 8px; }
+.ui-fila-stat + .ui-fila-stat { border-top: 2px solid rgba(117, 106, 124, .35); }
+.ui-fila-stat .nombre { font-size: 16px; line-height: 20px; }
+.ui-fila-stat .nombre small { display: block; font-family: var(--font-cifras); font-size: 10px; line-height: 14px; color: var(--ceniza); }
+.ui-delta { font-family: var(--font-cifras); font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ui-delta .antes { color: var(--ceniza); }
+.ui-delta .flecha { color: var(--ceniza); margin: 0 4px; }
+.ui-delta .despues { color: var(--brasa); }
+.ui-delta .igual { color: var(--hueso); }
+.ui-tabla-derivada { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; padding: 12px; }
+.ui-tabla-derivada .ui-etiqueta { color: var(--hueso); }
+.ui-pie { display: flex; gap: 10px; margin-top: auto; position: relative; }
+.ui-pie .ui-boton { flex: 1; }
+.ui-aviso { display: flex; gap: 8px; align-items: flex-start; padding: 8px 10px; background: rgba(163, 36, 42, .16); border-left: 0; border: 2px solid var(--sangre); font-size: 14px; line-height: 20px; }
+.ui-material { display: grid; grid-template-columns: 32px 1fr auto; gap: 10px; align-items: center; padding: 4px 0; }
+.ui-material .tengo { font-family: var(--font-cifras); font-size: 14px; }
+.ui-material .tengo.ok { color: var(--podredumbre); }
+.ui-material .tengo.no { color: var(--hueso); }
+.ui-material .tengo.no::before { content: "FALTA "; color: var(--sangre); background: var(--hueso); padding: 0 3px; margin-right: 4px; font-size: 10px; }
+.ui-retrato { width: 96px; height: 120px; image-rendering: pixelated; background: var(--abismo); border: 4px solid var(--borde); object-fit: contain; }
+
+:root { --ui-iconos: url("../../../assets/iconos/iconos.png"); }
+.ico-espada { --c: 0; --r: 0; }
+.ico-arco { --c: 1; --r: 0; }
+.ico-grimorio { --c: 2; --r: 0; }
+.ico-daga { --c: 3; --r: 0; }
+.ico-armadura { --c: 4; --r: 0; }
+.ico-yelmo { --c: 5; --r: 0; }
+.ico-escudo { --c: 6; --r: 0; }
+.ico-anillo { --c: 7; --r: 0; }
+.ico-pocion-vida { --c: 0; --r: 1; }
+.ico-pocion-espiritu { --c: 1; --r: 1; }
+.ico-vigor { --c: 2; --r: 1; }
+.ico-espiritu { --c: 3; --r: 1; }
+.ico-fuerza { --c: 4; --r: 1; }
+.ico-destreza { --c: 5; --r: 1; }
+.ico-intelecto { --c: 6; --r: 1; }
+.ico-fortuna { --c: 7; --r: 1; }
+.ico-oro { --c: 0; --r: 2; }
+.ico-ceniza { --c: 1; --r: 2; }
+.ico-esquirla { --c: 2; --r: 2; }
+.ico-nucleo-brasa { --c: 3; --r: 2; }
+.ico-polvo-alma { --c: 4; --r: 2; }
+.ico-hueso { --c: 5; --r: 2; }
+.ico-yunque { --c: 6; --r: 2; }
+.ico-altar { --c: 7; --r: 2; }
+.ico-cerrar { --c: 0; --r: 3; }
+.ico-atras { --c: 1; --r: 3; }
+.ico-mas { --c: 2; --r: 3; }
+.ico-menos { --c: 3; --r: 3; }
+.ico-ajustes { --c: 4; --r: 3; }
+.ico-mochila { --c: 5; --r: 3; }
+.ico-mapa { --c: 6; --r: 3; }
+.ico-misiones { --c: 7; --r: 3; }
+.ico-candado { --c: 0; --r: 4; }
+.ico-confirmar { --c: 1; --r: 4; }

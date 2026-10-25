@@ -4,10 +4,15 @@ import 'package:flutter/material.dart';
 import '../../servicio/modelos/partida_jugable.dart';
 import '../../servicio/modelos/recompensa.dart';
 import '../../servicio/partida_servicio.dart';
+import '../clases_ui.dart';
 import '../juego/umbral_juego.dart';
 import '../tema/tema_umbral.dart';
 import '../widgets/boton_umbral.dart';
+import '../widgets/confirmacion_umbral.dart';
+import '../widgets/icono_umbral.dart';
 import '../widgets/panel_umbral.dart';
+import 'estadisticas_pantalla.dart';
+import 'herreria_pantalla.dart';
 
 class JuegoPantalla extends StatefulWidget {
   final PartidaJugable partida;
@@ -24,6 +29,7 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
   final _servicio = PartidaServicio();
   late final UmbralJuego _juego;
   bool _menu = false;
+  bool _enOtraPantalla = false;
   bool _tituloZona = false;
   int _tituloId = 0;
 
@@ -34,7 +40,9 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
       partida: widget.partida,
       recompensas: widget.recompensas,
       alGuardar: _servicio.registrarProgreso,
-    )..alPedirMenu = _abrirMenu;
+    )
+      ..alPedirMenu = _abrirMenu
+      ..alAbrirPantalla = _abrirPantalla;
     _juego.region.addListener(_anunciarRegion);
   }
 
@@ -64,6 +72,43 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
     setState(() => _menu = false);
   }
 
+  /// Guarda antes de abrir (así el oro y los niveles ganados ya cuentan) y
+  /// pausa el juego mientras la otra pantalla está encima.
+  Future<void> _abrirPantalla(PantallaJuego pantalla) async {
+    if (_menu || _enOtraPantalla || _juego.muerto.value) return;
+    _enOtraPantalla = true;
+    _juego
+      ..soltarControles()
+      ..pauseEngine();
+    if (await _juego.guardar(silencioso: true) && mounted) {
+      final partida = _juego.partidaGuardada;
+      final id = partida.partida.partidaId;
+      await Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => switch (pantalla) {
+          PantallaJuego.estadisticas => EstadisticasPantalla(
+              partida: partida,
+              alSubir: (incrementos) =>
+                  _aplicar(_servicio.subirAtributos(id, incrementos)),
+            ),
+          PantallaJuego.herreria => HerreriaPantalla(
+              partida: partida,
+              alMejorar: (pieza) =>
+                  _aplicar(_servicio.mejorarEquipo(id, pieza)),
+            ),
+        },
+      ));
+    }
+    _juego.resumeEngine();
+    _enOtraPantalla = false;
+  }
+
+  /// Lleva al juego la partida que devuelve el servidor tras un cambio.
+  Future<PartidaJugable> _aplicar(Future<PartidaJugable> peticion) async {
+    final nueva = await peticion;
+    _juego.aplicarPartida(nueva);
+    return nueva;
+  }
+
   Future<void> _guardarYSalir() async {
     final ok = await _juego.guardar();
     if (!mounted) return;
@@ -74,7 +119,13 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
     }
   }
 
-  void _salirSinGuardar() => Navigator.of(context).pop();
+  Future<void> _salirSinGuardar() async {
+    final ok = await confirmar(context,
+        titulo: '¿Salir sin guardar?',
+        texto: 'Perderás la experiencia y el oro ganados desde el último guardado.',
+        verbo: 'Salir');
+    if (ok && mounted) Navigator.of(context).pop();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,10 +150,9 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
                         child: _Estado(_juego)),
                     Align(
                       alignment: Alignment.topRight,
-                      child: BotonUmbral(
-                        texto: 'Menú',
-                        estilo: EstiloBoton.secundario,
-                        expandido: false,
+                      child: BotonIcono(
+                        icono: 'ajustes',
+                        descripcion: 'Menú',
                         alPulsar: _abrirMenu,
                       ),
                     ),
@@ -174,7 +224,7 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
                   const SizedBox(height: Espacios.paso4),
                   BotonUmbral(
                     texto: 'Salir sin guardar',
-                    estilo: EstiloBoton.secundario,
+                    estilo: EstiloBoton.peligro,
                     alPulsar: _salirSinGuardar,
                   ),
                 ],
@@ -225,19 +275,50 @@ class _Estado extends StatelessWidget {
                   alto: 16,
                 ),
                 const SizedBox(height: Espacios.paso1),
+                _BarraEstamina(juego),
+                const SizedBox(height: Espacios.paso1),
                 _Barra(
                   etiqueta: 'EXP ${juego.exp.value}/${juego.expSiguiente.value}',
                   valor: juego.exp.value / juego.expSiguiente.value,
                   color: Colores.borde,
-                  alto: 16,
+                  alto: 12,
                 ),
                 const SizedBox(height: Espacios.paso1),
-                Text('ORO ${juego.oro.value}',
-                    style: Textos.etiqueta(color: Colores.brasa)),
+                Row(
+                  children: [
+                    const IconoUmbral('oro', escala: 1),
+                    const SizedBox(width: Espacios.paso1),
+                    Text('${juego.oro.value}',
+                        style: Textos.etiqueta(color: Colores.brasa)),
+                  ],
+                ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Se gasta al atacar y se recupera sola. Se redibuja aparte del resto del
+/// panel porque cambia en cada cuadro. Si no alcanza para un ataque, el borde
+/// se pone rojo.
+class _BarraEstamina extends StatelessWidget {
+  final UmbralJuego juego;
+
+  const _BarraEstamina(this.juego);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([juego.estamina, juego.sinEstamina]),
+      builder: (_, _) => _Barra(
+        etiqueta: 'EST ${juego.estamina.value.floor()}',
+        valor: juego.estamina.value / UmbralJuego.estaminaMaxima,
+        color: Colores.podredumbre,
+        alto: 12,
+        colorBorde: juego.sinEstamina.value ? Colores.sangre : Colores.borde,
       ),
     );
   }
@@ -248,12 +329,14 @@ class _Barra extends StatelessWidget {
   final double valor;
   final Color color;
   final double alto;
+  final Color colorBorde;
 
   const _Barra({
     required this.etiqueta,
     required this.valor,
     required this.color,
     required this.alto,
+    this.colorBorde = Colores.borde,
   });
 
   @override
@@ -263,7 +346,7 @@ class _Barra extends StatelessWidget {
       height: alto + 4,
       decoration: BoxDecoration(
         color: Colores.abismo,
-        border: Border.all(color: Colores.borde, width: 2),
+        border: Border.all(color: colorBorde, width: 2),
       ),
       child: Stack(
         children: [
@@ -352,7 +435,8 @@ class _JoystickState extends State<_Joystick> {
   }
 }
 
-/// Botón de ataque (se puede mantener pulsado) y, junto al altar, descansar.
+/// Botón de ataque (se puede mantener pulsado) y encima lo que se puede hacer
+/// en el lugar: descansar, entrar, usar el yunque...
 class _Acciones extends StatelessWidget {
   final UmbralJuego juego;
 
@@ -364,23 +448,26 @@ class _Acciones extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        ValueListenableBuilder(
-          valueListenable: juego.enElAltar,
-          builder: (_, enElAltar, _) => enElAltar
-              ? Padding(
+        ListenableBuilder(
+          listenable: Listenable.merge([juego.acciones, juego.guardando]),
+          builder: (_, _) => Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              for (final a in juego.acciones.value)
+                Padding(
                   padding: const EdgeInsets.only(bottom: Espacios.paso4),
-                  child: ValueListenableBuilder(
-                    valueListenable: juego.guardando,
-                    builder: (_, guardando, _) => BotonUmbral(
-                      texto: 'Descansar',
-                      estilo: EstiloBoton.acento,
-                      expandido: false,
-                      cargando: guardando,
-                      alPulsar: juego.descansar,
-                    ),
+                  child: BotonUmbral(
+                    texto: a.etiqueta,
+                    icono: a.icono,
+                    estilo: a.estilo,
+                    expandido: false,
+                    cargando: juego.guardando.value,
+                    alPulsar: a.alPulsar,
                   ),
-                )
-              : const SizedBox.shrink(),
+                ),
+            ],
+          ),
         ),
         Semantics(
           button: true,
@@ -399,7 +486,14 @@ class _Acciones extends StatelessWidget {
                 border: Border.all(color: Colores.abismo, width: 2),
                 boxShadow: sombraDura,
               ),
-              child: Text('ATACAR', style: Textos.etiqueta()),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconoUmbral(claseUi(juego.personaje.clase).iconoArma),
+                  const SizedBox(height: Espacios.paso1),
+                  Text('ATACAR', style: Textos.etiqueta()),
+                ],
+              ),
             ),
           ),
         ),

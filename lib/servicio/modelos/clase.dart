@@ -5,6 +5,9 @@ import 'combate.dart';
 /// colección: es la respuesta de `GET /api/clases`.
 class Clase {
   final String id;
+
+  /// Nivel con el que empieza: 1 más cada punto de atributo por encima de 1.
+  final int nivel;
   final AtributosDto atributos;
   final int oroInicial;
 
@@ -13,6 +16,7 @@ class Clase {
 
   const Clase({
     required this.id,
+    required this.nivel,
     required this.atributos,
     required this.oroInicial,
     required this.combate,
@@ -21,6 +25,7 @@ class Clase {
   factory Clase.fromMap(Map<String, dynamic> map) {
     return Clase(
       id: map['id'] as String,
+      nivel: map['nivel'] as int? ?? 1,
       atributos: AtributosDto.fromMap(map['atributos'] as Map<String, dynamic>),
       oroInicial: map['oroInicial'] as int,
       combate: Combate.fromMap(map['combate'] as Map<String, dynamic>),

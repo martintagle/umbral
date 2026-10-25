@@ -1,9 +1,11 @@
 import { ObjectId } from 'mongodb';
 
+import type { AtributosDto } from '../dto/atributos.dto.js';
 import type { PartidaDto } from '../dto/partida.dto.js';
+import type { PersonajeDto } from '../dto/personaje.dto.js';
 import { usuarios } from './coleccion-usuarios.js';
 import { conErroresMongo, idMongo, NegocioError } from './negocio-error.js';
-import { personajeNegocio, type Progreso } from './personaje.negocio.js';
+import { personajeNegocio, type PiezaEquipo, type Progreso } from './personaje.negocio.js';
 
 const MAXIMO_PARTIDAS = 10;
 /** Reintentos si otra petición guarda la misma partida a la vez. */
@@ -19,6 +21,49 @@ async function listarPartidas(idUsuario: string): Promise<PartidaDto[]> {
   );
   if (!usuario) throw noExisteUsuario();
   return usuario.partidas;
+}
+
+/**
+ * Cambia el personaje de una partida con [cambio]. La escritura solo ocurre si
+ * la partida sigue como se leyó (mismo `ultimaVezJugada`, que se renueva en
+ * cada cambio); si otra petición la cambió entre medias, se vuelve a leer y a
+ * aplicar.
+ */
+async function actualizarPersonaje(
+  idUsuario: string,
+  partidaId: string,
+  cambio: (anterior: PartidaDto, ahora: Date) => PersonajeDto,
+): Promise<PartidaDto> {
+  const id = idMongo(idUsuario);
+  const coleccion = await usuarios();
+  for (let intento = 0; intento < INTENTOS_GUARDADO; intento++) {
+    const anterior = (await listarPartidas(idUsuario)).find((p) => p.partidaId === partidaId);
+    if (!anterior) throw noExistePartida();
+
+    const ahora = new Date();
+    const personaje = cambio(anterior, ahora);
+    const resultado = await conErroresMongo(() =>
+      coleccion.updateOne(
+        {
+          _id: id,
+          partidas: {
+            $elemMatch: { partidaId, ultimaVezJugada: anterior.ultimaVezJugada },
+          },
+        },
+        {
+          $set: {
+            'partidas.$.personaje': personaje,
+            'partidas.$.ultimaVezJugada': ahora,
+            actualizadoEn: ahora,
+          },
+        },
+      ),
+    );
+    if (resultado.matchedCount === 1) {
+      return { ...anterior, ultimaVezJugada: ahora, personaje };
+    }
+  }
+  throw new NegocioError('La partida cambió mientras se guardaba. Inténtalo de nuevo.', 'conflicto');
 }
 
 /**
@@ -58,56 +103,28 @@ export const partidaNegocio = {
     return partida;
   },
 
-  /**
-   * Aplica el progreso con las reglas del personaje. La escritura solo ocurre
-   * si la partida sigue como se leyó (mismo `ultimaVezJugada`); si otra
-   * petición la cambió entre medias, se vuelve a leer y a aplicar.
-   */
-  async registrarProgreso(
-    idUsuario: string,
-    partidaId: string,
-    progreso: Progreso,
-  ): Promise<PartidaDto> {
-    const id = idMongo(idUsuario);
-    const coleccion = await usuarios();
-    for (let intento = 0; intento < INTENTOS_GUARDADO; intento++) {
-      const anterior = (await listarPartidas(idUsuario)).find(
-        (p) => p.partidaId === partidaId,
-      );
-      if (!anterior) throw noExistePartida();
-
-      const ahora = new Date();
-      const segundosDesdeGuardado =
-        (ahora.getTime() - anterior.ultimaVezJugada.getTime()) / 1000;
-      const personaje = personajeNegocio.aplicarProgreso(
+  /** Aplica el progreso con las reglas del personaje. */
+  registrarProgreso(idUsuario: string, partidaId: string, progreso: Progreso): Promise<PartidaDto> {
+    return actualizarPersonaje(idUsuario, partidaId, (anterior, ahora) =>
+      personajeNegocio.aplicarProgreso(
         anterior.personaje,
         progreso,
-        segundosDesdeGuardado,
-      );
-      const resultado = await conErroresMongo(() =>
-        coleccion.updateOne(
-          {
-            _id: id,
-            partidas: {
-              $elemMatch: { partidaId, ultimaVezJugada: anterior.ultimaVezJugada },
-            },
-          },
-          {
-            $set: {
-              'partidas.$.personaje': personaje,
-              'partidas.$.ultimaVezJugada': ahora,
-              actualizadoEn: ahora,
-            },
-          },
-        ),
-      );
-      if (resultado.matchedCount === 1) {
-        return { ...anterior, ultimaVezJugada: ahora, personaje };
-      }
-    }
-    throw new NegocioError(
-      'La partida cambió mientras se guardaba. Inténtalo de nuevo.',
-      'conflicto',
+        (ahora.getTime() - anterior.ultimaVezJugada.getTime()) / 1000,
+      ),
+    );
+  },
+
+  /** Sube atributos (y nivel) gastando experiencia en un altar de brasas. */
+  subirAtributos(idUsuario: string, partidaId: string, incrementos: AtributosDto): Promise<PartidaDto> {
+    return actualizarPersonaje(idUsuario, partidaId, (anterior) =>
+      personajeNegocio.subirAtributos(anterior.personaje, incrementos),
+    );
+  },
+
+  /** Mejora el arma o la armadura con oro (yunque de la herrería). */
+  mejorarEquipo(idUsuario: string, partidaId: string, pieza: PiezaEquipo): Promise<PartidaDto> {
+    return actualizarPersonaje(idUsuario, partidaId, (anterior) =>
+      personajeNegocio.mejorarEquipo(anterior.personaje, pieza),
     );
   },
 

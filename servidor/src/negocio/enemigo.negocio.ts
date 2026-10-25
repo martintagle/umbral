@@ -14,6 +14,8 @@ const RECOMPENSAS: Record<string, Omit<Recompensa, 'id'>> = {
   'larva-cirio': { exp: 26, oro: 10 },
   manojo: { exp: 16, oro: 6 },
   'ahorcado-fungico': { exp: 20, oro: 8 },
+  // Jefe de la sala del trono de la cripta.
+  'jefe-rey-hueco': { exp: 400, oro: 150 },
 };
 
 /** Reglas de las criaturas: qué da cada una al ser derrotada. No accede a la base de datos. */

@@ -1,3 +1,4 @@
+import '../dto/atributos_dto.dart';
 import 'modelos/partida_jugable.dart';
 import 'modelos/progreso.dart';
 import 'api_cliente.dart';
@@ -31,6 +32,22 @@ class PartidaServicio {
       String partidaId, Progreso progreso) async {
     final datos =
         await ApiCliente.post('/partidas/$partidaId/progreso', progreso.toMap());
+    return PartidaJugable.fromMap(datos as Map<String, dynamic>);
+  }
+
+  /// Sube atributos gastando experiencia: [incrementos] dice cuántos puntos
+  /// van a cada uno. Cada punto es un nivel; el servidor cobra y valida.
+  Future<PartidaJugable> subirAtributos(
+      String partidaId, AtributosDto incrementos) async {
+    final datos = await ApiCliente.post(
+        '/partidas/$partidaId/atributos', incrementos.toMap());
+    return PartidaJugable.fromMap(datos as Map<String, dynamic>);
+  }
+
+  /// Sube un nivel el `arma` o la `armadura` a cambio de oro.
+  Future<PartidaJugable> mejorarEquipo(String partidaId, String pieza) async {
+    final datos =
+        await ApiCliente.post('/partidas/$partidaId/mejora', {'pieza': pieza});
     return PartidaJugable.fromMap(datos as Map<String, dynamic>);
   }
 
