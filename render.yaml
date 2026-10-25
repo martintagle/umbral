@@ -1,0 +1,25 @@
+# Despliegue de la API en Render (https://render.com). Ver docs/despliegue.md.
+# Los secretos llevan sync: false: Render los pide al crear el servicio y nunca
+# quedan escritos en este archivo ni en el repositorio.
+services:
+  - type: web
+    name: umbral-api
+    runtime: node
+    rootDir: servidor
+    plan: free
+    # --include=dev: tsc es devDependency y NODE_ENV=production la omitiría.
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/salud
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PROXIES_CONFIABLES
+        value: "1"
+      # mongodb-memory-server es solo para desarrollo: que no descargue mongod.
+      - key: MONGOMS_DISABLE_POSTINSTALL
+        value: "1"
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRETO
+        sync: false

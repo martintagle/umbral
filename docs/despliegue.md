@@ -1,0 +1,68 @@
+# Despliegue de la beta
+
+Cómo publicar la API contra MongoDB Atlas y repartir el APK sin exponer ninguna credencial.
+
+## Qué es secreto y dónde vive
+
+| Dato | Dónde vive | ¿Se sube a GitHub? | ¿Va en el APK? |
+|---|---|---|---|
+| `MONGO_URI` (usuario y contraseña de Atlas) | Variables de entorno del hosting y `servidor/.env` en tu PC | No | No |
+| `JWT_SECRETO` | Variables de entorno del hosting y `servidor/.env` | No | No |
+| Clave de firma (`.jks`, `key.properties`) | Solo en tu PC, con copia de seguridad | No | No |
+| URL de la API (`API_URL`) | En el APK | Sí, es pública | Sí |
+
+La app nunca habla con Atlas: solo con la API. Cualquiera puede descompilar un APK, así que dentro solo va la URL de la API.
+
+## 1. Atlas
+
+1. **Database Access → Add New Database User**
+   - Usuario nuevo solo para la API (por ejemplo, `umbral-api`), con contraseña autogenerada.
+   - En *Built-in Role* no elijas *Atlas admin* ni *readWriteAnyDatabase*. En *Specific Privileges* añade `readWrite` sobre la base `rpg`.
+   - Para `npm run bd:esquema` usa otro usuario con `dbAdmin` sobre `rpg`, solo en tu PC y nunca en el hosting.
+2. **Network Access**
+   - El plan gratis de Render no tiene IP fija, así que hay que permitir `0.0.0.0/0`. Te protegen el usuario con permisos mínimos y la contraseña larga.
+   - Con un plan que tenga IP de salida fija, permite solo esa IP.
+3. **Tu cuenta de Atlas**: activa la verificación en dos pasos (MFA). Es lo que impide que alguien entre a tu cuenta, no a la base.
+
+## 2. API en Render
+
+1. En Render: **New → Blueprint** y elige el repo. Render lee [render.yaml](../render.yaml).
+2. Te pedirá los dos secretos:
+   - `MONGO_URI`: la cadena del usuario `umbral-api`, terminada en `/rpg?retryWrites=true&w=majority`.
+   - `JWT_SECRETO`: el resultado de `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`.
+3. Cuando arranque, comprueba que `https://umbral-api.onrender.com/api/salud` responde `{"ok":true}`.
+
+En el plan gratis, la API se duerme tras 15 minutos sin uso y la primera petición tarda unos 30-50 s. La app espera 15 s, así que el primer intento puede fallar: vuelve a intentarlo.
+
+## 3. APK de la beta
+
+1. Crea la clave de firma (una sola vez; guárdala, porque sin ella no podrás publicar actualizaciones):
+   ```bash
+   keytool -genkey -v -keystore ~/umbral-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias umbral
+   ```
+2. Crea `android/key.properties` (está en `.gitignore`):
+   ```properties
+   storeFile=C:/Users/TU-USUARIO/umbral-release.jks
+   storePassword=...
+   keyAlias=umbral
+   keyPassword=...
+   ```
+3. Compila apuntando a la API de producción:
+   ```bash
+   flutter build apk --release --obfuscate --split-debug-info=build/simbolos --dart-define=API_URL=https://umbral-api.onrender.com/api
+   ```
+   El APK queda en `build/app/outputs/flutter-apk/app-release.apk`. En release, Android solo permite HTTPS hacia la API.
+
+## Protecciones de la API
+
+- Contraseñas guardadas con bcrypt; `passwordHash` nunca sale del servidor.
+- Sesiones JWT de 30 días. La API no arranca si `JWT_SECRETO` tiene menos de 32 caracteres.
+- Límite de peticiones por IP: 120 por minuto en total y 10 intentos de login o registro cada 15 minutos.
+- Cuerpos JSON de 100 KB como máximo, validados con zod, y validador `$jsonSchema` en la colección.
+- Errores internos genéricos hacia la app; el detalle solo aparece en los logs del servidor.
+
+## Si se filtra un secreto
+
+- **`MONGO_URI`**: en Atlas, *Database Access → Edit → Edit Password*, y actualiza la variable en Render.
+- **`JWT_SECRETO`**: cámbialo en Render. Todas las sesiones caducan y los jugadores vuelven a iniciar sesión.
+- Borrar el commit no basta: GitHub y los clones lo conservan. Cambia siempre el secreto.

@@ -10,7 +10,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 
 const servidor = await MongoMemoryServer.create();
 process.env.MONGO_URI = `${servidor.getUri()}rpg`;
-process.env.JWT_SECRETO ??= 'solo-para-pruebas-locales';
+process.env.JWT_SECRETO ??= 'solo-para-pruebas-locales-nunca-en-produccion';
 
 const esquema = JSON.parse(
   await readFile(new URL('../../bd/esquema-usuarios.json', import.meta.url), 'utf8'),

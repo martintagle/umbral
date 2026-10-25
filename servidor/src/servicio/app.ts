@@ -3,6 +3,7 @@ import { ZodError } from 'zod';
 
 import { NegocioError, type TipoError } from '../negocio/negocio-error.js';
 import { claseServicio } from './clase.servicio.js';
+import { limiteGeneral } from './limites.js';
 import { partidaServicio } from './partida.servicio.js';
 import { usuarioServicio } from './usuario.servicio.js';
 
@@ -17,6 +18,11 @@ const ESTADO_HTTP: Record<TipoError, number> = {
 export function crearApp() {
   const app = express();
   app.disable('x-powered-by');
+  // Detrás del proxy del hosting (Render, Railway...), la IP real del cliente
+  // llega en X-Forwarded-For. Sin esto, el límite por IP trataría a todos como uno.
+  const proxies = Number(process.env.PROXIES_CONFIABLES ?? 0);
+  if (proxies > 0) app.set('trust proxy', proxies);
+  app.use(limiteGeneral);
   app.use(express.json({ limit: '100kb' }));
 
   app.get('/api/salud', (_req, res) => {

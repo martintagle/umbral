@@ -40,6 +40,6 @@ npm run dev               # API en http://localhost:3000 con recarga automática
 
 - **Emulador de Android:** la app usa por defecto `http://10.0.2.2:3000/api`, que es el PC visto desde el emulador.
 - **Móvil físico en la misma red Wi-Fi:** ejecuta la app con `--dart-define=API_URL=http://IP-DEL-PC:3000/api` y añade esa IP en `android/app/src/main/res/xml/network_security_config.xml`.
-- **Producción:** despliega el servidor con HTTPS (por ejemplo, en Render o Railway) y usa esa URL en `API_URL`.
+- **Producción:** despliega el servidor con HTTPS y usa esa URL en `API_URL`. Pasos en [docs/despliegue.md](../docs/despliegue.md).
 
 La cadena de Atlas y la clave JWT viven solo en el `.env` del servidor; nunca van dentro de la app.

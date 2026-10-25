@@ -40,6 +40,10 @@ Flutter solo admite Dart, así que la app y el juego son Dart. Todo lo que no ne
    ```
    Por defecto la app busca la API en `http://10.0.2.2:3000/api` (el PC visto desde el emulador). Para otra dirección: `flutter run --dart-define=API_URL=https://tu-servidor/api`.
 
+## Publicar la beta
+
+API en Render contra Atlas, APK firmado y qué secretos van en cada sitio: [docs/despliegue.md](docs/despliegue.md).
+
 ## Diseño
 
 Sistema de diseño, paleta y sprites: [docs/diseno](docs/diseno/README.md).
