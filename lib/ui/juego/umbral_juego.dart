@@ -6,11 +6,12 @@ import 'package:flame/game.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import '../../dto/combate_dto.dart';
-import '../../dto/partida_jugable_dto.dart';
 import '../../dto/personaje_dto.dart';
-import '../../dto/progreso_dto.dart';
 import '../../dto/ubicacion_dto.dart';
+import '../../servicio/modelos/combate.dart';
+import '../../servicio/modelos/partida_jugable.dart';
+import '../../servicio/modelos/progreso.dart';
+import '../../servicio/modelos/recompensa.dart';
 import '../clases_ui.dart';
 import '../tema/tema_umbral.dart';
 import 'efectos.dart';
@@ -22,15 +23,19 @@ import 'tipos_enemigo.dart';
 import 'zona_claro.dart';
 
 /// Envía el progreso. La pantalla lo implementa con `PartidaServicio`.
-typedef GuardarProgreso = Future<PartidaJugableDto> Function(
-    String partidaId, ProgresoDto progreso);
+typedef GuardarProgreso = Future<PartidaJugable> Function(
+    String partidaId, Progreso progreso);
 
 /// El juego en tiempo real. Las reglas de progresión las aplica el servidor:
 /// aquí solo se juega con los valores de [combate] y se anota en [_registro]
 /// lo que pasa, que se envía al descansar, al revivir o al salir.
 class UmbralJuego extends FlameGame<ZonaClaro> with KeyboardEvents {
-  UmbralJuego({required PartidaJugableDto partida, required this.alGuardar})
-      : _guardada = partida,
+  UmbralJuego({
+    required PartidaJugable partida,
+    required Map<String, Recompensa> recompensas,
+    required this.alGuardar,
+  })  : _guardada = partida,
+        _registro = RegistroProgreso(recompensas),
         super(world: ZonaClaro()) {
     images.prefix = 'assets/';
   }
@@ -38,13 +43,13 @@ class UmbralJuego extends FlameGame<ZonaClaro> with KeyboardEvents {
   final GuardarProgreso alGuardar;
 
   /// Última versión confirmada por el servidor.
-  PartidaJugableDto _guardada;
-  final _registro = RegistroProgreso();
+  PartidaJugable _guardada;
+  final RegistroProgreso _registro;
   late String? _puntoDeGuardado = personaje.ubicacion.ultimoPuntoGuardado;
   late final Jugador jugador;
 
   PersonajeDto get personaje => _guardada.partida.personaje;
-  CombateDto get combate => _guardada.combate;
+  Combate get combate => _guardada.combate;
 
   // Estado que dibuja el HUD de Flutter.
   final vida = ValueNotifier<int>(1);
@@ -182,9 +187,10 @@ class UmbralJuego extends FlameGame<ZonaClaro> with KeyboardEvents {
   int danoRecibido(int danoEnemigo) => max(1, danoEnemigo - combate.defensa);
 
   void enemigoDerrotado(Enemigo enemigo) {
-    _registro.enemigoDerrotado(exp: enemigo.tipo.exp, oro: enemigo.tipo.oro);
+    _registro.enemigoDerrotado(enemigo.tipo.id);
+    final recompensa = _registro.recompensa(enemigo.tipo.id);
     world.add(TextoFlotante(
-      '+${enemigo.tipo.exp} EXP  +${enemigo.tipo.oro} ORO',
+      '+${recompensa.exp} EXP  +${recompensa.oro} ORO',
       enemigo.centro - Vector2(0, 22),
       color: Colores.brasa,
       grande: false,
@@ -232,7 +238,7 @@ class UmbralJuego extends FlameGame<ZonaClaro> with KeyboardEvents {
   Future<bool> guardar({bool silencioso = false}) async {
     if (guardando.value) return false;
     guardando.value = true;
-    final enviado = _registro.aDto(
+    final enviado = _registro.aProgreso(
       vidaActual: vida.value,
       ubicacion: UbicacionDto(
         zonaId: ZonaClaro.id,

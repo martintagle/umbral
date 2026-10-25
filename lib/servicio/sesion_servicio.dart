@@ -15,6 +15,9 @@ abstract final class SesionServicio {
     _token = token;
   }
 
+  /// Sustituye el usuario por la versión más reciente del servidor.
+  static void actualizar(UsuarioDto usuario) => _usuario = usuario;
+
   static void cerrar() {
     _usuario = null;
     _token = null;

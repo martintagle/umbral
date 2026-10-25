@@ -1,6 +1,6 @@
 /// Valores de combate de un personaje, calculados por el servidor con las
-/// reglas del juego. No es una colección: llega junto a cada partida.
-class CombateDto {
+/// reglas del juego. No replica ninguna colección: llega junto a cada partida.
+class Combate {
   final int vidaMaxima;
 
   /// Experiencia total que hace falta para pasar al siguiente nivel.
@@ -10,7 +10,7 @@ class CombateDto {
   final double probabilidadCritico;
   final double multiplicadorCritico;
 
-  const CombateDto({
+  const Combate({
     required this.vidaMaxima,
     required this.expSiguiente,
     required this.dano,
@@ -19,8 +19,8 @@ class CombateDto {
     required this.multiplicadorCritico,
   });
 
-  factory CombateDto.fromMap(Map<String, dynamic> map) {
-    return CombateDto(
+  factory Combate.fromMap(Map<String, dynamic> map) {
+    return Combate(
       vidaMaxima: map['vidaMaxima'] as int,
       expSiguiente: map['expSiguiente'] as int,
       dano: map['dano'] as int,

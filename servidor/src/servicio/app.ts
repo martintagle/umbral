@@ -3,6 +3,7 @@ import { ZodError } from 'zod';
 
 import { NegocioError, type TipoError } from '../negocio/negocio-error.js';
 import { claseServicio } from './clase.servicio.js';
+import { enemigoServicio } from './enemigo.servicio.js';
 import { limiteGeneral } from './limites.js';
 import { partidaServicio } from './partida.servicio.js';
 import { usuarioServicio } from './usuario.servicio.js';
@@ -31,6 +32,7 @@ export function crearApp() {
   app.use('/api/usuarios', usuarioServicio);
   app.use('/api/partidas', partidaServicio);
   app.use('/api/clases', claseServicio);
+  app.use('/api/enemigos', enemigoServicio);
 
   app.use((_req, res) => {
     res.status(404).json({ error: 'Ruta no encontrada.' });

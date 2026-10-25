@@ -1,7 +1,8 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
-import '../../dto/partida_jugable_dto.dart';
+import '../../servicio/modelos/partida_jugable.dart';
+import '../../servicio/modelos/recompensa.dart';
 import '../../servicio/partida_servicio.dart';
 import '../juego/umbral_juego.dart';
 import '../juego/zona_claro.dart';
@@ -10,9 +11,11 @@ import '../widgets/boton_umbral.dart';
 import '../widgets/panel_umbral.dart';
 
 class JuegoPantalla extends StatefulWidget {
-  final PartidaJugableDto partida;
+  final PartidaJugable partida;
+  final Map<String, Recompensa> recompensas;
 
-  const JuegoPantalla({super.key, required this.partida});
+  const JuegoPantalla(
+      {super.key, required this.partida, required this.recompensas});
 
   @override
   State<JuegoPantalla> createState() => _JuegoPantallaState();
@@ -29,6 +32,7 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
     super.initState();
     _juego = UmbralJuego(
       partida: widget.partida,
+      recompensas: widget.recompensas,
       alGuardar: _servicio.registrarProgreso,
     )..alPedirMenu = _abrirMenu;
     Future.delayed(const Duration(seconds: 3), () {

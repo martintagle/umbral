@@ -4,7 +4,7 @@ import 'dart:ui';
 import '../tema/tema_umbral.dart';
 
 /// Cómo se siente el arma de cada clase. El daño no está aquí: lo calcula el
-/// servidor y llega en `CombateDto`.
+/// servidor y llega en `Combate`.
 class EstiloCombate {
   final double velocidad;
   final double recarga;

@@ -5,16 +5,9 @@
  */
 import 'dotenv/config';
 
-import { readFile } from 'node:fs/promises';
-
 import { conexionBD } from '../conexion/conexion-bd.js';
+import { prepararColeccion } from '../negocio/coleccion-usuarios.js';
 
-const esquema = JSON.parse(
-  await readFile(new URL('../../bd/esquema-usuarios.json', import.meta.url), 'utf8'),
-);
-const db = await conexionBD.abrir();
-await db.command({ collMod: 'usuarios', validator: { $jsonSchema: esquema } });
-await db.collection('usuarios').createIndex({ email: 1 }, { unique: true });
-await db.collection('usuarios').createIndex({ username: 1 }, { unique: true });
+await prepararColeccion();
 console.log('Validador e índices de rpg.usuarios actualizados.');
 await conexionBD.cerrar();

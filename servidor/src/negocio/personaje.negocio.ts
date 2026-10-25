@@ -1,7 +1,45 @@
-import type { CatalogoClasesDto, CombateDto, ProgresoDto } from '../dto/api.dto.js';
 import type { AtributosDto } from '../dto/atributos.dto.js';
 import { APARIENCIAS, type Apariencia, type PersonajeDto } from '../dto/personaje.dto.js';
+import type { UbicacionDto } from '../dto/ubicacion.dto.js';
+import { enemigoNegocio } from './enemigo.negocio.js';
 import { NegocioError } from './negocio-error.js';
+
+/** Valores de combate de un personaje, calculados con las reglas del juego. */
+export interface Combate {
+  vidaMaxima: number;
+  /** Experiencia total que hace falta para pasar al siguiente nivel. */
+  expSiguiente: number;
+  dano: number;
+  defensa: number;
+  probabilidadCritico: number;
+  multiplicadorCritico: number;
+}
+
+/** Una clase tal como se muestra al crear un personaje. */
+export interface Clase {
+  id: string;
+  atributos: AtributosDto;
+  oroInicial: number;
+  combate: Combate;
+}
+
+export interface CatalogoClases {
+  apariencias: readonly Apariencia[];
+  clases: Clase[];
+}
+
+/**
+ * Lo que ha pasado en la partida desde el último guardado. La app envía los
+ * hechos y aquí se calculan la experiencia, el oro y la subida de nivel.
+ */
+export interface Progreso {
+  /** Enemigos derrotados de cada tipo: `{ id: cantidad }`. */
+  enemigosDerrotados: Record<string, number>;
+  muertes: number;
+  segundosJugados: number;
+  vidaActual: number;
+  ubicacion: UbicacionDto;
+}
 
 interface ClaseReglas {
   atributos: AtributosDto;
@@ -57,6 +95,10 @@ const MULTIPLICADOR_CRITICO = 1.5;
 const EXP_POR_NIVEL = 60;
 const PUNTOS_POR_NIVEL = 2;
 const ESTAMINA_MAXIMA = 100;
+/** Holgura para el redondeo de los segundos que envía la app. */
+const MARGEN_SEGUNDOS = 5;
+/** Ritmo máximo creíble de enemigos derrotados. */
+const MAXIMO_ENEMIGOS_POR_SEGUNDO = 1;
 
 function reglasDeClase(clase: string): ClaseReglas {
   const reglas = CLASES[clase];
@@ -72,7 +114,7 @@ function expParaSubir(nivel: number): number {
   return EXP_POR_NIVEL * nivel;
 }
 
-function combate(p: Pick<PersonajeDto, 'clase' | 'nivel' | 'atributos' | 'equipo'>): CombateDto {
+function combate(p: Pick<PersonajeDto, 'clase' | 'nivel' | 'atributos' | 'equipo'>): Combate {
   const a = p.atributos;
   const ataque = a[reglasDeClase(p.clase).atributoAtaque];
   return {
@@ -103,7 +145,7 @@ function validarApariencia(apariencia: string): Apariencia {
 export const personajeNegocio = {
   combate,
 
-  catalogo(): CatalogoClasesDto {
+  catalogo(): CatalogoClases {
     return {
       apariencias: APARIENCIAS,
       clases: Object.entries(CLASES).map(([id, c]) => ({
@@ -143,15 +185,23 @@ export const personajeNegocio = {
 
   /**
    * Suma lo ocurrido en la partida y sube de nivel las veces que haga falta.
-   * Al subir de nivel el personaje recupera toda la vida.
+   * Al subir de nivel el personaje recupera toda la vida. [segundosDesdeGuardado]
+   * es el tiempo real desde el último guardado: el progreso no puede abarcar más.
    */
-  aplicarProgreso(p: PersonajeDto, progreso: ProgresoDto): PersonajeDto {
+  aplicarProgreso(p: PersonajeDto, progreso: Progreso, segundosDesdeGuardado: number): PersonajeDto {
     const maxima = vidaMaxima(p.atributos);
     if (progreso.vidaActual > maxima) {
       throw new NegocioError(`La vida no puede superar ${maxima}.`);
     }
+    if (progreso.segundosJugados > segundosDesdeGuardado + MARGEN_SEGUNDOS) {
+      throw new NegocioError('El tiempo jugado no puede superar el tiempo desde el último guardado.');
+    }
+    const ganado = enemigoNegocio.recompensaTotal(progreso.enemigosDerrotados);
+    if (ganado.enemigos > progreso.segundosJugados * MAXIMO_ENEMIGOS_POR_SEGUNDO) {
+      throw new NegocioError('Demasiados enemigos derrotados para el tiempo jugado.');
+    }
     let nivel = p.nivel;
-    let exp = p.exp + progreso.expGanada;
+    let exp = p.exp + ganado.exp;
     while (exp >= expParaSubir(nivel)) {
       exp -= expParaSubir(nivel);
       nivel++;
@@ -162,11 +212,11 @@ export const personajeNegocio = {
       nivel,
       exp,
       puntosLibres: p.puntosLibres + (nivel - p.nivel) * PUNTOS_POR_NIVEL,
-      oro: p.oro + progreso.oroGanado,
+      oro: p.oro + ganado.oro,
       vidaActual: nivel > p.nivel ? maxima : progreso.vidaActual,
       ubicacion: progreso.ubicacion,
       estadisticas: {
-        enemigosDerrotados: e.enemigosDerrotados + progreso.enemigosDerrotados,
+        enemigosDerrotados: e.enemigosDerrotados + ganado.enemigos,
         muertes: e.muertes + progreso.muertes,
         tiempoJugadoSeg: e.tiempoJugadoSeg + progreso.segundosJugados,
       },

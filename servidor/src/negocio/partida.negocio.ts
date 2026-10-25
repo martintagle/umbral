@@ -1,10 +1,9 @@
 import { ObjectId } from 'mongodb';
 
-import type { ProgresoDto } from '../dto/api.dto.js';
 import type { PartidaDto } from '../dto/partida.dto.js';
 import { usuarios } from './coleccion-usuarios.js';
 import { conErroresMongo, idMongo, NegocioError } from './negocio-error.js';
-import { personajeNegocio } from './personaje.negocio.js';
+import { personajeNegocio, type Progreso } from './personaje.negocio.js';
 
 const MAXIMO_PARTIDAS = 10;
 /** Reintentos si otra petición guarda la misma partida a la vez. */
@@ -67,7 +66,7 @@ export const partidaNegocio = {
   async registrarProgreso(
     idUsuario: string,
     partidaId: string,
-    progreso: ProgresoDto,
+    progreso: Progreso,
   ): Promise<PartidaDto> {
     const id = idMongo(idUsuario);
     const coleccion = await usuarios();
@@ -77,8 +76,14 @@ export const partidaNegocio = {
       );
       if (!anterior) throw noExistePartida();
 
-      const personaje = personajeNegocio.aplicarProgreso(anterior.personaje, progreso);
       const ahora = new Date();
+      const segundosDesdeGuardado =
+        (ahora.getTime() - anterior.ultimaVezJugada.getTime()) / 1000;
+      const personaje = personajeNegocio.aplicarProgreso(
+        anterior.personaje,
+        progreso,
+        segundosDesdeGuardado,
+      );
       const resultado = await conErroresMongo(() =>
         coleccion.updateOne(
           {

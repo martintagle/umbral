@@ -37,22 +37,13 @@ UsuarioDto                         usuario_dto.dart
 | `mundo_dto.dart` | `List<String> zonasDesbloqueadas`, `List<String> cofresAbiertos`, `List<String> jefesDerrotados` |
 | `estadisticas_dto.dart` | `int enemigosDerrotados`, `int muertes`, `int tiempoJugadoSeg` |
 
-### Objetos de la API
-
-No replican una colección: se calculan en el servidor o se le envían.
-
-| Archivo | Uso |
-|---|---|
-| `combate_dto.dart` | Valores de combate de un personaje (vida máxima, exp para subir, daño, defensa, críticos). |
-| `partida_jugable_dto.dart` | Lo que devuelve la API por cada partida: `partida` y `combate`. |
-| `clase_dto.dart` | Catálogo de clases de `GET /api/clases`. |
-| `progreso_dto.dart` | Lo que envía el juego al guardar: lo ocurrido desde el último guardado. |
+Solo hay réplicas de la colección. Los objetos de la API que no replican ninguna colección (valores de combate, catálogos, progreso) están en [`servicio/modelos/`](../servicio/README.md).
 
 ## Qué debe contener cada DTO
 
 - Constructor con todos los campos.
 - `fromMap(Map<String, dynamic>)`: convierte el JSON de la API en el objeto. Las fechas llegan en ISO 8601 y se leen con `DateTime.parse`.
-- `toMap()`: convierte el objeto en JSON. Las réplicas lo tienen todas, aunque hoy solo se envían `AjustesDto` y `ProgresoDto`.
+- `toMap()`: convierte el objeto en JSON. Las réplicas lo tienen todas, aunque hoy solo se envía `AjustesDto`.
 
 ## Qué NO debe hacer
 

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../dto/partida_dto.dart';
-import '../../dto/partida_jugable_dto.dart';
+import '../../servicio/enemigo_servicio.dart';
+import '../../servicio/modelos/partida_jugable.dart';
+import '../../servicio/modelos/recompensa.dart';
 import '../../servicio/partida_servicio.dart';
 import '../../servicio/servicio_excepcion.dart';
 import '../../servicio/sesion_servicio.dart';
@@ -25,14 +27,16 @@ class PartidasPantalla extends StatefulWidget {
 
 class _PartidasPantallaState extends State<PartidasPantalla> {
   final _servicio = PartidaServicio();
-  List<PartidaJugableDto>? _partidas;
+  List<PartidaJugable>? _partidas;
   String? _error;
-  String? _partidaActiva;
+  final _enemigos = EnemigoServicio();
+
+  /// Los servicios mantienen la sesión al día al cambiar la partida activa.
+  String? get _partidaActiva => SesionServicio.usuario?.partidaActiva;
 
   @override
   void initState() {
     super.initState();
-    _partidaActiva = SesionServicio.usuario?.partidaActiva;
     _cargar();
   }
 
@@ -59,22 +63,28 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
     setState(() => _error = e.mensaje);
   }
 
-  Future<void> _jugar(PartidaJugableDto partida) async {
-    final id = partida.partida.partidaId;
+  Future<void> _jugar(PartidaJugable partida) async {
+    final Map<String, Recompensa> recompensas;
     try {
-      await _servicio.seleccionarPartidaActiva(id);
-      _partidaActiva = id;
+      recompensas = await _enemigos.recompensas();
+    } on ServicioExcepcion catch (e) {
+      _mostrarError(e);
+      return;
+    }
+    try {
+      await _servicio.seleccionarPartidaActiva(partida.partida.partidaId);
     } on ServicioExcepcion {
       // No impide jugar: solo marca la partida en la lista.
     }
     if (!mounted) return;
-    await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => JuegoPantalla(partida: partida)));
+    await Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) =>
+            JuegoPantalla(partida: partida, recompensas: recompensas)));
     _cargar();
   }
 
   Future<void> _nueva() async {
-    final creada = await Navigator.of(context).push<PartidaJugableDto>(
+    final creada = await Navigator.of(context).push<PartidaJugable>(
         MaterialPageRoute(builder: (_) => const NuevoPersonajePantalla()));
     if (creada != null) {
       await _jugar(creada);
@@ -83,7 +93,7 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
     }
   }
 
-  Future<void> _borrar(PartidaJugableDto jugable) async {
+  Future<void> _borrar(PartidaJugable jugable) async {
     final partida = jugable.partida;
     final confirmado = await showDialog<bool>(
       context: context,
@@ -118,7 +128,6 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
     if (confirmado != true) return;
     try {
       await _servicio.eliminarPartida(partida.partidaId);
-      if (_partidaActiva == partida.partidaId) _partidaActiva = null;
       _cargar();
     } on ServicioExcepcion catch (e) {
       _mostrarError(e);

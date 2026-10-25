@@ -22,8 +22,13 @@ class UsuarioServicio {
     return _abrirSesion(datos as Map<String, dynamic>);
   }
 
-  Future<UsuarioDto> obtenerYo() async => UsuarioDto.fromMap(
-      await ApiCliente.get('/usuarios/yo') as Map<String, dynamic>);
+  /// Pide el usuario al servidor y actualiza la sesión con él.
+  Future<UsuarioDto> obtenerYo() async {
+    final usuario = UsuarioDto.fromMap(
+        await ApiCliente.get('/usuarios/yo') as Map<String, dynamic>);
+    SesionServicio.actualizar(usuario);
+    return usuario;
+  }
 
   Future<void> actualizarAjustes(AjustesDto ajustes) =>
       ApiCliente.put('/usuarios/yo/ajustes', ajustes.toMap());

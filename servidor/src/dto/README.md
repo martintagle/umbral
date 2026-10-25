@@ -30,15 +30,7 @@ UsuarioDto                         usuario.dto.ts
 | `array` | `T[]` |
 | `["string", "null"]` | `string \| null` |
 
-## Objetos de la API (`api.dto.ts`)
-
-No son colecciones: se calculan o se reciben, pero nunca se guardan tal cual.
-
-| Tipo | Uso |
-|---|---|
-| `CombateDto` | Valores de combate de un personaje (vida máxima, exp para subir, daño, defensa, críticos). Viaja junto a cada partida. |
-| `ClaseDto`, `CatalogoClasesDto` | Respuesta de `GET /api/clases`. |
-| `ProgresoDto` | Lo que envía la app al guardar: lo ocurrido desde el último guardado. |
+Solo hay réplicas de la colección. Los objetos que viajan por la API pero no se guardan (valores de combate, catálogos, progreso) los define la capa de negocio que los calcula o los recibe: `personaje.negocio.ts` y `enemigo.negocio.ts`.
 
 ## Cuidado con los tipos
 

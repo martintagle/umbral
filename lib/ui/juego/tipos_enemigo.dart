@@ -5,7 +5,8 @@ import '../tema/tema_umbral.dart';
 enum Ataque { cuerpoACuerpo, distancia }
 
 /// Estadísticas y comportamiento de cada criatura. Las distancias están en
-/// píxeles de arte y los tiempos en segundos.
+/// píxeles de arte y los tiempos en segundos. Lo que da al ser derrotada lo
+/// decide el servidor (`EnemigoServicio`), por [id].
 class TipoEnemigo {
   final String id;
   final String nombre;
@@ -19,8 +20,6 @@ class TipoEnemigo {
   /// apartarse.
   final double preparacion;
   final double recarga;
-  final int exp;
-  final int oro;
   final Ataque ataque;
   final bool vuela;
 
@@ -47,8 +46,6 @@ class TipoEnemigo {
     required this.alcance,
     required this.preparacion,
     required this.recarga,
-    required this.exp,
-    required this.oro,
     this.ataque = Ataque.cuerpoACuerpo,
     this.vuela = false,
     this.embestida = 0,
@@ -73,8 +70,6 @@ abstract final class Enemigos {
     alcance: 14,
     preparacion: 0.35,
     recarga: 1.1,
-    exp: 8,
-    oro: 3,
     vuela: true,
     erratico: 1,
   );
@@ -90,8 +85,6 @@ abstract final class Enemigos {
     alcance: 34,
     preparacion: 0.6,
     recarga: 1.6,
-    exp: 18,
-    oro: 6,
     embestida: 170,
   );
 
@@ -106,8 +99,6 @@ abstract final class Enemigos {
     alcance: 85,
     preparacion: 0.5,
     recarga: 2.0,
-    exp: 14,
-    oro: 5,
     ataque: Ataque.distancia,
     vuela: true,
     colorProyectil: Colores.ceniza,
@@ -124,8 +115,6 @@ abstract final class Enemigos {
     alcance: 95,
     preparacion: 0.9,
     recarga: 2.4,
-    exp: 26,
-    oro: 10,
     ataque: Ataque.distancia,
     colorProyectil: Colores.brasa,
   );
@@ -141,8 +130,6 @@ abstract final class Enemigos {
     alcance: 16,
     preparacion: 0.25,
     recarga: 0.6,
-    exp: 16,
-    oro: 6,
     ralentiza: 1.0,
   );
 
@@ -157,8 +144,6 @@ abstract final class Enemigos {
     alcance: 16,
     preparacion: 0.45,
     recarga: 1.3,
-    exp: 20,
-    oro: 8,
     regeneracion: 5,
   );
 

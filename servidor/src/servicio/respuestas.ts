@@ -1,8 +1,7 @@
-import type { CombateDto } from '../dto/api.dto.js';
 import type { PartidaDto } from '../dto/partida.dto.js';
 import type { PersonajeDto } from '../dto/personaje.dto.js';
 import type { UsuarioDto } from '../dto/usuario.dto.js';
-import { personajeNegocio } from '../negocio/personaje.negocio.js';
+import { personajeNegocio, type Combate } from '../negocio/personaje.negocio.js';
 
 /** Partida tal como viaja a la app: fechas en ISO 8601. */
 export interface PartidaJson {
@@ -15,7 +14,7 @@ export interface PartidaJson {
 /** Partida con los valores de combate que el juego necesita para jugarla. */
 export interface PartidaJugableJson {
   partida: PartidaJson;
-  combate: CombateDto;
+  combate: Combate;
 }
 
 export function partidaJson(p: PartidaDto): PartidaJson {

@@ -22,9 +22,7 @@ export const crearPartida = z.object({ nombre: texto, clase: texto, apariencia: 
 export const partidaActiva = z.object({ partidaId: texto.nullable() });
 
 export const progreso = z.object({
-  expGanada: entero(0),
-  oroGanado: entero(0),
-  enemigosDerrotados: entero(0),
+  enemigosDerrotados: z.record(z.string().max(64), entero(0)),
   muertes: entero(0),
   segundosJugados: entero(0),
   vidaActual: entero(0),

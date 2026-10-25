@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../dto/clase_dto.dart';
 import '../../servicio/clase_servicio.dart';
+import '../../servicio/modelos/clase.dart';
 import '../../servicio/partida_servicio.dart';
 import '../../servicio/servicio_excepcion.dart';
 import '../clases_ui.dart';
@@ -26,8 +26,8 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
   final _formulario = GlobalKey<FormState>();
   final _nombre = TextEditingController();
 
-  CatalogoClasesDto? _catalogo;
-  ClaseDto? _clase;
+  CatalogoClases? _catalogo;
+  Clase? _clase;
   String _apariencia = 'hombre';
   bool _cargando = false;
   String? _error;
@@ -116,7 +116,7 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
     );
   }
 
-  Widget _formularioPersonaje(CatalogoClasesDto catalogo, ClaseDto elegida) {
+  Widget _formularioPersonaje(CatalogoClases catalogo, Clase elegida) {
     final clase = claseUi(elegida.id);
     final a = elegida.atributos;
     final combate = elegida.combate;

@@ -1,20 +1,17 @@
-import 'ubicacion_dto.dart';
+import '../../dto/ubicacion_dto.dart';
 
 /// Lo ocurrido en la partida desde el último guardado. La app envía los hechos
-/// y el servidor aplica las reglas (subida de nivel incluida). No es una
-/// colección.
-class ProgresoDto {
-  final int expGanada;
-  final int oroGanado;
-  final int enemigosDerrotados;
+/// y el servidor calcula la experiencia, el oro y la subida de nivel. No
+/// replica ninguna colección.
+class Progreso {
+  /// Enemigos derrotados de cada tipo: `{ id: cantidad }`.
+  final Map<String, int> enemigosDerrotados;
   final int muertes;
   final int segundosJugados;
   final int vidaActual;
   final UbicacionDto ubicacion;
 
-  const ProgresoDto({
-    required this.expGanada,
-    required this.oroGanado,
+  const Progreso({
     required this.enemigosDerrotados,
     required this.muertes,
     required this.segundosJugados,
@@ -24,8 +21,6 @@ class ProgresoDto {
 
   Map<String, dynamic> toMap() {
     return {
-      'expGanada': expGanada,
-      'oroGanado': oroGanado,
       'enemigosDerrotados': enemigosDerrotados,
       'muertes': muertes,
       'segundosJugados': segundosJugados,
