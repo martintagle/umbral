@@ -1,0 +1,32 @@
+{
+  "name": "umbral-servidor",
+  "version": "0.1.0",
+  "description": "API de Umbral: capas de conexión, DTO, negocio y servicio sobre MongoDB Atlas",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "dev:memoria": "tsx src/dev/memoria.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "tipos": "tsc --noEmit",
+    "bd:esquema": "tsx src/dev/actualizar-esquema.ts"
+  },
+  "type": "module",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongodb": "^7.7.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^26.6.5",
+    "mongodb-memory-server": "^11.3.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "private": true
+}

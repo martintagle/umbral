@@ -1,0 +1,65 @@
+{
+  "imagen": "hoja-estructuras.png",
+  "tamano": {
+    "w": 416,
+    "h": 64
+  },
+  "escalaRecomendada": 4,
+  "filtrado": "vecino-mas-cercano",
+  "cuadros": {
+    "altar-de-brasas": {
+      "x": 0,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "pozo": {
+      "x": 32,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "lapidas": {
+      "x": 64,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "estatua-sin-rostro": {
+      "x": 96,
+      "y": 16,
+      "w": 32,
+      "h": 48
+    },
+    "choza-en-ruinas": {
+      "x": 128,
+      "y": 0,
+      "w": 64,
+      "h": 64
+    },
+    "capilla": {
+      "x": 192,
+      "y": 0,
+      "w": 64,
+      "h": 64
+    },
+    "torre-derruida": {
+      "x": 256,
+      "y": 0,
+      "w": 48,
+      "h": 64
+    },
+    "entrada-de-cripta": {
+      "x": 304,
+      "y": 16,
+      "w": 64,
+      "h": 48
+    },
+    "arbol-de-la-jaula": {
+      "x": 368,
+      "y": 0,
+      "w": 48,
+      "h": 64
+    }
+  }
+}

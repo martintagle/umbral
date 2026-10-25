@@ -1,0 +1,257 @@
+{
+  "bsonType": "object",
+  "required": [
+    "_id",
+    "username",
+    "email",
+    "passwordHash",
+    "estado",
+    "creadoEn",
+    "actualizadoEn",
+    "versionEsquema",
+    "ajustes",
+    "partidas"
+  ],
+  "properties": {
+    "username": {
+      "bsonType": "string"
+    },
+    "email": {
+      "bsonType": "string"
+    },
+    "passwordHash": {
+      "bsonType": "string"
+    },
+    "estado": {
+      "enum": [
+        "activo",
+        "baneado",
+        "eliminado"
+      ]
+    },
+    "creadoEn": {
+      "bsonType": "date"
+    },
+    "ultimoLogin": {
+      "bsonType": [
+        "date",
+        "null"
+      ]
+    },
+    "actualizadoEn": {
+      "bsonType": "date"
+    },
+    "versionEsquema": {
+      "bsonType": "int"
+    },
+    "ajustes": {
+      "bsonType": "object",
+      "required": [
+        "idioma",
+        "musica",
+        "efectos"
+      ],
+      "properties": {
+        "idioma": {
+          "bsonType": "string"
+        },
+        "musica": {
+          "bsonType": "double"
+        },
+        "efectos": {
+          "bsonType": "double"
+        }
+      }
+    },
+    "partidaActiva": {
+      "bsonType": [
+        "string",
+        "null"
+      ]
+    },
+    "partidas": {
+      "bsonType": "array",
+      "items": {
+        "bsonType": "object",
+        "required": [
+          "partidaId",
+          "creadaEn",
+          "ultimaVezJugada",
+          "personaje"
+        ],
+        "properties": {
+          "partidaId": {
+            "bsonType": "string"
+          },
+          "creadaEn": {
+            "bsonType": "date"
+          },
+          "ultimaVezJugada": {
+            "bsonType": "date"
+          },
+          "personaje": {
+            "bsonType": "object",
+            "required": [
+              "nombre",
+              "clase",
+              "apariencia",
+              "nivel",
+              "exp",
+              "puntosLibres",
+              "oro",
+              "atributos",
+              "vidaActual",
+              "estaminaActual",
+              "equipo",
+              "ubicacion",
+              "mundo",
+              "estadisticas"
+            ],
+            "properties": {
+              "nombre": {
+                "bsonType": "string"
+              },
+              "clase": {
+                "bsonType": "string"
+              },
+              "apariencia": {
+                "enum": [
+                  "hombre",
+                  "mujer"
+                ]
+              },
+              "nivel": {
+                "bsonType": "int"
+              },
+              "exp": {
+                "bsonType": "int"
+              },
+              "puntosLibres": {
+                "bsonType": "int"
+              },
+              "oro": {
+                "bsonType": "int"
+              },
+              "atributos": {
+                "bsonType": "object",
+                "required": [
+                  "vida",
+                  "fuerza",
+                  "destreza",
+                  "inteligencia"
+                ],
+                "properties": {
+                  "vida": {
+                    "bsonType": "int"
+                  },
+                  "fuerza": {
+                    "bsonType": "int"
+                  },
+                  "destreza": {
+                    "bsonType": "int"
+                  },
+                  "inteligencia": {
+                    "bsonType": "int"
+                  }
+                }
+              },
+              "vidaActual": {
+                "bsonType": "int"
+              },
+              "estaminaActual": {
+                "bsonType": "int"
+              },
+              "equipo": {
+                "bsonType": "object",
+                "required": [
+                  "nivelArma",
+                  "nivelArmadura"
+                ],
+                "properties": {
+                  "nivelArma": {
+                    "bsonType": "int"
+                  },
+                  "nivelArmadura": {
+                    "bsonType": "int"
+                  }
+                }
+              },
+              "ubicacion": {
+                "bsonType": "object",
+                "required": [
+                  "zonaId",
+                  "x",
+                  "y"
+                ],
+                "properties": {
+                  "zonaId": {
+                    "bsonType": "string"
+                  },
+                  "x": {
+                    "bsonType": "int"
+                  },
+                  "y": {
+                    "bsonType": "int"
+                  },
+                  "ultimoPuntoGuardado": {
+                    "bsonType": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              },
+              "mundo": {
+                "bsonType": "object",
+                "required": [
+                  "zonasDesbloqueadas",
+                  "cofresAbiertos",
+                  "jefesDerrotados"
+                ],
+                "properties": {
+                  "zonasDesbloqueadas": {
+                    "bsonType": "array",
+                    "items": {
+                      "bsonType": "string"
+                    }
+                  },
+                  "cofresAbiertos": {
+                    "bsonType": "array",
+                    "items": {
+                      "bsonType": "string"
+                    }
+                  },
+                  "jefesDerrotados": {
+                    "bsonType": "array",
+                    "items": {
+                      "bsonType": "string"
+                    }
+                  }
+                }
+              },
+              "estadisticas": {
+                "bsonType": "object",
+                "required": [
+                  "enemigosDerrotados",
+                  "muertes",
+                  "tiempoJugadoSeg"
+                ],
+                "properties": {
+                  "enemigosDerrotados": {
+                    "bsonType": "int"
+                  },
+                  "muertes": {
+                    "bsonType": "int"
+                  },
+                  "tiempoJugadoSeg": {
+                    "bsonType": "int"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

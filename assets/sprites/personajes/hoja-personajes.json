@@ -1,0 +1,71 @@
+{
+  "imagen": "hoja-personajes.png",
+  "tamano": {
+    "w": 320,
+    "h": 40
+  },
+  "escalaRecomendada": 4,
+  "filtrado": "vecino-mas-cercano",
+  "cuadros": {
+    "vagabundo-hombre": {
+      "x": 0,
+      "y": 0,
+      "w": 32,
+      "h": 40
+    },
+    "vagabundo-mujer": {
+      "x": 32,
+      "y": 0,
+      "w": 32,
+      "h": 40
+    },
+    "guerrero-hombre": {
+      "x": 64,
+      "y": 0,
+      "w": 32,
+      "h": 40
+    },
+    "guerrero-mujer": {
+      "x": 96,
+      "y": 0,
+      "w": 32,
+      "h": 40
+    },
+    "arquero-hombre": {
+      "x": 128,
+      "y": 0,
+      "w": 32,
+      "h": 40
+    },
+    "arquero-mujer": {
+      "x": 160,
+      "y": 0,
+      "w": 32,
+      "h": 40
+    },
+    "mago-hombre": {
+      "x": 192,
+      "y": 0,
+      "w": 32,
+      "h": 40
+    },
+    "mago-mujer": {
+      "x": 224,
+      "y": 0,
+      "w": 32,
+      "h": 40
+    },
+    "prisionero-hombre": {
+      "x": 256,
+      "y": 0,
+      "w": 32,
+      "h": 40
+    },
+    "prisionero-mujer": {
+      "x": 288,
+      "y": 0,
+      "w": 32,
+      "h": 40
+    }
+  }
+}

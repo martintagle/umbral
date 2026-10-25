@@ -1,0 +1,53 @@
+{
+  "imagen": "hoja-enemigos.png",
+  "tamano": {
+    "w": 256,
+    "h": 64
+  },
+  "escalaRecomendada": 4,
+  "filtrado": "vecino-mas-cercano",
+  "cuadros": {
+    "ojo-errante": {
+      "x": 0,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "fauce": {
+      "x": 32,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "polilla-osaria": {
+      "x": 64,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "larva-cirio": {
+      "x": 96,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "manojo": {
+      "x": 128,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "ahorcado-fungico": {
+      "x": 160,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    "jefe-rey-hueco": {
+      "x": 192,
+      "y": 0,
+      "w": 64,
+      "h": 64
+    }
+  }
+}
