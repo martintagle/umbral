@@ -16,7 +16,7 @@ Muestra las pantallas, recoge lo que escribe el usuario y **solo se comunica con
 | `widgets/` | Componentes visuales reutilizables entre pantallas (botones, campos de texto, tarjetas). |
 | `validaciones/validaciones.dart` | Funciones de validación locales reutilizables, pensadas para usarlas como `validator` en `TextFormField`. Devuelven `null` si el valor es válido o el texto del error si no lo es. |
 | `tema/` | Tokens del sistema de diseño (`docs/diseno/tokens.json`): colores, tipografías, espaciado, radios y sombra dura. |
-| `juego/` | El juego en tiempo real, hecho con Flame: zona, jugador, enemigos, proyectiles y efectos. Juega con los valores de combate que da el servidor y anota en `registro_progreso.dart` lo que pasa (exp, oro, enemigos, muertes, tiempo). Al descansar, revivir o salir, la pantalla envía ese registro con `PartidaServicio` y el servidor aplica la subida de nivel. |
+| `juego/` | El juego en tiempo real, hecho con Flame: la zona (el mapa de `assets/mapas/mundo.json`, de noche, con la luz del jugador y las antorchas en `iluminacion.dart`), jugador, enemigos, proyectiles y efectos. Juega con los valores de combate que da el servidor y anota en `registro_progreso.dart` lo que pasa (exp, oro, enemigos, muertes, tiempo). Al descansar, revivir o salir, la pantalla envía ese registro con `PartidaServicio` y el servidor aplica la subida de nivel. |
 | `clases_ui.dart` | Nombre, arma, descripción y sprite de cada clase. Las estadísticas vienen del servicio. |
 
 ## Pantallas

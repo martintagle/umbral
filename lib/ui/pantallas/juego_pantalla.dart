@@ -5,7 +5,6 @@ import '../../servicio/modelos/partida_jugable.dart';
 import '../../servicio/modelos/recompensa.dart';
 import '../../servicio/partida_servicio.dart';
 import '../juego/umbral_juego.dart';
-import '../juego/zona_claro.dart';
 import '../tema/tema_umbral.dart';
 import '../widgets/boton_umbral.dart';
 import '../widgets/panel_umbral.dart';
@@ -25,7 +24,8 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
   final _servicio = PartidaServicio();
   late final UmbralJuego _juego;
   bool _menu = false;
-  bool _tituloZona = true;
+  bool _tituloZona = false;
+  int _tituloId = 0;
 
   @override
   void initState() {
@@ -35,8 +35,21 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
       recompensas: widget.recompensas,
       alGuardar: _servicio.registrarProgreso,
     )..alPedirMenu = _abrirMenu;
+    _juego.region.addListener(_anunciarRegion);
+  }
+
+  @override
+  void dispose() {
+    _juego.region.removeListener(_anunciarRegion);
+    super.dispose();
+  }
+
+  /// Muestra el nombre de la región durante 3 segundos al entrar en ella.
+  void _anunciarRegion() {
+    final id = ++_tituloId;
+    setState(() => _tituloZona = true);
     Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) setState(() => _tituloZona = false);
+      if (mounted && _tituloId == id) setState(() => _tituloZona = false);
     });
   }
 
@@ -110,7 +123,7 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
                         alignment: const Alignment(0, -0.55),
                         child: IgnorePointer(
                           child: Text(
-                            ZonaClaro.nombre,
+                            _juego.region.value,
                             textAlign: TextAlign.center,
                             style: Textos.tituloZona().copyWith(
                               shadows: const [

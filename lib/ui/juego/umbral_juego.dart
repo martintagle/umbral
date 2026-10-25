@@ -20,7 +20,8 @@ import 'estilo_combate.dart';
 import 'jugador.dart';
 import 'registro_progreso.dart';
 import 'tipos_enemigo.dart';
-import 'zona_claro.dart';
+import 'mapa_mundo.dart';
+import 'zona_tierras.dart';
 
 /// Envía el progreso. La pantalla lo implementa con `PartidaServicio`.
 typedef GuardarProgreso = Future<PartidaJugable> Function(
@@ -29,14 +30,14 @@ typedef GuardarProgreso = Future<PartidaJugable> Function(
 /// El juego en tiempo real. Las reglas de progresión las aplica el servidor:
 /// aquí solo se juega con los valores de [combate] y se anota en [_registro]
 /// lo que pasa, que se envía al descansar, al revivir o al salir.
-class UmbralJuego extends FlameGame<ZonaClaro> with KeyboardEvents {
+class UmbralJuego extends FlameGame<ZonaTierras> with KeyboardEvents {
   UmbralJuego({
     required PartidaJugable partida,
     required Map<String, Recompensa> recompensas,
     required this.alGuardar,
   })  : _guardada = partida,
         _registro = RegistroProgreso(recompensas),
-        super(world: ZonaClaro()) {
+        super(world: ZonaTierras()) {
     images.prefix = 'assets/';
   }
 
@@ -63,6 +64,9 @@ class UmbralJuego extends FlameGame<ZonaClaro> with KeyboardEvents {
   final guardando = ValueNotifier<bool>(false);
   final aviso = ValueNotifier<String?>(null);
 
+  /// Región del mapa en la que está el jugador; la pantalla anuncia los cambios.
+  final region = ValueNotifier<String>('');
+
   /// Lo pone la pantalla: abre el menú de pausa (tecla Escape).
   VoidCallback? alPedirMenu;
 
@@ -73,7 +77,7 @@ class UmbralJuego extends FlameGame<ZonaClaro> with KeyboardEvents {
   bool _avisoNivelMostrado = false;
   final _azar = Random();
 
-  ZonaClaro get zona => world;
+  ZonaTierras get zona => world;
 
   /// Escala entera de pantalla: 1 píxel de arte = [zoom] píxeles lógicos.
   double get zoom => camera.viewfinder.zoom;
@@ -100,18 +104,17 @@ class UmbralJuego extends FlameGame<ZonaClaro> with KeyboardEvents {
 
   @override
   Future<void> onLoad() async {
+    final mapa = await MapaMundo.cargar();
     await images.loadAll([
+      'tiles/tileset.png',
       for (final c in clasesUi.values)
         for (final ap in ['hombre', 'mujer'])
           c.sprite(ap).replaceFirst('assets/', ''),
       for (final e in Enemigos.todos) e.sprite,
-      for (final s in [
-        'altar-de-brasas', 'pozo', 'lapidas', 'estatua-sin-rostro',
-        'choza-en-ruinas', 'capilla', 'torre-derruida', 'entrada-de-cripta',
-        'arbol-de-la-jaula',
-      ])
+      for (final s in {for (final e in mapa.estructuras) e.sprite})
         'sprites/estructuras/$s.png',
     ]);
+    zona.preparar(mapa, images);
 
     _mostrarProgreso();
     vida.value = personaje.vidaActual > 0
@@ -125,18 +128,17 @@ class UmbralJuego extends FlameGame<ZonaClaro> with KeyboardEvents {
           .sprite(personaje.apariencia)
           .replaceFirst('assets/', ''),
       estilo: estiloDe(personaje.clase),
-      pies: u.zonaId == ZonaClaro.id && _posicionValida(guardada)
+      // Las partidas de antes de este mapa (y las nuevas, que el servidor
+      // crea en otra zona) empiezan junto al altar.
+      pies: u.zonaId == ZonaTierras.id && _posicionValida(guardada)
           ? guardada
-          : ZonaClaro.entrada.clone(),
+          : zona.inicio.clone(),
     );
     await world.add(jugador);
+    region.value = zona.mapa.regionEn(jugador.position);
 
     camera.follow(jugador, snap: true);
-    camera.setBounds(
-      Rectangle.fromLTRB(ZonaClaro.limites.left, ZonaClaro.limites.top,
-          ZonaClaro.limites.right, ZonaClaro.limites.bottom),
-      considerViewport: true,
-    );
+    _limitarCamara();
   }
 
   bool _posicionValida(Vector2 p) => world.libre(
@@ -149,6 +151,18 @@ class UmbralJuego extends FlameGame<ZonaClaro> with KeyboardEvents {
     // unos 110 píxeles de arte en el lado corto de la pantalla.
     final lado = min(size.x, size.y);
     camera.viewfinder.zoom = (lado / 110).floorToDouble().clamp(2, 4);
+    if (isLoaded) _limitarCamara();
+  }
+
+  /// Mantiene la vista dentro del mapa. El centro de la cámara puede ir hasta
+  /// media vista de cada borde; se calcula aquí porque `considerViewport` de
+  /// Flame mide la vista en píxeles de pantalla e ignora el zoom.
+  void _limitarCamara() {
+    final l = zona.limites;
+    final medio = size / (zoom * 2);
+    final dx = min(medio.x, l.width / 2), dy = min(medio.y, l.height / 2);
+    camera.setBounds(
+        Rectangle.fromLTRB(l.left + dx, l.top + dy, l.right - dx, l.bottom - dy));
   }
 
   @override
@@ -216,7 +230,7 @@ class UmbralJuego extends FlameGame<ZonaClaro> with KeyboardEvents {
   /// Despierta junto al altar con la vida llena. Los enemigos vuelven.
   Future<void> revivir() async {
     vida.value = combate.vidaMaxima;
-    jugador.reaparecer(ZonaClaro.entrada.clone());
+    jugador.reaparecer(zona.inicio.clone());
     world.reiniciarEnemigos();
     muerto.value = false;
     await guardar(silencioso: true);
@@ -228,7 +242,7 @@ class UmbralJuego extends FlameGame<ZonaClaro> with KeyboardEvents {
     if (guardando.value || !enElAltar.value) return;
     vida.value = combate.vidaMaxima;
     world.reiniciarEnemigos();
-    _puntoDeGuardado = ZonaClaro.puntoDeGuardado;
+    _puntoDeGuardado = ZonaTierras.puntoDeGuardado;
     final ok = await guardar(silencioso: true);
     if (ok) mostrarAviso('Descansas junto a las brasas. Partida guardada.');
   }
@@ -241,7 +255,7 @@ class UmbralJuego extends FlameGame<ZonaClaro> with KeyboardEvents {
     final enviado = _registro.aProgreso(
       vidaActual: vida.value,
       ubicacion: UbicacionDto(
-        zonaId: ZonaClaro.id,
+        zonaId: ZonaTierras.id,
         x: jugador.position.x.round(),
         y: jugador.position.y.round(),
         ultimoPuntoGuardado: _puntoDeGuardado,

@@ -182,7 +182,8 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
     for (final (dx, dy) in [(paso.x, 0.0), (0.0, paso.y)]) {
       final x = position.x + dx, y = position.y + dy;
       if (game.zona.libre(
-          Rect.fromCenter(center: Offset(x, y - 3), width: 14, height: 6))) {
+          Rect.fromCenter(center: Offset(x, y - 3), width: 14, height: 6),
+          enemigo: true)) {
         position.setValues(x, y);
       }
     }

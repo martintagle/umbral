@@ -24,3 +24,5 @@ flutter:
     - assets/sprites/personajes/
     - assets/sprites/enemigos/
     - assets/sprites/estructuras/
+    - assets/mapas/
+    - assets/tiles/
