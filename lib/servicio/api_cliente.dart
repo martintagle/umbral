@@ -16,7 +16,8 @@ abstract final class ApiCliente {
     defaultValue: 'http://10.0.2.2:3000/api',
   );
 
-  static const _espera = Duration(seconds: 15);
+  // El plan gratis de Render tarda 30-50 s en despertar la API tras estar inactiva.
+  static const _espera = Duration(seconds: 60);
   static final http.Client _cliente = http.Client();
 
   static Future<dynamic> get(String ruta) => _enviar('GET', ruta);

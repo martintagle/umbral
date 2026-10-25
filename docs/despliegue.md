@@ -30,9 +30,10 @@ La app nunca habla con Atlas: solo con la API. Cualquiera puede descompilar un A
 2. Te pedirá los dos secretos:
    - `MONGO_URI`: la cadena del usuario `umbral-api`, terminada en `/rpg?retryWrites=true&w=majority`.
    - `JWT_SECRETO`: el resultado de `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`.
-3. Cuando arranque, comprueba que `https://umbral-api.onrender.com/api/salud` responde `{"ok":true}`.
+3. Copia la URL que Render muestra arriba del servicio. Si el nombre `umbral-api` ya estaba ocupado, Render añade un sufijo (por ejemplo, `umbral-api-x7k2.onrender.com`). Usa siempre la URL exacta del panel, no la supongas.
+4. Abre `https://TU-URL.onrender.com/api/salud` en el navegador: debe responder `{"ok":true}`. Si responde otra cosa o un 401, esa URL no es tu servicio.
 
-En el plan gratis, la API se duerme tras 15 minutos sin uso y la primera petición tarda unos 30-50 s. La app espera 15 s, así que el primer intento puede fallar: vuelve a intentarlo.
+En el plan gratis, la API se duerme tras 15 minutos sin uso y la primera petición tarda unos 30-50 s. La app espera hasta 60 s para cubrir ese arranque.
 
 ## 3. APK de la beta
 
@@ -49,7 +50,7 @@ En el plan gratis, la API se duerme tras 15 minutos sin uso y la primera petici�
    ```
 3. Compila apuntando a la API de producción:
    ```bash
-   flutter build apk --release --obfuscate --split-debug-info=build/simbolos --dart-define=API_URL=https://umbral-api.onrender.com/api
+   flutter build apk --release --obfuscate --split-debug-info=build/simbolos --dart-define=API_URL=https://TU-URL.onrender.com/api
    ```
    El APK queda en `build/app/outputs/flutter-apk/app-release.apk`. En release, Android solo permite HTTPS hacia la API.
 
