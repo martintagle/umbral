@@ -54,6 +54,24 @@ En el plan gratis, la API se duerme tras 15 minutos sin uso y la primera petici�
    ```
    El APK queda en `build/app/outputs/flutter-apk/app-release.apk`. En release, Android solo permite HTTPS hacia la API.
 
+## 4. Publicar versiones con GitHub Actions
+
+[.github/workflows/release.yml](../.github/workflows/release.yml) compila el APK firmado y crea la Release al subir un tag que empiece por `v`.
+
+**Una sola vez**, en GitHub: *Settings → Secrets and variables → Actions → New repository secret*:
+
+| Secreto | Valor |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | El `.jks` en base64: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\ruta\umbral-release.jks"))` en PowerShell. |
+| `ANDROID_KEYSTORE_PASSWORD` | La contraseña de la clave. |
+
+**Cada versión:**
+1. Sube `version` en `pubspec.yaml` (el número tras `+` debe crecer siempre).
+2. Commit y push.
+3. `git tag v0.1.1-beta` y `git push origin v0.1.1-beta`.
+
+El APK queda en `https://github.com/martintagle/umbral/releases/latest/download/umbral.apk`.
+
 ## Protecciones de la API
 
 - Contraseñas guardadas con bcrypt; `passwordHash` nunca sale del servidor.
