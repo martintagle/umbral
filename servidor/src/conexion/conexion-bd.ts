@@ -1,3 +1,5 @@
+import { setServers } from 'node:dns';
+
 import { MongoClient, type Collection, type Db, type Document } from 'mongodb';
 
 export const BASE_DATOS = 'rpg';
@@ -25,6 +27,11 @@ class ConexionBD {
     if (!uri) {
       throw new Error('Falta MONGO_URI. Copia .env.ejemplo como .env y rellénalo.');
     }
+    // En algunos Windows, Node toma 127.0.0.1 como DNS y no resuelve el registro
+    // SRV de las cadenas mongodb+srv://. DNS_SERVIDORES (p. ej. "8.8.8.8,1.1.1.1")
+    // le indica qué servidores usar.
+    const dns = process.env.DNS_SERVIDORES;
+    if (dns) setServers(dns.split(',').map((s) => s.trim()));
     const base = new URL(uri).pathname.replace(/^\//, '');
     if (base !== BASE_DATOS) {
       throw new Error(

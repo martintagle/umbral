@@ -12,9 +12,8 @@ const leerJson = async (ruta: string) =>
 
 /**
  * Aplica `bd/esquema-clases.json` como validador de la colección (la crea si no
- * existe) e inserta las clases de `bd/clases.json` que falten. Las que ya
- * están no se tocan. Lo usan los scripts de `dev/`; en Atlas necesita un
- * usuario con permiso dbAdmin.
+ * existe) e inserta las clases que falten. Lo usan los scripts de `dev/`; en
+ * Atlas necesita un usuario con permiso dbAdmin.
  */
 export async function prepararColeccionClases(): Promise<void> {
   const validator = { $jsonSchema: await leerJson('../../bd/esquema-clases.json') };
@@ -24,10 +23,20 @@ export async function prepararColeccionClases(): Promise<void> {
   } else {
     await db.createCollection(COLECCION, { validator });
   }
+  await insertarClasesFaltantes();
+}
+
+/**
+ * Inserta las clases de `bd/clases.json` cuyo `_id` no esté en la colección;
+ * las que ya están no se tocan. Basta con permiso readWrite. Devuelve los
+ * códigos insertados.
+ */
+export async function insertarClasesFaltantes(): Promise<string[]> {
   const iniciales: ClaseDto[] = await leerJson('../../bd/clases.json');
-  await (await clases()).bulkWrite(
+  const resultado = await (await clases()).bulkWrite(
     iniciales.map(({ _id, ...clase }) => ({
       updateOne: { filter: { _id }, update: { $setOnInsert: clase }, upsert: true },
     })),
   );
+  return Object.values(resultado.upsertedIds).map(String);
 }

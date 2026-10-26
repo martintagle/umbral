@@ -37,6 +37,7 @@ npm run dev               # API en http://localhost:3000 con recarga automática
 | `npm run tipos` | Comprueba los tipos sin compilar. |
 | `npm run build` / `npm start` | Compila a `dist/` y lo ejecuta (producción). |
 | `npm run bd:esquema` | Aplica `bd/esquema-usuarios.json` y `bd/esquema-clases.json` como validadores de `rpg.usuarios` y `rpg.clases` en Atlas e inserta las clases de `bd/clases.json` que falten (no toca las que ya existen). Necesita un usuario con permiso `dbAdmin`. |
+| `npm run bd:clases` | Solo inserta en `rpg.clases` las clases de `bd/clases.json` que falten, sin tocar validadores. Basta con un usuario `readWrite`. |
 
 ## Conectar la app
 
