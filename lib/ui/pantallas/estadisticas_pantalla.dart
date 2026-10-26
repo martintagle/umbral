@@ -6,6 +6,7 @@ import '../../dto/atributos_dto.dart';
 import '../../servicio/modelos/partida_jugable.dart';
 import '../../servicio/servicio_excepcion.dart';
 import '../clases_ui.dart';
+import '../sonido.dart';
 import '../tema/tema_umbral.dart';
 import '../widgets/boton_umbral.dart';
 import '../widgets/confirmacion_umbral.dart';
@@ -25,8 +26,11 @@ class EstadisticasPantalla extends StatefulWidget {
   /// Envía los puntos de cada atributo y devuelve la partida resultante.
   final Future<PartidaJugable> Function(AtributosDto incrementos) alSubir;
 
-  const EstadisticasPantalla(
-      {super.key, required this.partida, required this.alSubir});
+  const EstadisticasPantalla({
+    super.key,
+    required this.partida,
+    required this.alSubir,
+  });
 
   @override
   State<EstadisticasPantalla> createState() => _EstadisticasPantallaState();
@@ -36,18 +40,23 @@ typedef _Atributo = ({String id, String nombre, String icono, String efecto});
 
 const _atributos = <_Atributo>[
   (id: 'vida', nombre: 'Vigor', icono: 'vigor', efecto: 'Vida máxima.'),
-  (id: 'fuerza', nombre: 'Fuerza', icono: 'fuerza', efecto: 'Golpes con armas pesadas.'),
+  (
+    id: 'fuerza',
+    nombre: 'Fuerza',
+    icono: 'fuerza',
+    efecto: 'Golpes con armas pesadas.',
+  ),
   (
     id: 'destreza',
     nombre: 'Destreza',
     icono: 'destreza',
-    efecto: 'Golpes críticos; katanas, arcos y dagas.'
+    efecto: 'Golpes críticos; katanas, arcos y dagas.',
   ),
   (
     id: 'inteligencia',
     nombre: 'Intelecto',
     icono: 'intelecto',
-    efecto: 'Daño de los hechizos.'
+    efecto: 'Daño de los hechizos.',
   ),
 ];
 
@@ -93,14 +102,14 @@ class _EstadisticasPantallaState extends State<EstadisticasPantalla> {
   }
 
   void _cambiar(String id, int paso) => setState(() {
-        _sumados[id] = _sumados[id]! + paso;
-        _hecho = null;
-      });
+    _sumados[id] = _sumados[id]! + paso;
+    _hecho = null;
+  });
 
   void _restablecer() => setState(() {
-        _sumados.updateAll((_, _) => 0);
-        _hecho = null;
-      });
+    _sumados.updateAll((_, _) => 0);
+    _hecho = null;
+  });
 
   Future<void> _confirmar() async {
     if (_cargando || _elegidos == 0) return;
@@ -109,17 +118,21 @@ class _EstadisticasPantallaState extends State<EstadisticasPantalla> {
       _error = null;
     });
     try {
-      final nueva = await widget.alSubir(AtributosDto(
-        vida: _sumados['vida']!,
-        fuerza: _sumados['fuerza']!,
-        destreza: _sumados['destreza']!,
-        inteligencia: _sumados['inteligencia']!,
-      ));
+      final nueva = await widget.alSubir(
+        AtributosDto(
+          vida: _sumados['vida']!,
+          fuerza: _sumados['fuerza']!,
+          destreza: _sumados['destreza']!,
+          inteligencia: _sumados['inteligencia']!,
+        ),
+      );
+      Sonido.efecto(Audios.exp);
       if (!mounted) return;
       setState(() {
         _partida = nueva;
         _sumados.updateAll((_, _) => 0);
-        _hecho = 'Las brasas aceptan tu ofrenda. '
+        _hecho =
+            'Las brasas aceptan tu ofrenda. '
             'Ahora eres nivel ${nueva.partida.personaje.nivel}.';
       });
     } on ServicioExcepcion catch (e) {
@@ -131,10 +144,12 @@ class _EstadisticasPantallaState extends State<EstadisticasPantalla> {
 
   Future<void> _volver() async {
     if (_elegidos > 0 &&
-        !await confirmar(context,
-            titulo: '¿Salir sin subir de nivel?',
-            texto: 'Los $_elegidos puntos que elegiste no se aplicarán.',
-            verbo: 'Salir')) {
+        !await confirmar(
+          context,
+          titulo: '¿Salir sin subir de nivel?',
+          texto: 'Los $_elegidos puntos que elegiste no se aplicarán.',
+          verbo: 'Salir',
+        )) {
       return;
     }
     if (mounted) Navigator.of(context).pop();
@@ -149,6 +164,151 @@ class _EstadisticasPantallaState extends State<EstadisticasPantalla> {
     final costo = _costo(niveles) ?? 0;
     final alcanzaOtro = _alcanzaOtro && !_cargando;
 
+    // En horizontal: a la izquierda el personaje y sus valores; a la derecha
+    // los atributos y la confirmación.
+    final resumen = ListView(
+      padding: const EdgeInsets.all(Espacios.paso4),
+      children: [
+        PanelUmbral(
+          child: Row(
+            children: [
+              SpriteUmbral(
+                ruta: clase.sprite(personaje.apariencia),
+                ancho: 32,
+                alto: 40,
+                escala: 2,
+                descripcion: clase.nombre,
+              ),
+              const SizedBox(width: Espacios.paso4),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(personaje.nombre, style: Textos.encabezado()),
+                    Text(
+                      niveles > 0
+                          ? '${clase.nombre.toUpperCase()} · NV ${personaje.nivel} ▶ ${personaje.nivel + niveles}'
+                          : '${clase.nombre.toUpperCase()} · NV ${personaje.nivel}',
+                      style: Textos.etiqueta(
+                        color: niveles > 0 ? Colores.brasa : Colores.ceniza,
+                      ),
+                    ),
+                    const SizedBox(height: Espacios.paso2),
+                    Text('EXP ${personaje.exp}', style: Textos.contador()),
+                    Text(
+                      _elegidos == 0
+                          ? 'Siguiente nivel: ${combate.expSiguiente} EXP'
+                          : 'Gastas $costo · quedan ${personaje.exp - costo}',
+                      style: Textos.cuerpo(
+                        color: _elegidos == 0 ? Colores.ceniza : Colores.brasa,
+                      ),
+                    ),
+                    if (_libres > 0)
+                      Text(
+                        '$_libres puntos sin costo de antes',
+                        style: Textos.cuerpo(color: Colores.ceniza),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: Espacios.paso4),
+        Text('VALORES ACTUALES', style: Textos.etiqueta(color: Colores.ceniza)),
+        const SizedBox(height: Espacios.paso2),
+        PanelUmbral(
+          padding: const EdgeInsets.all(Espacios.paso2),
+          child: Column(
+            children: [
+              _Valor('PV máximos', '${combate.vidaMaxima}'),
+              _Valor('Daño', '${combate.dano}'),
+              _Valor('Defensa', '${combate.defensa}'),
+              _Valor(
+                'Crítico',
+                '${(combate.probabilidadCritico * 100).toStringAsFixed(1)} %',
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: Espacios.paso2),
+        Text(
+          'Cada punto sube un nivel y cuesta más experiencia que el '
+          'anterior. Las criaturas sueltan experiencia al caer.',
+          style: Textos.cuerpo(color: Colores.ceniza),
+        ),
+      ],
+    );
+
+    final eleccion = Column(
+      children: [
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(Espacios.paso4),
+            children: [
+              for (final a in _atributos)
+                _FilaAtributo(
+                  atributo: a,
+                  delArma: clase.atributoArma == a.id,
+                  valor: _guardado(a.id) + _sumados[a.id]!,
+                  cambiado: _sumados[a.id]! > 0,
+                  alRestar: _sumados[a.id]! > 0 && !_cargando
+                      ? () => _cambiar(a.id, -1)
+                      : null,
+                  alSumar:
+                      alcanzaOtro && _guardado(a.id) + _sumados[a.id]! < _maximo
+                      ? () => _cambiar(a.id, 1)
+                      : null,
+                ),
+              if (_error != null) ...[
+                const SizedBox(height: Espacios.paso2),
+                AvisoError(_error!),
+              ],
+              if (_hecho != null) ...[
+                const SizedBox(height: Espacios.paso2),
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    _hecho!,
+                    textAlign: TextAlign.center,
+                    style: Textos.cuerpo(color: Colores.brasa),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(Espacios.paso2),
+          decoration: const BoxDecoration(
+            color: Colores.piedra,
+            border: Border(top: BorderSide(color: Colores.borde, width: 2)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: BotonUmbral(
+                  texto: 'Restablecer',
+                  estilo: EstiloBoton.secundario,
+                  alPulsar: _elegidos > 0 && !_cargando ? _restablecer : null,
+                ),
+              ),
+              const SizedBox(width: Espacios.paso4),
+              Expanded(
+                child: BotonUmbral(
+                  texto: 'Confirmar',
+                  estilo: EstiloBoton.acento,
+                  costo: _elegidos > 0 ? '$costo EXP' : null,
+                  cargando: _cargando,
+                  alPulsar: _elegidos > 0 ? _confirmar : null,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
@@ -158,161 +318,39 @@ class _EstadisticasPantallaState extends State<EstadisticasPantalla> {
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
+              constraints: const BoxConstraints(maxWidth: 1000),
               child: Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(Espacios.paso4),
+                    padding: const EdgeInsets.fromLTRB(
+                      Espacios.paso4,
+                      Espacios.paso2,
+                      Espacios.paso4,
+                      0,
+                    ),
                     child: Row(
                       children: [
                         BotonIcono(
-                            icono: 'atras',
-                            descripcion: 'Volver',
-                            alPulsar: _volver),
+                          icono: 'atras',
+                          descripcion: 'Volver',
+                          alPulsar: _volver,
+                        ),
                         const SizedBox(width: Espacios.paso4),
                         Expanded(
-                          child: Text('Altar de brasas',
-                              style: Textos.tituloZona()),
+                          child: Text(
+                            'Altar de brasas',
+                            style: Textos.tituloZona(),
+                          ),
                         ),
                       ],
                     ),
                   ),
                   Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: Espacios.paso4),
-                      children: [
-                        PanelUmbral(
-                          child: Row(
-                            children: [
-                              SpriteUmbral(
-                                ruta: clase.sprite(personaje.apariencia),
-                                ancho: 32,
-                                alto: 40,
-                                escala: 2,
-                                descripcion: clase.nombre,
-                              ),
-                              const SizedBox(width: Espacios.paso4),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(personaje.nombre,
-                                        style: Textos.encabezado()),
-                                    Text(
-                                      niveles > 0
-                                          ? '${clase.nombre.toUpperCase()} · NV ${personaje.nivel} ▶ ${personaje.nivel + niveles}'
-                                          : '${clase.nombre.toUpperCase()} · NV ${personaje.nivel}',
-                                      style: Textos.etiqueta(
-                                          color: niveles > 0
-                                              ? Colores.brasa
-                                              : Colores.ceniza),
-                                    ),
-                                    const SizedBox(height: Espacios.paso2),
-                                    Text('EXP ${personaje.exp}',
-                                        style: Textos.contador()),
-                                    Text(
-                                      _elegidos == 0
-                                          ? 'Siguiente nivel: ${combate.expSiguiente} EXP'
-                                          : 'Gastas $costo · quedan ${personaje.exp - costo}',
-                                      style: Textos.cuerpo(
-                                          color: _elegidos == 0
-                                              ? Colores.ceniza
-                                              : Colores.brasa),
-                                    ),
-                                    if (_libres > 0)
-                                      Text('$_libres puntos sin costo de antes',
-                                          style: Textos.cuerpo(
-                                              color: Colores.ceniza)),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: Espacios.paso2),
-                        Text(
-                          'Cada punto sube un nivel y cuesta más experiencia '
-                          'que el anterior. Las criaturas sueltan experiencia '
-                          'al caer.',
-                          style: Textos.cuerpo(color: Colores.ceniza),
-                        ),
-                        const SizedBox(height: Espacios.paso4),
-                        for (final a in _atributos)
-                          _FilaAtributo(
-                            atributo: a,
-                            delArma: clase.atributoArma == a.id,
-                            valor: _guardado(a.id) + _sumados[a.id]!,
-                            cambiado: _sumados[a.id]! > 0,
-                            alRestar: _sumados[a.id]! > 0 && !_cargando
-                                ? () => _cambiar(a.id, -1)
-                                : null,
-                            alSumar: alcanzaOtro &&
-                                    _guardado(a.id) + _sumados[a.id]! < _maximo
-                                ? () => _cambiar(a.id, 1)
-                                : null,
-                          ),
-                        const SizedBox(height: Espacios.paso4),
-                        Text('VALORES ACTUALES',
-                            style: Textos.etiqueta(color: Colores.ceniza)),
-                        const SizedBox(height: Espacios.paso2),
-                        PanelUmbral(
-                          padding: const EdgeInsets.all(Espacios.paso2),
-                          child: Column(
-                            children: [
-                              _Valor('PV máximos', '${combate.vidaMaxima}'),
-                              _Valor('Daño', '${combate.dano}'),
-                              _Valor('Defensa', '${combate.defensa}'),
-                              _Valor('Crítico',
-                                  '${(combate.probabilidadCritico * 100).toStringAsFixed(1)} %'),
-                            ],
-                          ),
-                        ),
-                        if (_error != null) ...[
-                          const SizedBox(height: Espacios.paso4),
-                          AvisoError(_error!),
-                        ],
-                        if (_hecho != null) ...[
-                          const SizedBox(height: Espacios.paso4),
-                          Semantics(
-                            liveRegion: true,
-                            child: Text(_hecho!,
-                                textAlign: TextAlign.center,
-                                style: Textos.cuerpo(color: Colores.brasa)),
-                          ),
-                        ],
-                        const SizedBox(height: Espacios.paso4),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(Espacios.paso4),
-                    decoration: const BoxDecoration(
-                      color: Colores.piedra,
-                      border: Border(
-                          top: BorderSide(color: Colores.borde, width: 2)),
-                    ),
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(
-                          child: BotonUmbral(
-                            texto: 'Restablecer',
-                            estilo: EstiloBoton.secundario,
-                            alPulsar: _elegidos > 0 && !_cargando
-                                ? _restablecer
-                                : null,
-                          ),
-                        ),
-                        const SizedBox(width: Espacios.paso4),
-                        Expanded(
-                          child: BotonUmbral(
-                            texto: 'Confirmar',
-                            estilo: EstiloBoton.acento,
-                            costo: _elegidos > 0 ? '$costo EXP' : null,
-                            cargando: _cargando,
-                            alPulsar: _elegidos > 0 ? _confirmar : null,
-                          ),
-                        ),
+                        Expanded(flex: 4, child: resumen),
+                        Expanded(flex: 5, child: eleccion),
                       ],
                     ),
                   ),

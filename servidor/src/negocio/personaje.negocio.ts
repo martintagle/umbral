@@ -283,6 +283,12 @@ export const personajeNegocio = {
       oro: p.oro + ganado.oro,
       vidaActual: progreso.vidaActual,
       ubicacion: progreso.ubicacion,
+      mundo: {
+        ...p.mundo,
+        jefesDerrotados: [
+          ...new Set([...p.mundo.jefesDerrotados, ...enemigoNegocio.jefesEn(progreso.enemigosDerrotados)]),
+        ],
+      },
       estadisticas: {
         enemigosDerrotados: e.enemigosDerrotados + ganado.enemigos,
         muertes: e.muertes + progreso.muertes,

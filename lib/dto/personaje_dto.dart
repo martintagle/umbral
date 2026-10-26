@@ -55,8 +55,9 @@ class PersonajeDto {
       equipo: EquipoDto.fromMap(map['equipo'] as Map<String, dynamic>),
       ubicacion: UbicacionDto.fromMap(map['ubicacion'] as Map<String, dynamic>),
       mundo: MundoDto.fromMap(map['mundo'] as Map<String, dynamic>),
-      estadisticas:
-          EstadisticasDto.fromMap(map['estadisticas'] as Map<String, dynamic>),
+      estadisticas: EstadisticasDto.fromMap(
+        map['estadisticas'] as Map<String, dynamic>,
+      ),
     );
   }
 

@@ -42,17 +42,19 @@ class EstiloCombate {
 
 const Map<String, EstiloCombate> estilosCombate = {
   'vagabundo': EstiloCombate(
-      velocidad: 62,
-      recarga: 0.38,
-      costoEstamina: 16,
-      alcance: 17,
-      arco: pi * 0.7),
+    velocidad: 62,
+    recarga: 0.38,
+    costoEstamina: 16,
+    alcance: 17,
+    arco: pi * 0.7,
+  ),
   'guerrero': EstiloCombate(
-      velocidad: 52,
-      recarga: 0.8,
-      costoEstamina: 30,
-      alcance: 21,
-      arco: pi * 0.95),
+    velocidad: 52,
+    recarga: 0.8,
+    costoEstamina: 30,
+    alcance: 21,
+    arco: pi * 0.95,
+  ),
   'arquero': EstiloCombate(
     velocidad: 60,
     recarga: 0.5,
@@ -71,11 +73,12 @@ const Map<String, EstiloCombate> estilosCombate = {
     colorProyectil: Colores.alma,
   ),
   'prisionero': EstiloCombate(
-      velocidad: 68,
-      recarga: 0.22,
-      costoEstamina: 10,
-      alcance: 12,
-      arco: pi * 0.5),
+    velocidad: 68,
+    recarga: 0.22,
+    costoEstamina: 10,
+    alcance: 12,
+    arco: pi * 0.5,
+  ),
 };
 
 EstiloCombate estiloDe(String clase) =>

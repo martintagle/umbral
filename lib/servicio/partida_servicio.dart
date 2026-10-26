@@ -21,33 +21,45 @@ class PartidaServicio {
     required String clase,
     required String apariencia,
   }) async {
-    final datos = await ApiCliente.post('/partidas',
-        {'nombre': nombre, 'clase': clase, 'apariencia': apariencia});
+    final datos = await ApiCliente.post('/partidas', {
+      'nombre': nombre,
+      'clase': clase,
+      'apariencia': apariencia,
+    });
     return PartidaJugable.fromMap(datos as Map<String, dynamic>);
   }
 
   /// Envía lo ocurrido desde el último guardado; el servidor aplica las reglas
   /// y devuelve la partida actualizada.
   Future<PartidaJugable> registrarProgreso(
-      String partidaId, Progreso progreso) async {
-    final datos =
-        await ApiCliente.post('/partidas/$partidaId/progreso', progreso.toMap());
+    String partidaId,
+    Progreso progreso,
+  ) async {
+    final datos = await ApiCliente.post(
+      '/partidas/$partidaId/progreso',
+      progreso.toMap(),
+    );
     return PartidaJugable.fromMap(datos as Map<String, dynamic>);
   }
 
   /// Sube atributos gastando experiencia: [incrementos] dice cuántos puntos
   /// van a cada uno. Cada punto es un nivel; el servidor cobra y valida.
   Future<PartidaJugable> subirAtributos(
-      String partidaId, AtributosDto incrementos) async {
+    String partidaId,
+    AtributosDto incrementos,
+  ) async {
     final datos = await ApiCliente.post(
-        '/partidas/$partidaId/atributos', incrementos.toMap());
+      '/partidas/$partidaId/atributos',
+      incrementos.toMap(),
+    );
     return PartidaJugable.fromMap(datos as Map<String, dynamic>);
   }
 
   /// Sube un nivel el `arma` o la `armadura` a cambio de oro.
   Future<PartidaJugable> mejorarEquipo(String partidaId, String pieza) async {
-    final datos =
-        await ApiCliente.post('/partidas/$partidaId/mejora', {'pieza': pieza});
+    final datos = await ApiCliente.post('/partidas/$partidaId/mejora', {
+      'pieza': pieza,
+    });
     return PartidaJugable.fromMap(datos as Map<String, dynamic>);
   }
 

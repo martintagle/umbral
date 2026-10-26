@@ -27,8 +27,11 @@ abstract final class ApiCliente {
       _enviar('PUT', ruta, cuerpo);
   static Future<dynamic> delete(String ruta) => _enviar('DELETE', ruta);
 
-  static Future<dynamic> _enviar(String metodo, String ruta,
-      [Object? cuerpo]) async {
+  static Future<dynamic> _enviar(
+    String metodo,
+    String ruta, [
+    Object? cuerpo,
+  ]) async {
     final peticion = http.Request(metodo, Uri.parse('$base$ruta'))
       ..headers['accept'] = 'application/json';
     final token = SesionServicio.token;
@@ -41,13 +44,16 @@ abstract final class ApiCliente {
     final http.Response respuesta;
     try {
       respuesta = await http.Response.fromStream(
-          await _cliente.send(peticion).timeout(_espera));
+        await _cliente.send(peticion).timeout(_espera),
+      );
     } on TimeoutException {
       throw const ServicioExcepcion(
-          'El servidor tarda demasiado en responder. Inténtalo de nuevo.');
+        'El servidor tarda demasiado en responder. Inténtalo de nuevo.',
+      );
     } on http.ClientException {
       throw const ServicioExcepcion(
-          'No se pudo contactar con el servidor. Revisa tu conexión.');
+        'No se pudo contactar con el servidor. Revisa tu conexión.',
+      );
     }
 
     final texto = utf8.decode(respuesta.bodyBytes);
@@ -65,7 +71,9 @@ abstract final class ApiCliente {
     try {
       return jsonDecode(texto);
     } on FormatException {
-      throw const ServicioExcepcion('El servidor envió una respuesta no válida.');
+      throw const ServicioExcepcion(
+        'El servidor envió una respuesta no válida.',
+      );
     }
   }
 }

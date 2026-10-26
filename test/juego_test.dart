@@ -147,45 +147,126 @@ void main() {
       expect(juego.world, juego.tierras);
       expect(juego.jugador.position, puertas['capilla']);
 
-      // Cripta: la escalera baja a la sala del trono, donde espera el jefe.
+      // Cripta: de la antecámara se baja al osario, a la galería (con su
+      // hoguera) y por fin a la sala del trono, donde espera el jefe.
       juego.entrar(
           juego.tierras.puertas.firstWhere((e) => e.$2.slug == 'cripta-antecamara').$2,
           puertas['cripta-antecamara']!);
       await correr(0.6);
       final antecamara = juego.world as SalaInterior;
-      final bajada = antecamara.sala.punto('bajada')!;
-      juego.jugador.position.setFrom(SalaInterior.piesEn(bajada.x, bajada.y));
-      await correr(0.1);
-      final trono = juego.world as SalaInterior;
-      expect(trono.sala.slug, 'cripta-sala-del-trono');
-      expect(trono.enemigosVivos.single.tipo, Enemigos.reyHueco);
+      Future<SalaInterior> bajar(SalaInterior desde) async {
+        final bajada = desde.sala.punto('bajada')!;
+        juego.vida.value = juego.vidaMaxima.value;
+        juego.jugador.position.setFrom(SalaInterior.piesEn(bajada.x, bajada.y));
+        await correr(0.1);
+        final abajo = juego.world as SalaInterior;
+        expect(abajo, isNot(desde));
+        // Las criaturas de la sala no deben empujarlo de vuelta a la escalera.
+        await correr(0.05);
+        for (final e in abajo.enemigosVivos.toList()) {
+          if (!e.tipo.jefe) e.recibirGolpe(100000, false, Vector2(1, 0));
+        }
+        await correr(0.5);
+        return abajo;
+      }
 
-      // El jefe se acerca, se prepara y ataca: el jugador recibe daño.
+      final osario = await bajar(antecamara);
+      expect(osario.sala.slug, 'cripta-osario');
+      expect(osario.sala.puntos.where((p) => p.tipo == 'enemigo'), isNotEmpty);
+      final galeria = await bajar(osario);
+      expect(galeria.sala.slug, 'cripta-galeria');
+      juego.jugador.position.setFrom(galeria.junto('hoguera'));
+      juego.vida.value = juego.vidaMaxima.value;
+      await correr(0.1);
+      expect(juego.acciones.value.map((a) => a.etiqueta),
+          ['Descansar', 'Subir de nivel']);
+      final trono = await bajar(galeria);
+      expect(trono.sala.slug, 'cripta-sala-del-trono');
+      final rey = trono.enemigosVivos.single;
+      expect(rey.tipo, Enemigos.reyHueco);
+
+      // El jefe despierta, se prepara y ataca: el jugador recibe daño.
       final vidaAntes = juego.vida.value;
-      juego.jugador.position.setFrom(trono.enemigosVivos.single.position +
-          Vector2(0, 30));
+      juego.jugador.position.setFrom(rey.position + Vector2(0, 30));
       await correr(4);
+      expect(juego.jefe.value, rey);
       expect(juego.vida.value, lessThan(vidaAntes));
 
-      // Subir vuelve a la antecámara junto a la escalera, y de ahí al mundo.
+      // Mientras pelea, la niebla sella la salida.
       final salidaTrono = trono.sala.punto('salida')!;
+      juego.vida.value = juego.vidaMaxima.value;
       juego.jugador.position
           .setFrom(SalaInterior.piesEn(salidaTrono.x, salidaTrono.y));
       await correr(0.1);
-      expect(juego.world, antecamara);
-      expect(juego.jugador.position, antecamara.llegada('bajada'));
-      await correr(0.5);
-      final salidaAnte = antecamara.sala.punto('salida')!;
-      juego.jugador.position
-          .setFrom(SalaInterior.piesEn(salidaAnte.x, salidaAnte.y));
+      expect(juego.world, trono);
+      expect(juego.aviso.value, contains('niebla'));
+      juego.jugador.position.setFrom(trono.junto('jefe'));
+
+      // Vencido, no vuelve y la salida se abre hacia la galería.
+      rey.recibirGolpe(100000, false, Vector2(1, 0));
+      await correr(0.2);
+      expect(juego.jefe.value, isNull);
+      expect(juego.jefesDerrotados, contains(Enemigos.reyHueco.id));
+      expect(juego.titular.value, isNotNull);
+      trono.reiniciarEnemigos();
       await correr(0.1);
+      expect(trono.enemigosVivos, isEmpty);
+      juego.jugador.position
+          .setFrom(SalaInterior.piesEn(salidaTrono.x, salidaTrono.y));
+      await correr(0.1);
+      expect(juego.world, galeria);
+      expect(juego.jugador.position, galeria.llegada('bajada'));
+
+      // Rodando a tiempo no hace daño; un frasco cura.
+      await correr(1.5);
+      juego.vida.value = 40;
+      juego.pedirRodar();
+      await correr(0.15);
+      expect(juego.jugador.rodando, isTrue);
+      juego.jugador.recibirGolpe(30);
+      expect(juego.vida.value, 40);
+      await correr(1);
+      juego.pedirBeber();
+      await correr(1.2);
+      expect(juego.frascos.value, UmbralJuego.frascosMaximos - 1);
+      expect(juego.vida.value, greaterThan(40));
+
+      // Descansar en la hoguera: al caer se despierta junto a ella.
+      await juego.descansar(enSala: galeria);
+      expect(juego.frascos.value, UmbralJuego.frascosMaximos);
+      juego.jugador.recibirGolpe(100000);
+      expect(juego.muerto.value, isTrue);
+      expect(juego.lugarDeDescanso, 'junto a la hoguera');
+      await juego.revivir();
+      await correr(0.1);
+      expect(juego.world, galeria);
+      expect(juego.muerto.value, isFalse);
+
+      // De vuelta al mundo por las escaleras.
+      Future<void> subir(SalaInterior desde) async {
+        final salida = desde.sala.punto('salida')!;
+        juego.vida.value = juego.vidaMaxima.value;
+        juego.jugador.position.setFrom(SalaInterior.piesEn(salida.x, salida.y));
+        await correr(0.1);
+        await correr(0.5);
+      }
+
+      await subir(galeria);
+      expect(juego.world, osario);
+      await subir(osario);
+      expect(juego.world, antecamara);
+      await subir(antecamara);
       expect(juego.world, juego.tierras);
+      // Descansar en el altar del mundo lo vuelve el lugar donde despertar.
+      await juego.descansar();
+      expect(juego.lugarDeDescanso, 'junto al altar');
+      await correr(0.1);
 
       // Pelea en el mundo: el jugador lo sigue de cerca (la polilla huye) y
       // la criatura se anima y muere sin errores.
       final enemigo = juego.tierras.enemigosVivos.first;
       juego.botonAtaque = true;
-      for (var t = 0.0; t < 8 && enemigo.vivo; t += 1 / 60) {
+      for (var t = 0.0; t < 12 && enemigo.vivo; t += 1 / 60) {
         juego.jugador.position.setFrom(enemigo.position + Vector2(8, 0));
         juego.vida.value = juego.vidaMaxima.value;
         await correr(1 / 60);
@@ -194,6 +275,18 @@ void main() {
       expect(enemigo.vivo, isFalse);
       await correr(0.5);
       expect(juego.tierras.children.whereType<Enemigo>(), isNot(contains(enemigo)));
+
+      // Al caer, lo ganado queda en el suelo y se recupera al pisarlo.
+      final expGanada = juego.exp.value;
+      final dondeCae = juego.jugador.position.clone();
+      juego.jugador.recibirGolpe(100000);
+      expect(juego.exp.value, lessThan(expGanada));
+      expect(juego.brasasPerdidas.value, contains('quedaron'));
+      await juego.revivir();
+      await correr(0.1);
+      juego.jugador.position.setFrom(dondeCae);
+      await correr(0.1);
+      expect(juego.exp.value, expGanada);
     });
   });
 }

@@ -46,13 +46,17 @@ class AvisoError extends StatelessWidget {
           color: Colores.abismo,
           borderRadius: Radios.astilla,
           border: Border.fromBorderSide(
-              BorderSide(color: Colores.sangre, width: 2)),
+            BorderSide(color: Colores.sangre, width: 2),
+          ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.warning_amber_rounded,
-                color: Colores.brasa, size: 20),
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Colores.brasa,
+              size: 20,
+            ),
             const SizedBox(width: Espacios.paso2),
             Expanded(child: Text(mensaje, style: Textos.cuerpo())),
           ],

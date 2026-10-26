@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../servicio/preferencias_servicio.dart';
 import '../../servicio/servicio_excepcion.dart';
 import '../../servicio/usuario_servicio.dart';
+import '../sonido.dart';
 import '../tema/tema_umbral.dart';
 import '../validaciones/validaciones.dart';
 import '../widgets/boton_umbral.dart';
@@ -19,7 +21,11 @@ class LoginPantalla extends StatefulWidget {
 class _LoginPantallaState extends State<LoginPantalla> {
   final _servicio = UsuarioServicio();
   final _formulario = GlobalKey<FormState>();
-  final _identificador = TextEditingController();
+
+  /// Si ya se entró antes en este teléfono, el usuario viene escrito.
+  final _identificador = TextEditingController(
+    text: PreferenciasServicio.identificador,
+  );
   final _username = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
@@ -31,7 +37,13 @@ class _LoginPantallaState extends State<LoginPantalla> {
 
   @override
   void dispose() {
-    for (final c in [_identificador, _username, _email, _password, _confirmar]) {
+    for (final c in [
+      _identificador,
+      _username,
+      _email,
+      _password,
+      _confirmar,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -61,8 +73,14 @@ class _LoginPantallaState extends State<LoginPantalla> {
           email: _email.text,
           password: _password.text,
         );
+        // La cuenta nueva se queda con el volumen de este teléfono.
+        Sonido.guardarAjustes();
       } else {
-        await _servicio.iniciarSesion(_identificador.text, _password.text);
+        final usuario = await _servicio.iniciarSesion(
+          _identificador.text,
+          _password.text,
+        );
+        Sonido.aplicarAjustes(usuario.ajustes);
       }
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
@@ -77,64 +95,95 @@ class _LoginPantallaState extends State<LoginPantalla> {
 
   @override
   Widget build(BuildContext context) {
+    // En horizontal: el título a la izquierda y el formulario, que se
+    // desplaza, a la derecha.
     return Scaffold(
       body: SafeArea(
         child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(Espacios.paso4),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 880),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(Espacios.paso4),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('Umbral', style: Textos.tituloJuego()),
+                        ),
+                        const SizedBox(height: Espacios.paso2),
+                        Text(
+                          'Lo que cruza no vuelve igual.',
+                          textAlign: TextAlign.center,
+                          style: Textos.cuerpo(color: Colores.ceniza),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(Espacios.paso4),
+                    child: _formularioLogin(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _formularioLogin() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PanelUmbral(
+          child: AutofillGroup(
+            child: Form(
+              key: _formulario,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Umbral',
-                      textAlign: TextAlign.center,
-                      style: Textos.tituloJuego()),
-                  const SizedBox(height: Espacios.paso6),
-                  PanelUmbral(
-                    child: AutofillGroup(
-                      child: Form(
-                        key: _formulario,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(_registro ? 'Crear cuenta' : 'Iniciar sesión',
-                                style: Textos.encabezado()),
-                            const SizedBox(height: Espacios.paso4),
-                            ..._campos(),
-                            if (_error != null) ...[
-                              const SizedBox(height: Espacios.paso4),
-                              AvisoError(_error!),
-                            ],
-                            const SizedBox(height: Espacios.paso6),
-                            BotonUmbral(
-                              texto: _registro ? 'Crear cuenta' : 'Entrar',
-                              cargando: _cargando,
-                              alPulsar: _enviar,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  Text(
+                    _registro ? 'Crear cuenta' : 'Iniciar sesión',
+                    style: Textos.encabezado(),
                   ),
                   const SizedBox(height: Espacios.paso4),
-                  TextButton(
-                    onPressed: _cargando ? null : _cambiarModo,
-                    style: TextButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48)),
-                    child: Text(
-                      _registro
-                          ? '¿Ya tienes cuenta? Inicia sesión'
-                          : '¿No tienes cuenta? Créala',
-                      style: Textos.cuerpo(color: Colores.brasa),
-                    ),
+                  ..._campos(),
+                  if (_error != null) ...[
+                    const SizedBox(height: Espacios.paso4),
+                    AvisoError(_error!),
+                  ],
+                  const SizedBox(height: Espacios.paso6),
+                  BotonUmbral(
+                    texto: _registro ? 'Crear cuenta' : 'Entrar',
+                    cargando: _cargando,
+                    alPulsar: _enviar,
                   ),
                 ],
               ),
             ),
           ),
         ),
-      ),
+        const SizedBox(height: Espacios.paso4),
+        TextButton(
+          onPressed: _cargando ? null : _cambiarModo,
+          style: TextButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+          child: Text(
+            _registro
+                ? '¿Ya tienes cuenta? Inicia sesión'
+                : '¿No tienes cuenta? Créala',
+            style: Textos.cuerpo(color: Colores.brasa),
+          ),
+        ),
+      ],
     );
   }
 
@@ -145,7 +194,8 @@ class _LoginPantallaState extends State<LoginPantalla> {
         CampoUmbral(
           etiqueta: 'Correo o usuario',
           controlador: _identificador,
-          validador: (v) => Validaciones.requerido(v, campo: 'El correo o usuario'),
+          validador: (v) =>
+              Validaciones.requerido(v, campo: 'El correo o usuario'),
           autocompletar: const [AutofillHints.username, AutofillHints.email],
         ),
         separacion,

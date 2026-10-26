@@ -6,6 +6,8 @@ class ClaseServicio {
   static CatalogoClases? _catalogo;
 
   /// El catálogo no cambia mientras la app está abierta: se pide una vez.
-  Future<CatalogoClases> catalogo() async => _catalogo ??=
-      CatalogoClases.fromMap(await ApiCliente.get('/clases') as Map<String, dynamic>);
+  Future<CatalogoClases> catalogo() async =>
+      _catalogo ??= CatalogoClases.fromMap(
+        await ApiCliente.get('/clases') as Map<String, dynamic>,
+      );
 }

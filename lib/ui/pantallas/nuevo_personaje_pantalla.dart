@@ -68,7 +68,10 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
     });
     try {
       final partida = await _partidas.crearPartida(
-          nombre: _nombre.text.trim(), clase: _clase!.id, apariencia: _apariencia);
+        nombre: _nombre.text.trim(),
+        clase: _clase!.id,
+        apariencia: _apariencia,
+      );
       if (mounted) Navigator.of(context).pop(partida);
     } on ServicioExcepcion catch (e) {
       if (mounted) setState(() => _error = e.mensaje);
@@ -83,6 +86,7 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
     final elegida = _clase;
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 48,
         title: Text('Nuevo personaje', style: Textos.encabezado()),
       ),
       body: SafeArea(
@@ -96,7 +100,9 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
   Widget _sinCatalogo() {
     final error = _error;
     if (error == null) {
-      return const Center(child: CircularProgressIndicator(color: Colores.brasa));
+      return const Center(
+        child: CircularProgressIndicator(color: Colores.brasa),
+      );
     }
     return Center(
       child: Padding(
@@ -107,133 +113,196 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
             AvisoError(error),
             const SizedBox(height: Espacios.paso4),
             BotonUmbral(
-                texto: 'Reintentar',
-                estilo: EstiloBoton.secundario,
-                alPulsar: _cargarCatalogo),
+              texto: 'Reintentar',
+              estilo: EstiloBoton.secundario,
+              alPulsar: _cargarCatalogo,
+            ),
           ],
         ),
       ),
     );
   }
 
+  /// En horizontal: a la izquierda se elige (clase, apariencia y nombre) y a
+  /// la derecha se ve el personaje con sus estadísticas.
   Widget _formularioPersonaje(CatalogoClases catalogo, Clase elegida) {
     final clase = claseUi(elegida.id);
     final a = elegida.atributos;
     final combate = elegida.combate;
     return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(Espacios.paso4),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: Form(
-            key: _formulario,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text('CLASE', style: Textos.etiqueta(color: Colores.ceniza)),
-                const SizedBox(height: Espacios.paso2),
-                LayoutBuilder(
-                  // Tres tarjetas por fila que se reparten el ancho.
-                  builder: (_, limites) => Wrap(
-                    spacing: Espacios.paso2,
-                    runSpacing: Espacios.paso2,
-                    children: [
-                      for (final c in catalogo.clases)
-                        _OpcionClase(
-                          clase: claseUi(c.id),
-                          apariencia: _apariencia,
-                          elegida: c.id == elegida.id,
-                          ancho: ((limites.maxWidth - Espacios.paso2 * 2) / 3)
-                              .floorToDouble(),
-                          alElegir: () => setState(() => _clase = c),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: Espacios.paso4),
-                Text('APARIENCIA', style: Textos.etiqueta(color: Colores.ceniza)),
-                const SizedBox(height: Espacios.paso2),
-                Row(
-                  children: [
-                    for (final ap in catalogo.apariencias) ...[
-                      Expanded(
-                        child: BotonUmbral(
-                          texto: ap == 'hombre' ? 'Hombre' : 'Mujer',
-                          estilo: ap == _apariencia
-                              ? EstiloBoton.acento
-                              : EstiloBoton.secundario,
-                          alPulsar: () => setState(() => _apariencia = ap),
-                        ),
-                      ),
-                      if (ap != catalogo.apariencias.last)
-                        const SizedBox(width: Espacios.paso4),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: Espacios.paso6),
-                PanelUmbral(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1000),
+        child: Form(
+          key: _formulario,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                flex: 5,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(Espacios.paso4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Center(
-                        child: SpriteUmbral(
-                          ruta: clase.sprite(_apariencia),
-                          ancho: 32,
-                          alto: 40,
-                          descripcion: '${clase.nombre}, $_apariencia',
-                        ),
+                      Text(
+                        'CLASE',
+                        style: Textos.etiqueta(color: Colores.ceniza),
+                      ),
+                      const SizedBox(height: Espacios.paso2),
+                      LayoutBuilder(
+                        // Todas las clases en una fila si caben; si no, tres.
+                        builder: (_, limites) {
+                          final n = catalogo.clases.length;
+                          final porFila =
+                              (limites.maxWidth - Espacios.paso2 * (n - 1)) /
+                                      n >=
+                                  80
+                              ? n
+                              : 3;
+                          return Wrap(
+                            spacing: Espacios.paso2,
+                            runSpacing: Espacios.paso2,
+                            children: [
+                              for (final c in catalogo.clases)
+                                _OpcionClase(
+                                  clase: claseUi(c.id),
+                                  apariencia: _apariencia,
+                                  elegida: c.id == elegida.id,
+                                  ancho:
+                                      ((limites.maxWidth -
+                                                  Espacios.paso2 *
+                                                      (porFila - 1)) /
+                                              porFila)
+                                          .floorToDouble(),
+                                  alElegir: () => setState(() => _clase = c),
+                                ),
+                            ],
+                          );
+                        },
                       ),
                       const SizedBox(height: Espacios.paso4),
-                      Text(clase.nombre,
-                          textAlign: TextAlign.center, style: Textos.tituloZona()),
-                      Text('NIVEL ${elegida.nivel} · ${clase.arma.toUpperCase()}',
-                          textAlign: TextAlign.center,
-                          style: Textos.etiqueta(color: Colores.brasa)),
+                      Text(
+                        'APARIENCIA',
+                        style: Textos.etiqueta(color: Colores.ceniza),
+                      ),
                       const SizedBox(height: Espacios.paso2),
-                      Text(clase.descripcion,
-                          textAlign: TextAlign.center,
-                          style: Textos.cuerpo(color: Colores.ceniza)),
-                      const SizedBox(height: Espacios.paso4),
-                      _Estadistica('Vigor', a.vida),
-                      _Estadistica('Fuerza', a.fuerza),
-                      _Estadistica('Destreza', a.destreza),
-                      _Estadistica('Intelecto', a.inteligencia),
-                      const SizedBox(height: Espacios.paso2),
-                      Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        spacing: Espacios.paso4,
+                      Row(
                         children: [
-                          Text('PV ${combate.vidaMaxima}', style: Textos.etiqueta()),
-                          Text('DAÑO ${combate.dano}', style: Textos.etiqueta()),
-                          Text('DEFENSA ${combate.defensa}', style: Textos.etiqueta()),
-                          Text('ORO ${elegida.oroInicial}',
-                              style: Textos.etiqueta(color: Colores.brasa)),
+                          for (final ap in catalogo.apariencias) ...[
+                            Expanded(
+                              child: BotonUmbral(
+                                texto: ap == 'hombre' ? 'Hombre' : 'Mujer',
+                                estilo: ap == _apariencia
+                                    ? EstiloBoton.acento
+                                    : EstiloBoton.secundario,
+                                alPulsar: () =>
+                                    setState(() => _apariencia = ap),
+                              ),
+                            ),
+                            if (ap != catalogo.apariencias.last)
+                              const SizedBox(width: Espacios.paso4),
+                          ],
                         ],
+                      ),
+                      const SizedBox(height: Espacios.paso4),
+                      CampoUmbral(
+                        etiqueta: 'Nombre del personaje',
+                        controlador: _nombre,
+                        validador: Validaciones.nombrePersonaje,
+                        accion: TextInputAction.done,
+                        maximo: 16,
+                        alEnviar: (_) => _comenzar(),
+                      ),
+                      if (_error != null) ...[
+                        const SizedBox(height: Espacios.paso4),
+                        AvisoError(_error!),
+                      ],
+                      const SizedBox(height: Espacios.paso4),
+                      BotonUmbral(
+                        texto: 'Cruzar el umbral',
+                        cargando: _cargando,
+                        alPulsar: _comenzar,
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: Espacios.paso6),
-                CampoUmbral(
-                  etiqueta: 'Nombre del personaje',
-                  controlador: _nombre,
-                  validador: Validaciones.nombrePersonaje,
-                  accion: TextInputAction.done,
-                  maximo: 16,
-                  alEnviar: (_) => _comenzar(),
+              ),
+              Expanded(
+                flex: 4,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(Espacios.paso4),
+                  child: PanelUmbral(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            SpriteUmbral(
+                              ruta: clase.sprite(_apariencia),
+                              ancho: 32,
+                              alto: 40,
+                              escala: 3,
+                              descripcion: '${clase.nombre}, $_apariencia',
+                            ),
+                            const SizedBox(width: Espacios.paso4),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    clase.nombre,
+                                    style: Textos.tituloZona(),
+                                  ),
+                                  Text(
+                                    'NIVEL ${elegida.nivel} · ${clase.arma.toUpperCase()}',
+                                    style: Textos.etiqueta(
+                                      color: Colores.brasa,
+                                    ),
+                                  ),
+                                  const SizedBox(height: Espacios.paso2),
+                                  Text(
+                                    clase.descripcion,
+                                    style: Textos.cuerpo(color: Colores.ceniza),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: Espacios.paso2),
+                        _Estadistica('Vigor', a.vida),
+                        _Estadistica('Fuerza', a.fuerza),
+                        _Estadistica('Destreza', a.destreza),
+                        _Estadistica('Intelecto', a.inteligencia),
+                        const SizedBox(height: Espacios.paso2),
+                        Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          spacing: Espacios.paso4,
+                          children: [
+                            Text(
+                              'PV ${combate.vidaMaxima}',
+                              style: Textos.etiqueta(),
+                            ),
+                            Text(
+                              'DAÑO ${combate.dano}',
+                              style: Textos.etiqueta(),
+                            ),
+                            Text(
+                              'DEFENSA ${combate.defensa}',
+                              style: Textos.etiqueta(),
+                            ),
+                            Text(
+                              'ORO ${elegida.oroInicial}',
+                              style: Textos.etiqueta(color: Colores.brasa),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                if (_error != null) ...[
-                  const SizedBox(height: Espacios.paso4),
-                  AvisoError(_error!),
-                ],
-                const SizedBox(height: Espacios.paso4),
-                BotonUmbral(
-                  texto: 'Cruzar el umbral',
-                  cargando: _cargando,
-                  alPulsar: _comenzar,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -273,20 +342,29 @@ class _OpcionClase extends StatelessWidget {
             color: Colores.piedra,
             borderRadius: Radios.astilla,
             border: Border.all(
-                color: elegida ? Colores.brasa : Colores.borde, width: 2),
+              color: elegida ? Colores.brasa : Colores.borde,
+              width: 2,
+            ),
           ),
           child: Column(
             children: [
               SpriteUmbral(
-                  ruta: clase.sprite(apariencia), ancho: 32, alto: 40, escala: 2),
+                ruta: clase.sprite(apariencia),
+                ancho: 32,
+                alto: 40,
+                escala: 2,
+              ),
               const SizedBox(height: Espacios.paso1),
               // En pantallas estrechas se reduce un poco antes que partirse.
               FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text(clase.nombre.toUpperCase(),
-                    maxLines: 1,
-                    style: Textos.etiqueta(
-                        color: elegida ? Colores.brasa : Colores.hueso)),
+                child: Text(
+                  clase.nombre.toUpperCase(),
+                  maxLines: 1,
+                  style: Textos.etiqueta(
+                    color: elegida ? Colores.brasa : Colores.hueso,
+                  ),
+                ),
               ),
             ],
           ),
@@ -313,8 +391,9 @@ class _Estadistica extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-              width: 120,
-              child: Text(nombre.toUpperCase(), style: Textos.etiqueta())),
+            width: 120,
+            child: Text(nombre.toUpperCase(), style: Textos.etiqueta()),
+          ),
           Expanded(
             child: Container(
               height: 12,
@@ -331,8 +410,11 @@ class _Estadistica extends StatelessWidget {
           ),
           SizedBox(
             width: 32,
-            child: Text('$valor',
-                textAlign: TextAlign.right, style: Textos.etiqueta()),
+            child: Text(
+              '$valor',
+              textAlign: TextAlign.right,
+              style: Textos.etiqueta(),
+            ),
           ),
         ],
       ),

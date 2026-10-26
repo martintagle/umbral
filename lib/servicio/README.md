@@ -9,7 +9,8 @@ Es la puerta de entrada de la UI a los datos: **llama a los servicios de la API*
 | Archivo | Contenido |
 |---|---|
 | `api_cliente.dart` | Cliente HTTP: dirección de la API (`--dart-define=API_URL`), cabecera de sesión, envío en JSON y conversión de errores en `ServicioExcepcion`. |
-| `sesion_servicio.dart` | Usuario y token de la sesión. Lo abren y cierran los servicios; la UI solo lo lee. |
+| `sesion_servicio.dart` | Usuario y token de la sesión. Lo abren y cierran los servicios; la UI solo lo lee. Se recuerda en el teléfono hasta cerrar sesión. |
+| `preferencias_servicio.dart` | Lo que el teléfono guarda entre aperturas (`shared_preferences`): la última sesión, el usuario con que se entró y el volumen de música y efectos. |
 | `usuario_servicio.dart` | Registro, login, cierre de sesión, datos del usuario (actualizan la sesión), ajustes y borrado de la cuenta. |
 | `partida_servicio.dart` | Listar, crear, registrar progreso, subir atributos con experiencia, mejorar el equipo con oro, borrar y elegir la partida activa. Cada partida llega con sus valores de combate. Al borrar o elegir la activa, actualiza la sesión. |
 | `clase_servicio.dart` | Catálogo de clases para crear un personaje (se pide una vez). |

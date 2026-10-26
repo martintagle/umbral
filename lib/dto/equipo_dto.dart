@@ -3,10 +3,7 @@ class EquipoDto {
   final int nivelArma;
   final int nivelArmadura;
 
-  const EquipoDto({
-    required this.nivelArma,
-    required this.nivelArmadura,
-  });
+  const EquipoDto({required this.nivelArma, required this.nivelArmadura});
 
   factory EquipoDto.fromMap(Map<String, dynamic> map) {
     return EquipoDto(
@@ -16,9 +13,6 @@ class EquipoDto {
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'nivelArma': nivelArma,
-      'nivelArmadura': nivelArmadura,
-    };
+    return {'nivelArma': nivelArma, 'nivelArmadura': nivelArmadura};
   }
 }

@@ -26,10 +26,15 @@ class RegistroProgreso {
   int get exp => _suma((r) => r.exp);
   int get oro => _suma((r) => r.oro);
 
-  int _suma(int Function(Recompensa) valor) => enemigos.entries
-      .fold(0, (total, e) => total + e.value * valor(recompensa(e.key)));
+  int _suma(int Function(Recompensa) valor) => enemigos.entries.fold(
+    0,
+    (total, e) => total + e.value * valor(recompensa(e.key)),
+  );
 
-  Progreso aProgreso({required int vidaActual, required UbicacionDto ubicacion}) {
+  Progreso aProgreso({
+    required int vidaActual,
+    required UbicacionDto ubicacion,
+  }) {
     return Progreso(
       enemigosDerrotados: Map.of(enemigos),
       muertes: muertes,
@@ -39,10 +44,24 @@ class RegistroProgreso {
     );
   }
 
+  /// Al caer: se quita lo ganado para dejarlo en el suelo.
+  Map<String, int> soltarEnemigos() {
+    final soltado = Map.of(enemigos);
+    enemigos.clear();
+    return soltado;
+  }
+
+  /// Al recoger lo que se soltó.
+  void recuperar(Map<String, int> soltado) {
+    soltado.forEach((tipo, n) => enemigos.update(tipo, (m) => m + n,
+        ifAbsent: () => n));
+  }
+
   void descontar(Progreso enviado) {
     enviado.enemigosDerrotados.forEach((tipo, n) {
-      final quedan = enemigos[tipo]! - n;
-      if (quedan == 0) {
+      // Puede faltar si se cayó mientras se guardaba.
+      final quedan = (enemigos[tipo] ?? 0) - n;
+      if (quedan <= 0) {
         enemigos.remove(tipo);
       } else {
         enemigos[tipo] = quedan;

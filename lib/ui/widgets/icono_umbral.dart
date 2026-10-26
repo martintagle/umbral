@@ -12,8 +12,9 @@ abstract final class Iconos {
   static Map<String, int> _indice = const {};
 
   static Future<void> cargar() async {
-    final m = jsonDecode(await rootBundle.loadString('${_carpeta}iconos.json'))
-        as Map<String, dynamic>;
+    final m = jsonDecode(
+      await rootBundle.loadString('${_carpeta}iconos.json'),
+    ) as Map<String, dynamic>;
     _hoja = '$_carpeta${m['imagen']}';
     _tamano = m['tamano'] as int;
     _columnas = m['columnas'] as int;
@@ -32,7 +33,12 @@ class IconoUmbral extends StatelessWidget {
   /// Texto para lectores de pantalla; sin él, el icono es decorativo.
   final String? descripcion;
 
-  const IconoUmbral(this.nombre, {super.key, this.escala = 2, this.descripcion});
+  const IconoUmbral(
+    this.nombre, {
+    super.key,
+    this.escala = 2,
+    this.descripcion,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -49,8 +55,10 @@ class IconoUmbral extends StatelessWidget {
           maxWidth: double.infinity,
           maxHeight: double.infinity,
           child: Transform.translate(
-            offset: Offset(-(i % Iconos._columnas) * lado,
-                -(i ~/ Iconos._columnas) * lado),
+            offset: Offset(
+              -(i % Iconos._columnas) * lado,
+              -(i ~/ Iconos._columnas) * lado,
+            ),
             child: Image.asset(
               Iconos._hoja,
               width: Iconos._columnas * lado,

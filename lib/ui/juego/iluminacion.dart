@@ -36,9 +36,9 @@ class Iluminacion extends Component with HasGameReference<UmbralJuego> {
   /// [oscuridad] es la opacidad de la noche: los interiores son algo menos
   /// cerrados que el bosque.
   Iluminacion({double oscuridad = 0.96})
-      : _pinturaOscuridad = Paint()
-          ..color = Colores.abismo.withValues(alpha: oscuridad),
-        super(priority: prioridadEfectos - 100);
+    : _pinturaOscuridad = Paint()
+        ..color = Colores.abismo.withValues(alpha: oscuridad),
+      super(priority: prioridadEfectos - 100);
 
   final List<Luz> fijas = [];
 
@@ -94,8 +94,12 @@ class Iluminacion extends Component with HasGameReference<UmbralJuego> {
     anotar(_jugador, game.jugador.centro);
     for (final e in game.zona.enemigosVivos) {
       if (e.tipo.id == 'larva-cirio') {
-        final vela = _velas[e] ??=
-            Luz(Vector2.zero(), radio: _luzVela, tinte: Colores.brasa, parpadeo: 2);
+        final vela = _velas[e] ??= Luz(
+          Vector2.zero(),
+          radio: _luzVela,
+          tinte: Colores.brasa,
+          parpadeo: 2,
+        );
         anotar(vela, e.centro - Vector2(0, 4));
       }
     }
@@ -130,7 +134,10 @@ class Iluminacion extends Component with HasGameReference<UmbralJuego> {
     if (radio <= 0) return;
     canvas.save();
     canvas.translate(x, y);
-    canvas.drawPath(_circulos.putIfAbsent(radio, () => _pathCirculo(radio)), pintura);
+    canvas.drawPath(
+      _circulos.putIfAbsent(radio, () => _pathCirculo(radio)),
+      pintura,
+    );
     canvas.restore();
   }
 
@@ -157,7 +164,10 @@ class Antorcha extends PositionComponent {
 
   /// Base del poste: lo único que no se puede atravesar.
   Rect get huella => Rect.fromCenter(
-      center: Offset(position.x, position.y - 2), width: 6, height: 4);
+    center: Offset(position.x, position.y - 2),
+    width: 6,
+    height: 4,
+  );
 
   static const _madera = Color(0xFF3B2A22);
   static const _maderaLuz = Color(0xFF5A4030);
@@ -194,7 +204,12 @@ class Antorcha extends PositionComponent {
       pixel(canvas, 0, y.toDouble(), _madera);
     }
     for (var x = -3; x <= 2; x++) {
-      pixel(canvas, x.toDouble(), -15, x == -3 || x == 2 ? Colores.abismo : _hierro);
+      pixel(
+        canvas,
+        x.toDouble(),
+        -15,
+        x == -3 || x == 2 ? Colores.abismo : _hierro,
+      );
       if (x > -3 && x < 2) pixel(canvas, x.toDouble(), -14, _hierro);
     }
 
@@ -212,8 +227,8 @@ class Antorcha extends PositionComponent {
         final color = h == 0 && (i == 1 || i == 2)
             ? Colores.hueso
             : h >= fila[i] - 1 && fila[i] > 2
-                ? Colores.sangre
-                : Colores.brasa;
+            ? Colores.sangre
+            : Colores.brasa;
         pixel(canvas, x, -16 - h.toDouble(), color);
       }
     }

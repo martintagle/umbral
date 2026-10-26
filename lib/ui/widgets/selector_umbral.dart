@@ -30,17 +30,26 @@ class SelectorUmbral extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _Paso(icono: 'menos', descripcion: 'Restar $descripcion', alPulsar: alRestar),
+        _Paso(
+          icono: 'menos',
+          descripcion: 'Restar $descripcion',
+          alPulsar: alRestar,
+        ),
         SizedBox(
           width: 40,
           child: Text(
             '$valor',
             textAlign: TextAlign.center,
             style: Textos.contador(
-                color: cambiado ? Colores.brasa : Colores.hueso),
+              color: cambiado ? Colores.brasa : Colores.hueso,
+            ),
           ),
         ),
-        _Paso(icono: 'mas', descripcion: 'Sumar $descripcion', alPulsar: alSumar),
+        _Paso(
+          icono: 'mas',
+          descripcion: 'Sumar $descripcion',
+          alPulsar: alSumar,
+        ),
       ],
     );
   }
@@ -51,8 +60,11 @@ class _Paso extends StatefulWidget {
   final String descripcion;
   final VoidCallback? alPulsar;
 
-  const _Paso(
-      {required this.icono, required this.descripcion, required this.alPulsar});
+  const _Paso({
+    required this.icono,
+    required this.descripcion,
+    required this.alPulsar,
+  });
 
   @override
   State<_Paso> createState() => _PasoState();
@@ -92,7 +104,8 @@ class _PasoState extends State<_Paso> {
         onLongPressStart: activo
             ? (_) => _repetir = Timer.periodic(
                 const Duration(milliseconds: 120),
-                (_) => widget.alPulsar?.call())
+                (_) => widget.alPulsar?.call(),
+              )
             : null,
         onLongPressEnd: (_) => _soltar(),
         onLongPressCancel: _soltar,

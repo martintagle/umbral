@@ -59,7 +59,7 @@ void main() {
   testWidgets('cada punto cuesta más y no deja pasar de la experiencia',
       (tester) async {
     tester.view
-      ..physicalSize = const Size(480, 1200)
+      ..physicalSize = const Size(915, 412)
       ..devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     AtributosDto? enviado;

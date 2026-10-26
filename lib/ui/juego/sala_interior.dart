@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 
+import '../sonido.dart';
 import '../tema/tema_umbral.dart';
 import '../widgets/boton_umbral.dart';
 import 'efectos.dart';
@@ -35,8 +36,24 @@ class SalaInterior extends Escenario {
   final Sala sala;
   late final Uint8List _solido;
   final Set<PuntoSala> _abiertos = {};
+  NieblaSello? _niebla;
+  double _avisoSello = 0;
 
   static const _distanciaInteraccion = 22.0;
+
+  @override
+  bool get interior => true;
+
+  /// La cripta suena a criaturas que se arrastran en la oscuridad.
+  @override
+  String? get pista =>
+      sala.estructura == 'entrada-de-cripta' ? Audios.ambienteCripta : null;
+
+  /// El jefe de esta sala, si está despierto y en pie: sella la salida.
+  bool get _sellada {
+    final jefe = game.jefe.value;
+    return jefe != null && identical(jefe.parent, this) && jefe.despierto;
+  }
 
   @override
   Rect get limites =>
@@ -47,8 +64,7 @@ class SalaInterior extends Escenario {
 
   @override
   Future<void> onLoad() async {
-    final tileset =
-        game.images.fromCache('interiores/${mapa.tileset}');
+    final tileset = game.images.fromCache('interiores/${mapa.tileset}');
     add(_SueloSala(mapa, sala, tileset));
     for (var y = 0; y < sala.alto; y++) {
       add(_FilaSala(mapa, sala, tileset, y));
@@ -56,11 +72,14 @@ class SalaInterior extends Escenario {
 
     final iluminacion = Iluminacion(oscuridad: 0.88);
     void luz(int x, int y, double radio, Color? tinte, {double alto = 4}) =>
-        iluminacion.fijas.add(Luz(
+        iluminacion.fijas.add(
+          Luz(
             Vector2((x + 0.5) * _lado, (y + 0.5) * _lado - alto),
             radio: radio,
             tinte: tinte,
-            parpadeo: tinte == Colores.brasa ? 2 : 0));
+            parpadeo: tinte == Colores.brasa ? 2 : 0,
+          ),
+        );
     final candelabro = mapa.objeto('candelabro'),
         forja = mapa.objeto('forja'),
         altar = mapa.objeto('altar-brasas'),
@@ -112,10 +131,46 @@ class SalaInterior extends Escenario {
     for (final c in children.whereType<Proyectil>().toList()) {
       c.removeFromParent();
     }
-    // El Rey Hueco espera delante de su trono.
-    if (sala.punto('jefe') case final p?) {
+    for (final p in sala.puntos.where((p) => p.tipo == 'enemigo')) {
+      if (Enemigos.porId(p.texto) case final tipo?) {
+        add(Enemigo(tipo, piesEn(p.x, p.y)));
+      }
+    }
+    // El Rey Hueco espera delante de su trono, si aún no ha caído.
+    if (sala.punto('jefe') case final p?
+        when !game.jefesDerrotados.contains(Enemigos.reyHueco.id)) {
       add(Enemigo(Enemigos.reyHueco, piesEn(p.x, p.y)));
     }
+  }
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    _avisoSello = (_avisoSello - dt).clamp(0, 10);
+    // La niebla aparece sobre la salida mientras dura el combate.
+    final sellada = _sellada;
+    if (sellada && _niebla == null) {
+      final p = sala.punto('salida')!;
+      final (desde, hasta) = _tramo(p);
+      add(_niebla = NieblaSello(Rect.fromLTWH(desde * _lado, (p.y - 0.5) * _lado,
+          (hasta - desde + 1) * _lado, _lado * 1.5)));
+    } else if (!sellada && _niebla != null) {
+      _niebla!.removeFromParent();
+      _niebla = null;
+    }
+  }
+
+  /// Pies de alguien de pie junto al punto [tipo] (debajo, si cabe).
+  Vector2 junto(String tipo) {
+    final p = sala.punto(tipo)!;
+    for (final (dx, dy) in const [(0, 1), (-1, 1), (1, 1), (-1, 0), (1, 0)]) {
+      final pies = piesEn(p.x + dx, p.y + dy);
+      if (libre(Rect.fromCenter(
+          center: Offset(pies.x, pies.y - 1.5), width: 8, height: 3))) {
+        return pies;
+      }
+    }
+    return llegada('salida');
   }
 
   /// Pies de alguien de pie en la celda (x, y).
@@ -152,6 +207,13 @@ class SalaInterior extends Escenario {
       if (p.tipo != 'salida' && p.tipo != 'bajada') continue;
       final (desde, hasta) = _tramo(p);
       if (ty == p.y && tx >= desde && tx <= hasta) {
+        if (p.tipo == 'salida' && _sellada) {
+          if (_avisoSello == 0) {
+            _avisoSello = 3;
+            game.mostrarAviso('Una niebla de ceniza sella la salida.');
+          }
+          return;
+        }
         game.cruzar(this, p.tipo);
         return;
       }
@@ -163,8 +225,11 @@ class SalaInterior extends Escenario {
     PuntoSala? cerca;
     var mejor = _distanciaInteraccion;
     for (final p in sala.puntos) {
-      final d = Vector2((p.x + 0.5) * _lado, (p.y + 0.5) * _lado)
-          .distanceTo(pies);
+      if (p.tipo == 'enemigo' || p.tipo == 'jefe') continue;
+      final d = Vector2(
+        (p.x + 0.5) * _lado,
+        (p.y + 0.5) * _lado,
+      ).distanceTo(pies);
       if (d < mejor) {
         mejor = d;
         cerca = p;
@@ -172,29 +237,46 @@ class SalaInterior extends Escenario {
     }
     return switch (cerca?.tipo) {
       'herreria' => [
-          AccionContexto('Usar el yunque',
-              () => game.abrirPantalla(PantallaJuego.herreria),
-              icono: 'yunque', estilo: EstiloBoton.acento),
-        ],
+        AccionContexto(
+          'Usar el yunque',
+          () => game.abrirPantalla(PantallaJuego.herreria),
+          icono: 'yunque',
+          estilo: EstiloBoton.acento,
+        ),
+      ],
       'estadisticas' => [game.accionSubirNivel(icono: 'altar')],
+      'hoguera' => [
+        AccionContexto(
+          'Descansar',
+          () => game.descansar(enSala: this),
+          icono: 'altar',
+          estilo: EstiloBoton.acento,
+        ),
+        game.accionSubirNivel(icono: 'vigor'),
+      ],
       'cofre' => [
-          AccionContexto(
-              _abiertos.contains(cerca) ? 'Cofre vacío' : 'Abrir el cofre',
-              () => _abrirCofre(cerca!),
-              icono: 'mochila'),
-        ],
+        AccionContexto(
+          _abiertos.contains(cerca) ? 'Cofre vacío' : 'Abrir el cofre',
+          () => _abrirCofre(cerca!),
+          icono: 'mochila',
+        ),
+      ],
       'secreto' => [
-          AccionContexto('Examinar',
-              () => game.mostrarAviso('La trampilla está atrancada desde abajo.'),
-              icono: 'candado'),
-        ],
+        AccionContexto(
+          'Examinar',
+          () => game.mostrarAviso('La trampilla está atrancada desde abajo.'),
+          icono: 'candado',
+        ),
+      ],
       'subida' => [
-          AccionContexto(
-              'Subir',
-              () => game.mostrarAviso(
-                  'La escalera al mirador se derrumbó a mitad de camino.'),
-              icono: 'candado'),
-        ],
+        AccionContexto(
+          'Subir',
+          () => game.mostrarAviso(
+            'La escalera al mirador se derrumbó a mitad de camino.',
+          ),
+          icono: 'candado',
+        ),
+      ],
       _ => const [],
     };
   }
@@ -208,6 +290,9 @@ class SalaInterior extends Escenario {
     // No hay objetos que llevarse: el arma es lo único que se porta.
     if (sala.slug == 'choza-en-ruinas') {
       game.curar('Bebes las pociones del cofre. Tu vida se renueva.');
+    } else if (sala.slug == 'cripta-osario') {
+      game.rellenarFrascos(
+          'Un frasco de brasas a medio llenar. Tus frascos y tu vida se renuevan.');
     } else {
       game.mostrarAviso('El cofre está vacío. Alguien llegó antes.');
     }
@@ -217,7 +302,7 @@ class SalaInterior extends Escenario {
 /// Suelo, muros y objetos de paso, dibujados una vez en una imagen.
 class _SueloSala extends PositionComponent {
   _SueloSala(MapaInteriores mapa, Sala sala, Image tileset)
-      : super(priority: -1 << 20) {
+    : super(priority: -1 << 20) {
     final grabadora = PictureRecorder();
     final canvas = Canvas(grabadora);
     for (var y = 0; y < sala.alto; y++) {
@@ -230,7 +315,9 @@ class _SueloSala extends PositionComponent {
       }
     }
     _imagen = grabadora.endRecording().toImageSync(
-        (sala.ancho * _lado).toInt(), (sala.alto * _lado).toInt());
+      (sala.ancho * _lado).toInt(),
+      (sala.alto * _lado).toInt(),
+    );
   }
 
   late final Image _imagen;
@@ -243,7 +330,7 @@ class _SueloSala extends PositionComponent {
 /// Muebles de una fila: se ordenan con los sprites según su base.
 class _FilaSala extends PositionComponent {
   _FilaSala(this._mapa, Sala sala, this._tileset, this._fila)
-      : super(priority: ((_fila + 1) * _lado).round()) {
+    : super(priority: ((_fila + 1) * _lado).round()) {
     for (var x = 0; x < sala.ancho; x++) {
       final o = sala.objetos[_fila][x];
       if (o >= 0 && !_mapa.objetosTransitables.contains(o)) {
@@ -269,13 +356,23 @@ final _pintura = Paint()
   ..filterQuality = FilterQuality.none
   ..isAntiAlias = false;
 
-void _tile(Canvas canvas, Image tileset, MapaInteriores mapa, int cuadro,
-    int x, int y) {
+void _tile(
+  Canvas canvas,
+  Image tileset,
+  MapaInteriores mapa,
+  int cuadro,
+  int x,
+  int y,
+) {
   final columnas = mapa.columnasTileset;
   canvas.drawImageRect(
     tileset,
-    Rect.fromLTWH((cuadro % columnas) * _lado, (cuadro ~/ columnas) * _lado,
-        _lado, _lado),
+    Rect.fromLTWH(
+      (cuadro % columnas) * _lado,
+      (cuadro ~/ columnas) * _lado,
+      _lado,
+      _lado,
+    ),
     Rect.fromLTWH(x * _lado, y * _lado, _lado, _lado),
     _pintura,
   );

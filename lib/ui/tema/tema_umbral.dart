@@ -40,7 +40,11 @@ abstract final class Textos {
 
   static TextStyle encabezado({Color color = Colores.hueso}) =>
       GoogleFonts.pixelifySans(
-          fontSize: 24, height: 32 / 24, fontWeight: FontWeight.w600, color: color);
+        fontSize: 24,
+        height: 32 / 24,
+        fontWeight: FontWeight.w600,
+        color: color,
+      );
 
   static TextStyle cuerpo({Color color = Colores.hueso}) =>
       GoogleFonts.pixelifySans(fontSize: 16, height: 24 / 16, color: color);
@@ -48,8 +52,13 @@ abstract final class Textos {
   static TextStyle etiqueta({Color color = Colores.hueso}) =>
       GoogleFonts.silkscreen(fontSize: 12, height: 16 / 12, color: color);
 
-  static TextStyle dano({Color color = Colores.hueso}) => GoogleFonts.silkscreen(
-      fontSize: 32, height: 1, fontWeight: FontWeight.w700, color: color);
+  static TextStyle dano({Color color = Colores.hueso}) =>
+      GoogleFonts.silkscreen(
+        fontSize: 32,
+        height: 1,
+        fontWeight: FontWeight.w700,
+        color: color,
+      );
 
   static TextStyle contador({Color color = Colores.hueso}) =>
       GoogleFonts.silkscreen(fontSize: 16, height: 1, color: color);

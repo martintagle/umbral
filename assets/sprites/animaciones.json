@@ -1,0 +1,115 @@
+{
+  "descripcion": "Piezas en que se recorta cada sprite para animarlo. Rectángulos [x, y, ancho, alto] en píxeles del PNG. Cada píxel va a la primera pieza cuyo rectángulo lo contiene; lo que sobra es el cuerpo (capa 2). 'p' es el pivote sobre el que gira la pieza. Ver lib/ui/juego/animacion.dart.",
+  "personajes": {
+    "vagabundo": {
+      "ataque": "tajo",
+      "piezas": [
+        { "rol": "arma", "r": [[21, 27, 4, 3], [22, 30, 10, 6], [23, 36, 9, 4]], "p": [22, 27], "capa": 4 },
+        { "rol": "brazo", "r": [[4, 14, 7, 22]], "p": [10, 15], "capa": 3, "fase": 0 },
+        { "rol": "brazo", "r": [[21, 14, 3, 13]], "p": [21, 15], "capa": 3, "fase": 1, "armado": true },
+        { "rol": "pierna", "r": [[11, 29, 6, 10]], "p": [14, 29], "capa": 1, "fase": 0 },
+        { "rol": "pierna", "r": [[17, 29, 6, 10]], "p": [19, 29], "capa": 1, "fase": 1 },
+        { "rol": "cabeza", "r": [[9, 0, 14, 14]], "p": [15, 13], "capa": 3 }
+      ]
+    },
+    "guerrero": {
+      "ataque": "mandoble",
+      "piezas": [
+        { "rol": "arma", "r": [[23, 0, 8, 21], [21, 21, 10, 3], [23, 24, 8, 6]], "p": [25, 23], "capa": 4 },
+        { "rol": "brazo", "r": [[6, 13, 5, 16]], "p": [10, 14], "capa": 3, "fase": 0 },
+        { "rol": "brazo", "r": [[20, 13, 3, 15]], "p": [20, 14], "capa": 3, "fase": 1, "armado": true },
+        { "rol": "pierna", "r": [[9, 31, 6, 8]], "p": [13, 31], "capa": 1, "fase": 0 },
+        { "rol": "pierna", "r": [[15, 31, 7, 8]], "p": [17, 31], "capa": 1, "fase": 1 },
+        { "rol": "cabeza", "r": [[9, 0, 14, 13]], "p": [16, 12], "capa": 3 }
+      ]
+    },
+    "arquero": {
+      "ataque": "arco",
+      "piezas": [
+        { "rol": "arma", "r": [[0, 7, 9, 25]], "p": [4, 19], "capa": 4 },
+        { "rol": "brazo", "r": [[9, 14, 3, 12]], "p": [11, 15], "capa": 3, "fase": 0, "armado": true },
+        { "rol": "brazo", "r": [[18, 14, 3, 13]], "p": [18, 15], "capa": 3, "fase": 1 },
+        { "rol": "pierna", "r": [[9, 33, 6, 6]], "p": [13, 33], "capa": 1, "fase": 0 },
+        { "rol": "pierna", "r": [[15, 33, 7, 6]], "p": [17, 33], "capa": 1, "fase": 1 },
+        { "rol": "cabeza", "r": [[8, 0, 17, 14]], "p": [15, 13], "capa": 3 }
+      ]
+    },
+    "mago": {
+      "ataque": "libro",
+      "piezas": [
+        { "rol": "arma", "r": [[2, 20, 7, 9]], "p": [6, 24], "capa": 4 },
+        { "rol": "brazo", "r": [[6, 14, 4, 15]], "p": [9, 15], "capa": 3, "fase": 0, "armado": true },
+        { "rol": "brazo", "r": [[22, 14, 4, 15]], "p": [22, 15], "capa": 3, "fase": 1 },
+        { "rol": "pierna", "r": [[4, 33, 11, 6]], "p": [11, 33], "capa": 1, "fase": 0 },
+        { "rol": "pierna", "r": [[15, 33, 11, 6]], "p": [18, 33], "capa": 1, "fase": 1 },
+        { "rol": "cabeza", "r": [[6, 0, 19, 14]], "p": [15, 13], "capa": 3 }
+      ]
+    },
+    "prisionero": {
+      "ataque": "estocada",
+      "piezas": [
+        { "rol": "arma", "r": [[20, 26, 9, 10]], "p": [21, 27], "capa": 4 },
+        { "rol": "brazo", "r": [[6, 14, 5, 16]], "p": [10, 15], "capa": 3, "fase": 0 },
+        { "rol": "brazo", "r": [[19, 14, 4, 13]], "p": [19, 15], "capa": 3, "fase": 1, "armado": true },
+        { "rol": "pierna", "r": [[10, 30, 6, 9]], "p": [14, 30], "capa": 1, "fase": 0 },
+        { "rol": "pierna", "r": [[16, 30, 6, 9]], "p": [17, 30], "capa": 1, "fase": 1 },
+        { "rol": "cabeza", "r": [[9, 2, 13, 12]], "p": [15, 13], "capa": 3 }
+      ]
+    }
+  },
+  "enemigos": {
+    "ojo-errante": {
+      "piezas": [
+        { "rol": "onda", "r": [[6, 21, 22, 11]], "p": [16, 21], "capa": 1, "eje": "x", "amp": 2, "frec": 5, "colgante": true },
+        { "rol": "balanceo", "r": [[0, 0, 32, 21]], "p": [16, 12], "capa": 2, "amp": 0.06, "frec": 2 }
+      ]
+    },
+    "fauce": {
+      "piezas": [
+        { "rol": "pata", "r": [[0, 13, 8, 19]], "p": [5, 14], "capa": 1, "fase": 0, "amp": 0.25, "frec": 9 },
+        { "rol": "pata", "r": [[24, 13, 8, 19]], "p": [25, 14], "capa": 1, "fase": 1, "amp": 0.25, "frec": 9 },
+        { "rol": "mandibula", "r": [[7, 8, 17, 9]], "p": [15, 16], "capa": 3, "dir": -1 },
+        { "rol": "mandibula", "r": [[7, 21, 17, 5]], "p": [15, 21], "capa": 3, "dir": 1 }
+      ]
+    },
+    "polilla-osaria": {
+      "piezas": [
+        { "rol": "ala", "r": [[0, 3, 13, 26]], "p": [12, 14], "capa": 1, "lado": -1, "frec": 14 },
+        { "rol": "ala", "r": [[18, 3, 14, 26]], "p": [18, 14], "capa": 1, "lado": 1, "frec": 14 }
+      ]
+    },
+    "larva-cirio": {
+      "piezas": [
+        { "rol": "onda", "r": [[0, 0, 32, 32]], "p": [15, 31], "capa": 2, "eje": "y", "amp": 0.8, "frec": 6 }
+      ]
+    },
+    "manojo": {
+      "piezas": [
+        { "rol": "balanceo", "r": [[9, 1, 7, 11]], "p": [12, 13], "capa": 1, "amp": 0.35, "frec": 4, "fase": 0 },
+        { "rol": "balanceo", "r": [[18, 0, 8, 12]], "p": [20, 12], "capa": 1, "amp": 0.35, "frec": 4, "fase": 0.3 },
+        { "rol": "balanceo", "r": [[0, 6, 7, 9]], "p": [6, 13], "capa": 1, "amp": 0.4, "frec": 3.5, "fase": 0.6 },
+        { "rol": "balanceo", "r": [[25, 6, 7, 9]], "p": [25, 13], "capa": 1, "amp": 0.4, "frec": 3.5, "fase": 0.1 },
+        { "rol": "balanceo", "r": [[0, 23, 7, 9]], "p": [7, 23], "capa": 1, "amp": 0.4, "frec": 3, "fase": 0.8 },
+        { "rol": "balanceo", "r": [[24, 22, 8, 10]], "p": [23, 23], "capa": 1, "amp": 0.4, "frec": 3, "fase": 0.45 },
+        { "rol": "balanceo", "r": [[5, 28, 7, 4], [19, 28, 7, 4]], "p": [15, 27], "capa": 1, "amp": 0.15, "frec": 5, "fase": 0.2 }
+      ]
+    },
+    "ahorcado-fungico": {
+      "piezas": [
+        { "rol": "cabeza", "r": [[1, 0, 30, 12]], "p": [15, 12], "capa": 3, "amp": 0.08, "frec": 1.6 },
+        { "rol": "balanceo", "r": [[2, 13, 8, 17]], "p": [9, 14], "capa": 1, "amp": 0.2, "frec": 2, "fase": 0 },
+        { "rol": "balanceo", "r": [[22, 14, 9, 18]], "p": [22, 14], "capa": 1, "amp": 0.2, "frec": 2, "fase": 0.5 },
+        { "rol": "pata", "r": [[10, 28, 5, 4]], "p": [13, 28], "capa": 1, "fase": 0, "amp": 0.3, "frec": 6 },
+        { "rol": "pata", "r": [[15, 28, 6, 4]], "p": [17, 28], "capa": 1, "fase": 1, "amp": 0.3, "frec": 6 }
+      ]
+    },
+    "jefe-rey-hueco": {
+      "piezas": [
+        { "rol": "cabeza", "r": [[21, 0, 26, 17]], "p": [34, 17], "capa": 4, "amp": 0.05, "frec": 1.2 },
+        { "rol": "brazo", "r": [[3, 23, 13, 31]], "p": [14, 23], "capa": 3, "fase": 0 },
+        { "rol": "brazo", "r": [[45, 23, 18, 31]], "p": [47, 23], "capa": 3, "fase": 1 },
+        { "rol": "onda", "r": [[0, 54, 64, 10]], "p": [31, 54], "capa": 1, "eje": "x", "amp": 1.5, "frec": 3, "colgante": true }
+      ]
+    }
+  }
+}

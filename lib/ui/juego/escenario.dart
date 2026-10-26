@@ -16,14 +16,24 @@ class AccionContexto {
   final String? icono;
   final EstiloBoton estilo;
 
-  const AccionContexto(this.etiqueta, this.alPulsar,
-      {this.icono, this.estilo = EstiloBoton.secundario});
+  const AccionContexto(
+    this.etiqueta,
+    this.alPulsar, {
+    this.icono,
+    this.estilo = EstiloBoton.secundario,
+  });
 }
 
 /// Un lugar jugable: el mundo abierto o una sala interior. Las coordenadas
 /// están en píxeles de arte desde la esquina superior izquierda.
 abstract class Escenario extends World with HasGameReference<UmbralJuego> {
   Rect get limites;
+
+  /// Bajo techo y sobre piedra: cambia el sonido de los pasos.
+  bool get interior => false;
+
+  /// Música o ambiente del lugar; `null` para el silencio de la noche.
+  String? get pista => null;
 
   /// Nombre que la pantalla anuncia al llegar a [pies].
   String regionEn(Vector2 pies);

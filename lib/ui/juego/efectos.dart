@@ -19,11 +19,18 @@ const escalaSprites = 0.5;
 final Paint _pintura = Paint()..isAntiAlias = false;
 
 /// Pinta un cuadrado de [tamano] píxeles de arte alineado a la cuadrícula.
-void pixel(Canvas canvas, double x, double y, Color color, [double tamano = 1]) {
+void pixel(
+  Canvas canvas,
+  double x,
+  double y,
+  Color color, [
+  double tamano = 1,
+]) {
   _pintura.color = color;
   canvas.drawRect(
-      Rect.fromLTWH(x.roundToDouble(), y.roundToDouble(), tamano, tamano),
-      _pintura);
+    Rect.fromLTWH(x.roundToDouble(), y.roundToDouble(), tamano, tamano),
+    _pintura,
+  );
 }
 
 /// Número de daño o texto corto que sube y desaparece.
@@ -31,15 +38,19 @@ class TextoFlotante extends TextComponent with HasGameReference<UmbralJuego> {
   final double _vida;
   double _t = 0;
 
-  TextoFlotante(String texto, Vector2 posicion,
-      {Color color = Colores.hueso, bool grande = true, double duracion = 0.7})
-      : _vida = duracion,
-        super(
-          text: texto,
-          position: posicion,
-          anchor: Anchor.bottomCenter,
-          priority: prioridadEfectos,
-        ) {
+  TextoFlotante(
+    String texto,
+    Vector2 posicion, {
+    Color color = Colores.hueso,
+    bool grande = true,
+    double duracion = 0.7,
+  }) : _vida = duracion,
+       super(
+         text: texto,
+         position: posicion,
+         anchor: Anchor.bottomCenter,
+         priority: prioridadEfectos,
+       ) {
     _estilo = (color, grande);
   }
 
@@ -78,9 +89,12 @@ class Tajo extends PositionComponent {
   double _t = 0;
   static const _duracion = 0.14;
 
-  Tajo(Vector2 centro,
-      {required this.direccion, required this.arco, required this.radio})
-      : super(position: centro, priority: prioridadEfectos - 1);
+  Tajo(
+    Vector2 centro, {
+    required this.direccion,
+    required this.arco,
+    required this.radio,
+  }) : super(position: centro, priority: prioridadEfectos - 1);
 
   @override
   void update(double dt) {
@@ -111,8 +125,8 @@ class Zarpazo extends PositionComponent {
   static const _duracion = 0.18;
 
   Zarpazo(Vector2 centro, {required bool haciaLaDerecha})
-      : _lado = haciaLaDerecha ? 1 : -1,
-        super(position: centro, priority: prioridadEfectos - 1);
+    : _lado = haciaLaDerecha ? 1 : -1,
+      super(position: centro, priority: prioridadEfectos - 1);
 
   @override
   void update(double dt) {
@@ -142,24 +156,28 @@ class Desvanecer extends SpriteComponent {
 
   /// [_lado] es 1 si la criatura miraba a la derecha y -1 si a la izquierda.
   Desvanecer(Sprite sprite, Vector2 pies, this._lado)
-      : super(
-          sprite: sprite,
-          position: pies,
-          anchor: Anchor.bottomCenter,
-          priority: pies.y.round(),
-          paint: Paint()
-            ..filterQuality = FilterQuality.none
-            ..isAntiAlias = false
-            ..colorFilter =
-                const ColorFilter.mode(Colores.hueso, BlendMode.srcATop),
-        );
+    : super(
+        sprite: sprite,
+        position: pies,
+        anchor: Anchor.bottomCenter,
+        priority: pies.y.round(),
+        paint: Paint()
+          ..filterQuality = FilterQuality.none
+          ..isAntiAlias = false
+          ..colorFilter = const ColorFilter.mode(
+            Colores.hueso,
+            BlendMode.srcATop,
+          ),
+      );
 
   @override
   void update(double dt) {
     _t += dt;
     final p = (_t / _duracion).clamp(0.0, 1.0);
-    scale.setValues(_lado * escalaSprites * (1 + p * 0.4),
-        escalaSprites * (1 - p * 0.85));
+    scale.setValues(
+      _lado * escalaSprites * (1 + p * 0.4),
+      escalaSprites * (1 - p * 0.85),
+    );
     if (p > 0.25) {
       paint.colorFilter = null;
       paint.color = Color.fromRGBO(255, 255, 255, 1 - p);
@@ -175,13 +193,16 @@ class Estallido extends PositionComponent {
   static const _duracion = 0.45;
 
   Estallido(Vector2 centro, List<Color> colores)
-      : super(position: centro, priority: prioridadEfectos - 1) {
+    : super(position: centro, priority: prioridadEfectos - 1) {
     final azar = Random();
     for (var i = 0; i < 12; i++) {
       final a = azar.nextDouble() * pi * 2;
       final v = 30 + azar.nextDouble() * 50;
-      _trozos.add(
-          (Vector2.zero(), Vector2(cos(a), sin(a)) * v, colores[i % colores.length]));
+      _trozos.add((
+        Vector2.zero(),
+        Vector2(cos(a), sin(a)) * v,
+        colores[i % colores.length],
+      ));
     }
   }
 
@@ -225,8 +246,8 @@ class Proyectil extends PositionComponent with HasGameReference<UmbralJuego> {
     required this.color,
     this.tamano = 2,
     this.critico = false,
-  })  : velocidad = direccion.normalized() * rapidez,
-        super(position: origen, priority: prioridadEfectos - 2);
+  }) : velocidad = direccion.normalized() * rapidez,
+       super(position: origen, priority: prioridadEfectos - 2);
 
   @override
   void update(double dt) {
@@ -269,6 +290,78 @@ class Proyectil extends PositionComponent with HasGameReference<UmbralJuego> {
     } else {
       pixel(canvas, -tamano / 2, -tamano / 2, color, tamano);
       pixel(canvas, -1, -1, Colores.hueso, 2);
+    }
+  }
+}
+
+/// Lo que el jugador soltó al caer: un montón de brasas que laten en el
+/// suelo, visibles aun en la oscuridad. Al pisarlo se recupera.
+class ManchaBrasas extends PositionComponent {
+  ManchaBrasas(this.enemigos, Vector2 pies)
+    : super(position: pies, priority: prioridadEfectos - 50);
+
+  /// Los enemigos derrotados que valen esas brasas.
+  final Map<String, int> enemigos;
+
+  final _azar = Random();
+  final List<Vector2> _chispas = [];
+  double _t = 0;
+  double _siguiente = 0;
+
+  @override
+  void update(double dt) {
+    _t += dt;
+    _siguiente -= dt;
+    if (_siguiente <= 0) {
+      _siguiente = 0.12;
+      _chispas.add(Vector2((_azar.nextInt(9) - 4).toDouble(), 0));
+    }
+    for (final c in _chispas) {
+      c.y -= 12 * dt;
+    }
+    _chispas.removeWhere((c) => c.y < -12);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    // Late como un corazón: el núcleo crece y mengua un píxel.
+    final latido = sin(_t * 4) > 0 ? 1.0 : 0.0;
+    for (var x = -3 - latido; x <= 3 + latido; x++) {
+      pixel(canvas, x, 0, Colores.sangre);
+    }
+    for (var x = -2.0; x <= 2; x++) {
+      pixel(canvas, x, -1, Colores.brasa);
+    }
+    pixel(canvas, 0, -2 - latido, Colores.hueso);
+    for (final c in _chispas) {
+      pixel(canvas, c.x, c.y, c.y < -7 ? Colores.ceniza : Colores.brasa);
+    }
+  }
+}
+
+/// Niebla de ceniza que sella una salida mientras el jefe sigue en pie.
+class NieblaSello extends PositionComponent {
+  NieblaSello(Rect zona)
+    : _zona = zona,
+      super(priority: prioridadEfectos - 60);
+
+  final Rect _zona;
+  final _azar = Random();
+  double _t = 0;
+
+  @override
+  void update(double dt) => _t += dt;
+
+  @override
+  void render(Canvas canvas) {
+    // Píxeles que suben y cambian a 8 cuadros por segundo.
+    final cuadro = (_t * 8).floor();
+    final semilla = Random(cuadro);
+    for (var i = 0; i < (_zona.width * _zona.height / 6).round(); i++) {
+      final x = _zona.left + semilla.nextDouble() * _zona.width;
+      final y = _zona.top + semilla.nextDouble() * _zona.height;
+      pixel(canvas, x, y,
+          _azar.nextBool() ? Colores.ceniza : Colores.hueso.withValues(alpha: 0.6));
     }
   }
 }

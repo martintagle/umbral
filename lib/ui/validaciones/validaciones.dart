@@ -34,7 +34,9 @@ abstract final class Validaciones {
     return null;
   }
 
-  static String? Function(String?) confirmarPassword(String Function() original) {
+  static String? Function(String?) confirmarPassword(
+    String Function() original,
+  ) {
     return (valor) {
       if (valor == null || valor.isEmpty) return 'Repite la contraseña.';
       if (valor != original()) return 'Las contraseñas no coinciden.';

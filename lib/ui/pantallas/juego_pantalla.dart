@@ -6,11 +6,13 @@ import '../../servicio/modelos/recompensa.dart';
 import '../../servicio/partida_servicio.dart';
 import '../clases_ui.dart';
 import '../juego/umbral_juego.dart';
+import '../sonido.dart';
 import '../tema/tema_umbral.dart';
 import '../widgets/boton_umbral.dart';
 import '../widgets/confirmacion_umbral.dart';
 import '../widgets/icono_umbral.dart';
 import '../widgets/panel_umbral.dart';
+import 'ajustes_pantalla.dart';
 import 'estadisticas_pantalla.dart';
 import 'herreria_pantalla.dart';
 
@@ -18,8 +20,11 @@ class JuegoPantalla extends StatefulWidget {
   final PartidaJugable partida;
   final Map<String, Recompensa> recompensas;
 
-  const JuegoPantalla(
-      {super.key, required this.partida, required this.recompensas});
+  const JuegoPantalla({
+    super.key,
+    required this.partida,
+    required this.recompensas,
+  });
 
   @override
   State<JuegoPantalla> createState() => _JuegoPantallaState();
@@ -36,19 +41,21 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
   @override
   void initState() {
     super.initState();
-    _juego = UmbralJuego(
-      partida: widget.partida,
-      recompensas: widget.recompensas,
-      alGuardar: _servicio.registrarProgreso,
-    )
-      ..alPedirMenu = _abrirMenu
-      ..alAbrirPantalla = _abrirPantalla;
+    _juego =
+        UmbralJuego(
+            partida: widget.partida,
+            recompensas: widget.recompensas,
+            alGuardar: _servicio.registrarProgreso,
+          )
+          ..alPedirMenu = _abrirMenu
+          ..alAbrirPantalla = _abrirPantalla;
     _juego.region.addListener(_anunciarRegion);
   }
 
   @override
   void dispose() {
     _juego.region.removeListener(_anunciarRegion);
+    Sonido.silenciarJuego();
     super.dispose();
   }
 
@@ -63,9 +70,16 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
 
   void _abrirMenu() {
     if (_menu || _juego.muerto.value) return;
-    _juego.pauseEngine();
+    _juego
+      ..soltarControles()
+      ..pauseEngine();
+    Sonido.silenciarJuego();
     setState(() => _menu = true);
   }
+
+  Future<void> _abrirAjustes() => Navigator.of(context).push(
+    MaterialPageRoute<void>(builder: (_) => const AjustesPantalla()),
+  );
 
   void _cerrarMenu() {
     _juego.resumeEngine();
@@ -83,20 +97,22 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
     if (await _juego.guardar(silencioso: true) && mounted) {
       final partida = _juego.partidaGuardada;
       final id = partida.partida.partidaId;
-      await Navigator.of(context).push(MaterialPageRoute<void>(
-        builder: (_) => switch (pantalla) {
-          PantallaJuego.estadisticas => EstadisticasPantalla(
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => switch (pantalla) {
+            PantallaJuego.estadisticas => EstadisticasPantalla(
               partida: partida,
               alSubir: (incrementos) =>
                   _aplicar(_servicio.subirAtributos(id, incrementos)),
             ),
-          PantallaJuego.herreria => HerreriaPantalla(
+            PantallaJuego.herreria => HerreriaPantalla(
               partida: partida,
               alMejorar: (pieza) =>
                   _aplicar(_servicio.mejorarEquipo(id, pieza)),
             ),
-        },
-      ));
+          },
+        ),
+      );
     }
     _juego.resumeEngine();
     _enOtraPantalla = false;
@@ -120,10 +136,13 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
   }
 
   Future<void> _salirSinGuardar() async {
-    final ok = await confirmar(context,
-        titulo: '¿Salir sin guardar?',
-        texto: 'Perderás la experiencia y el oro ganados desde el último guardado.',
-        verbo: 'Salir');
+    final ok = await confirmar(
+      context,
+      titulo: '¿Salir sin guardar?',
+      texto:
+          'Perderás la experiencia y el oro ganados desde el último guardado.',
+      verbo: 'Salir',
+    );
     if (ok && mounted) Navigator.of(context).pop();
   }
 
@@ -137,17 +156,13 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
       child: Scaffold(
         body: Stack(
           children: [
-            Positioned.fill(
-              child: GameWidget(game: _juego, autofocus: true),
-            ),
+            Positioned.fill(child: GameWidget(game: _juego, autofocus: true)),
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(Espacios.paso4),
                 child: Stack(
                   children: [
-                    Align(
-                        alignment: Alignment.topLeft,
-                        child: _Estado(_juego)),
+                    Align(alignment: Alignment.topLeft, child: _Estado(_juego)),
                     Align(
                       alignment: Alignment.topRight,
                       child: BotonIcono(
@@ -165,9 +180,14 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
                       child: _Acciones(_juego),
                     ),
                     Align(
-                      alignment: const Alignment(0, 0.45),
+                      alignment: const Alignment(0, 0.3),
                       child: _Aviso(_juego),
                     ),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: _BarraJefe(_juego),
+                    ),
+                    Center(child: _Titular(_juego)),
                     if (_tituloZona)
                       Align(
                         alignment: const Alignment(0, -0.55),
@@ -178,8 +198,9 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
                             style: Textos.tituloZona().copyWith(
                               shadows: const [
                                 Shadow(
-                                    color: Colores.abismo,
-                                    offset: Offset(4, 4)),
+                                  color: Colores.abismo,
+                                  offset: Offset(4, 4),
+                                ),
                               ],
                             ),
                           ),
@@ -193,11 +214,14 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
               valueListenable: _juego.muerto,
               builder: (_, muerto, _) => muerto
                   ? _Capa(
-                      titulo: 'Has caído',
-                      texto: 'Las brasas del altar aún arden.',
+                      titulo: 'HAS CAÍDO',
+                      colorTitulo: Colores.sangre,
+                      texto: (_juego.brasasPerdidas.value ?? '').isEmpty
+                          ? 'Las brasas aún arden.'
+                          : _juego.brasasPerdidas.value,
                       acciones: [
                         BotonUmbral(
-                          texto: 'Despertar junto al altar',
+                          texto: 'Despertar ${_juego.lugarDeDescanso}',
                           alPulsar: _juego.revivir,
                         ),
                       ],
@@ -209,9 +233,17 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
                 titulo: 'Pausa',
                 acciones: [
                   BotonUmbral(
-                      texto: 'Continuar',
-                      estilo: EstiloBoton.secundario,
-                      alPulsar: _cerrarMenu),
+                    texto: 'Continuar',
+                    estilo: EstiloBoton.secundario,
+                    alPulsar: _cerrarMenu,
+                  ),
+                  const SizedBox(height: Espacios.paso4),
+                  BotonUmbral(
+                    texto: 'Ajustes',
+                    icono: 'ajustes',
+                    estilo: EstiloBoton.secundario,
+                    alPulsar: _abrirAjustes,
+                  ),
                   const SizedBox(height: Espacios.paso4),
                   ValueListenableBuilder(
                     valueListenable: _juego.guardando,
@@ -278,7 +310,8 @@ class _Estado extends StatelessWidget {
                 _BarraEstamina(juego),
                 const SizedBox(height: Espacios.paso1),
                 _Barra(
-                  etiqueta: 'EXP ${juego.exp.value}/${juego.expSiguiente.value}',
+                  etiqueta:
+                      'EXP ${juego.exp.value}/${juego.expSiguiente.value}',
                   valor: juego.exp.value / juego.expSiguiente.value,
                   color: Colores.borde,
                   alto: 12,
@@ -288,8 +321,10 @@ class _Estado extends StatelessWidget {
                   children: [
                     const IconoUmbral('oro', escala: 1),
                     const SizedBox(width: Espacios.paso1),
-                    Text('${juego.oro.value}',
-                        style: Textos.etiqueta(color: Colores.brasa)),
+                    Text(
+                      '${juego.oro.value}',
+                      style: Textos.etiqueta(color: Colores.brasa),
+                    ),
                   ],
                 ),
               ],
@@ -359,10 +394,14 @@ class _Barra extends StatelessWidget {
             child: Align(
               alignment: Alignment.centerLeft,
               // Sombra dura para que el número se lea sobre cualquier relleno.
-              child: Text(etiqueta,
-                  style: Textos.etiqueta().copyWith(shadows: const [
+              child: Text(
+                etiqueta,
+                style: Textos.etiqueta().copyWith(
+                  shadows: const [
                     Shadow(color: Colores.abismo, offset: Offset(1, 1)),
-                  ])),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -390,7 +429,10 @@ class _JoystickState extends State<_Joystick> {
     var d = local - const Offset(_tamano / 2, _tamano / 2);
     if (d.distance > _recorrido) d = d / d.distance * _recorrido;
     setState(() => _perilla = d);
-    widget.juego.direccionJoystick.setValues(d.dx / _recorrido, d.dy / _recorrido);
+    widget.juego.direccionJoystick.setValues(
+      d.dx / _recorrido,
+      d.dy / _recorrido,
+    );
   }
 
   void _soltar() {
@@ -435,8 +477,9 @@ class _JoystickState extends State<_Joystick> {
   }
 }
 
-/// Botón de ataque (se puede mantener pulsado) y encima lo que se puede hacer
-/// en el lugar: descansar, entrar, usar el yunque...
+/// Lo que se puede hacer en el lugar (descansar, entrar, usar el yunque...)
+/// y debajo los botones de combate: frasco y rodar a la izquierda del de
+/// ataque, que se puede mantener pulsado.
 class _Acciones extends StatelessWidget {
   final UmbralJuego juego;
 
@@ -456,7 +499,7 @@ class _Acciones extends StatelessWidget {
             children: [
               for (final a in juego.acciones.value)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: Espacios.paso4),
+                  padding: const EdgeInsets.only(bottom: Espacios.paso2),
                   child: BotonUmbral(
                     texto: a.etiqueta,
                     icono: a.icono,
@@ -469,35 +512,205 @@ class _Acciones extends StatelessWidget {
             ],
           ),
         ),
-        Semantics(
-          button: true,
-          label: 'Atacar',
-          child: Listener(
-            onPointerDown: (_) => juego.botonAtaque = true,
-            onPointerUp: (_) => juego.botonAtaque = false,
-            onPointerCancel: (_) => juego.botonAtaque = false,
-            child: Container(
-              width: 96,
-              height: 96,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colores.sangre,
-                borderRadius: Radios.astilla,
-                border: Border.all(color: Colores.abismo, width: 2),
-                boxShadow: sombraDura,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ValueListenableBuilder(
+                  valueListenable: juego.frascos,
+                  builder: (_, quedan, _) => _BotonCombate(
+                    etiqueta: 'Beber un frasco, quedan $quedan',
+                    tamano: 56,
+                    color: quedan > 0 ? Colores.piedra : Colores.abismo,
+                    alPulsar: juego.pedirBeber,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const IconoUmbral('pocion-vida', escala: 1),
+                        const SizedBox(width: 2),
+                        Text(
+                          '$quedan',
+                          style: Textos.contador(
+                            color: quedan > 0 ? Colores.brasa : Colores.ceniza,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: Espacios.paso2),
+                _BotonCombate(
+                  etiqueta: 'Rodar',
+                  tamano: 68,
+                  color: Colores.piedra,
+                  alPulsar: juego.pedirRodar,
+                  child: Text('RODAR', style: Textos.etiqueta()),
+                ),
+              ],
+            ),
+            const SizedBox(width: Espacios.paso2),
+            Semantics(
+              button: true,
+              label: 'Atacar',
+              child: Listener(
+                onPointerDown: (_) => juego.botonAtaque = true,
+                onPointerUp: (_) => juego.botonAtaque = false,
+                onPointerCancel: (_) => juego.botonAtaque = false,
+                child: Container(
+                  width: 96,
+                  height: 96,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colores.sangre,
+                    borderRadius: Radios.astilla,
+                    border: Border.all(color: Colores.abismo, width: 2),
+                    boxShadow: sombraDura,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconoUmbral(claseUi(juego.personaje.clase).iconoArma),
+                      const SizedBox(height: Espacios.paso1),
+                      Text('ATACAR', style: Textos.etiqueta()),
+                    ],
+                  ),
+                ),
               ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Botón cuadrado que actúa al tocarlo, sin esperar a soltar: en combate
+/// cada décima cuenta.
+class _BotonCombate extends StatelessWidget {
+  final String etiqueta;
+  final double tamano;
+  final Color color;
+  final VoidCallback alPulsar;
+  final Widget child;
+
+  const _BotonCombate({
+    required this.etiqueta,
+    required this.tamano,
+    required this.color,
+    required this.alPulsar,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: etiqueta,
+      excludeSemantics: true,
+      child: Listener(
+        onPointerDown: (_) => alPulsar(),
+        child: Container(
+          width: tamano,
+          height: tamano,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.85),
+            borderRadius: Radios.astilla,
+            border: Border.all(color: Colores.borde, width: 2),
+            boxShadow: sombraDura,
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/// Nombre y vida del jefe, abajo y a lo ancho, mientras dura el combate.
+class _BarraJefe extends StatelessWidget {
+  final UmbralJuego juego;
+
+  const _BarraJefe(this.juego);
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ListenableBuilder(
+        listenable: Listenable.merge([juego.jefe, juego.vidaJefe]),
+        builder: (context, _) {
+          final jefe = juego.jefe.value;
+          if (jefe == null) return const SizedBox.shrink();
+          final ancho = MediaQuery.sizeOf(context).width * 0.4;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: Espacios.paso2),
+            child: SizedBox(
+              width: ancho,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconoUmbral(claseUi(juego.personaje.clase).iconoArma),
+                  Text(
+                    jefe.tipo.nombre,
+                    style: Textos.cuerpo().copyWith(
+                      shadows: const [
+                        Shadow(color: Colores.abismo, offset: Offset(2, 2)),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: Espacios.paso1),
-                  Text('ATACAR', style: Textos.etiqueta()),
+                  Container(
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colores.abismo,
+                      border: Border.all(color: Colores.borde, width: 2),
+                    ),
+                    alignment: Alignment.centerLeft,
+                    child: FractionallySizedBox(
+                      widthFactor: juego.vidaJefe.value.clamp(0, 1),
+                      child: Container(
+                        color: jefe.furioso ? Colores.brasa : Colores.sangre,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-        ),
-      ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Letrero grande al vencer a un jefe.
+class _Titular extends StatelessWidget {
+  final UmbralJuego juego;
+
+  const _Titular(this.juego);
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ValueListenableBuilder(
+        valueListenable: juego.titular,
+        builder: (_, texto, _) => texto == null
+            ? const SizedBox.shrink()
+            : Semantics(
+                liveRegion: true,
+                child: Text(
+                  texto,
+                  textAlign: TextAlign.center,
+                  style: Textos.tituloJuego(color: Colores.brasa).copyWith(
+                    shadows: const [
+                      Shadow(color: Colores.abismo, offset: Offset(4, 4)),
+                    ],
+                  ),
+                ),
+              ),
+      ),
     );
   }
 }
@@ -517,12 +730,15 @@ class _Aviso extends StatelessWidget {
             : Semantics(
                 liveRegion: true,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 360),
+                  constraints: const BoxConstraints(maxWidth: 420),
                   child: PanelUmbral(
                     colorBorde: Colores.brasa,
                     padding: const EdgeInsets.all(Espacios.paso2),
-                    child: Text(aviso,
-                        textAlign: TextAlign.center, style: Textos.cuerpo()),
+                    child: Text(
+                      aviso,
+                      textAlign: TextAlign.center,
+                      style: Textos.cuerpo(),
+                    ),
                   ),
                 ),
               ),
@@ -536,8 +752,14 @@ class _Capa extends StatelessWidget {
   final String titulo;
   final String? texto;
   final List<Widget> acciones;
+  final Color? colorTitulo;
 
-  const _Capa({required this.titulo, this.texto, required this.acciones});
+  const _Capa({
+    required this.titulo,
+    this.texto,
+    required this.acciones,
+    this.colorTitulo,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -553,13 +775,20 @@ class _Capa extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(titulo,
-                      textAlign: TextAlign.center, style: Textos.tituloZona()),
+                  Text(
+                    titulo,
+                    textAlign: TextAlign.center,
+                    style: colorTitulo == null
+                        ? Textos.tituloZona()
+                        : Textos.tituloJuego(color: colorTitulo!),
+                  ),
                   if (texto != null) ...[
                     const SizedBox(height: Espacios.paso2),
-                    Text(texto!,
-                        textAlign: TextAlign.center,
-                        style: Textos.cuerpo(color: Colores.ceniza)),
+                    Text(
+                      texto!,
+                      textAlign: TextAlign.center,
+                      style: Textos.cuerpo(color: Colores.ceniza),
+                    ),
                   ],
                   const SizedBox(height: Espacios.paso6),
                   ...acciones,

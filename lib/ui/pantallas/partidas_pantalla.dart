@@ -9,10 +9,12 @@ import '../../servicio/servicio_excepcion.dart';
 import '../../servicio/sesion_servicio.dart';
 import '../../servicio/usuario_servicio.dart';
 import '../clases_ui.dart';
+import '../sonido.dart';
 import '../tema/tema_umbral.dart';
 import '../widgets/boton_umbral.dart';
 import '../widgets/panel_umbral.dart';
 import '../widgets/sprite_umbral.dart';
+import 'ajustes_pantalla.dart';
 import 'juego_pantalla.dart';
 import 'login_pantalla.dart';
 import 'nuevo_personaje_pantalla.dart';
@@ -30,6 +32,7 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
   List<PartidaJugable>? _partidas;
   String? _error;
   final _enemigos = EnemigoServicio();
+  bool _usuarioAlDia = false;
 
   /// Los servicios mantienen la sesión al día al cambiar la partida activa.
   String? get _partidaActiva => SesionServicio.usuario?.partidaActiva;
@@ -43,9 +46,17 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
   Future<void> _cargar() async {
     setState(() => _error = null);
     try {
+      // Con la sesión recordada se refresca el usuario (y se comprueba que el
+      // token sigue valiendo).
+      if (!_usuarioAlDia) {
+        await UsuarioServicio().obtenerYo();
+        _usuarioAlDia = true;
+      }
       final partidas = await _servicio.listarPartidas();
-      partidas.sort((a, b) =>
-          b.partida.ultimaVezJugada.compareTo(a.partida.ultimaVezJugada));
+      partidas.sort(
+        (a, b) =>
+            b.partida.ultimaVezJugada.compareTo(a.partida.ultimaVezJugada),
+      );
       if (mounted) setState(() => _partidas = partidas);
     } on ServicioExcepcion catch (e) {
       _mostrarError(e);
@@ -57,7 +68,8 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
     if (e.sesionCaducada) {
       UsuarioServicio().cerrarSesion();
       Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginPantalla()));
+        MaterialPageRoute(builder: (_) => const LoginPantalla()),
+      );
       return;
     }
     setState(() => _error = e.mensaje);
@@ -77,15 +89,20 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
       // No impide jugar: solo marca la partida en la lista.
     }
     if (!mounted) return;
-    await Navigator.of(context).push(MaterialPageRoute(
+    await Navigator.of(context).push(
+      MaterialPageRoute(
         builder: (_) =>
-            JuegoPantalla(partida: partida, recompensas: recompensas)));
+            JuegoPantalla(partida: partida, recompensas: recompensas),
+      ),
+    );
+    Sonido.pista(Audios.musicaTitulo);
     _cargar();
   }
 
   Future<void> _nueva() async {
     final creada = await Navigator.of(context).push<PartidaJugable>(
-        MaterialPageRoute(builder: (_) => const NuevoPersonajePantalla()));
+      MaterialPageRoute(builder: (_) => const NuevoPersonajePantalla()),
+    );
     if (creada != null) {
       await _jugar(creada);
     } else {
@@ -98,10 +115,14 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
     final confirmado = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('¿Borrar a ${partida.personaje.nombre}?',
-            style: Textos.encabezado()),
-        content: Text('La partida se pierde para siempre.',
-            style: Textos.cuerpo(color: Colores.ceniza)),
+        title: Text(
+          '¿Borrar a ${partida.personaje.nombre}?',
+          style: Textos.encabezado(),
+        ),
+        content: Text(
+          'La partida se pierde para siempre.',
+          style: Textos.cuerpo(color: Colores.ceniza),
+        ),
         actionsPadding: const EdgeInsets.all(Espacios.paso4),
         actions: [
           Row(
@@ -137,7 +158,8 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
   void _cerrarSesion() {
     UsuarioServicio().cerrarSesion();
     Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const TituloPantalla()));
+      MaterialPageRoute(builder: (_) => const TituloPantalla()),
+    );
   }
 
   @override
@@ -145,70 +167,104 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
     final partidas = _partidas;
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
-            child: Padding(
-              padding: const EdgeInsets.all(Espacios.paso4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Padding(
+          padding: const EdgeInsets.all(Espacios.paso4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Una sola fila de cabecera: en horizontal el alto es escaso.
+              Row(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                          child: Text('Partidas', style: Textos.encabezado())),
-                      TextButton(
-                        onPressed: _cerrarSesion,
-                        style: TextButton.styleFrom(
-                            minimumSize: const Size(48, 48)),
-                        child: Text('Cerrar sesión',
-                            style: Textos.etiqueta(color: Colores.ceniza)),
-                      ),
-                    ],
-                  ),
-                  Text('Hola, ${SesionServicio.usuario?.username ?? ''}.',
-                      style: Textos.cuerpo(color: Colores.ceniza)),
-                  const SizedBox(height: Espacios.paso4),
-                  if (_error != null) ...[
-                    AvisoError(_error!),
-                    const SizedBox(height: Espacios.paso2),
-                    BotonUmbral(
-                        texto: 'Reintentar',
-                        estilo: EstiloBoton.secundario,
-                        alPulsar: _cargar),
-                    const SizedBox(height: Espacios.paso4),
-                  ],
+                  Text('Partidas', style: Textos.encabezado()),
+                  const SizedBox(width: Espacios.paso4),
                   Expanded(
-                    child: switch (partidas) {
-                      null when _error == null => const Center(
-                          child: CircularProgressIndicator(
-                              color: Colores.brasa)),
-                      null => const SizedBox.shrink(),
-                      [] => Center(
-                          child: Text(
-                            'Aún no tienes partidas.\nCrea un personaje para cruzar el umbral.',
-                            textAlign: TextAlign.center,
-                            style: Textos.cuerpo(color: Colores.ceniza),
-                          ),
-                        ),
-                      _ => ListView.separated(
-                          itemCount: partidas.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: Espacios.paso4),
-                          itemBuilder: (_, i) => _TarjetaPartida(
-                            partida: partidas[i].partida,
-                            activa: partidas[i].partida.partidaId == _partidaActiva,
-                            alJugar: () => _jugar(partidas[i]),
-                            alBorrar: () => _borrar(partidas[i]),
-                          ),
-                        ),
-                    },
+                    child: Text(
+                      'Hola, ${SesionServicio.usuario?.username ?? ''}.',
+                      overflow: TextOverflow.ellipsis,
+                      style: Textos.cuerpo(color: Colores.ceniza),
+                    ),
                   ),
-                  const SizedBox(height: Espacios.paso4),
-                  BotonUmbral(texto: 'Nueva partida', alPulsar: _nueva),
+                  BotonUmbral(
+                    texto: 'Nueva partida',
+                    expandido: false,
+                    alPulsar: _nueva,
+                  ),
+                  const SizedBox(width: Espacios.paso4),
+                  BotonIcono(
+                    icono: 'ajustes',
+                    descripcion: 'Ajustes',
+                    alPulsar: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AjustesPantalla(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: Espacios.paso2),
+                  TextButton(
+                    onPressed: _cerrarSesion,
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                    ),
+                    child: Text(
+                      'Cerrar sesión',
+                      style: Textos.etiqueta(color: Colores.ceniza),
+                    ),
+                  ),
                 ],
               ),
-            ),
+              const SizedBox(height: Espacios.paso4),
+              if (_error != null) ...[
+                Row(
+                  children: [
+                    Expanded(child: AvisoError(_error!)),
+                    const SizedBox(width: Espacios.paso4),
+                    BotonUmbral(
+                      texto: 'Reintentar',
+                      estilo: EstiloBoton.secundario,
+                      expandido: false,
+                      alPulsar: _cargar,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: Espacios.paso4),
+              ],
+              Expanded(
+                child: switch (partidas) {
+                  null when _error == null => const Center(
+                    child: CircularProgressIndicator(color: Colores.brasa),
+                  ),
+                  null => const SizedBox.shrink(),
+                  [] => Center(
+                    child: Text(
+                      'Aún no tienes partidas.\nCrea un personaje para cruzar el umbral.',
+                      textAlign: TextAlign.center,
+                      style: Textos.cuerpo(color: Colores.ceniza),
+                    ),
+                  ),
+                  // Tarjetas en columnas que llenan el ancho.
+                  _ => GridView.builder(
+                    padding: const EdgeInsets.only(
+                      right: Espacios.paso1,
+                      bottom: Espacios.paso1,
+                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 460,
+                          mainAxisExtent: 156,
+                          crossAxisSpacing: Espacios.paso4,
+                          mainAxisSpacing: Espacios.paso4,
+                        ),
+                    itemCount: partidas.length,
+                    itemBuilder: (_, i) => _TarjetaPartida(
+                      partida: partidas[i].partida,
+                      activa: partidas[i].partida.partidaId == _partidaActiva,
+                      alJugar: () => _jugar(partidas[i]),
+                      alBorrar: () => _borrar(partidas[i]),
+                    ),
+                  ),
+                },
+              ),
+            ],
           ),
         ),
       ),
@@ -245,28 +301,40 @@ class _TarjetaPartida extends StatelessWidget {
       child: Row(
         children: [
           SpriteUmbral(
-              ruta: clase.sprite(p.apariencia), ancho: 32, alto: 40, escala: 2),
+            ruta: clase.sprite(p.apariencia),
+            ancho: 32,
+            alto: 40,
+            escala: 2,
+          ),
           const SizedBox(width: Espacios.paso4),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(p.nombre, style: Textos.encabezado()),
-                Text('${clase.nombre} · Nivel ${p.nivel}',
-                    style: Textos.cuerpo()),
-                Text('ORO ${p.oro}', style: Textos.etiqueta(color: Colores.brasa)),
-                Text('Jugada ${_fecha(partida.ultimaVezJugada)}',
-                    style: Textos.etiqueta(color: Colores.ceniza)),
+                Text(
+                  '${clase.nombre} · Nivel ${p.nivel}',
+                  style: Textos.cuerpo(),
+                ),
+                Text(
+                  'ORO ${p.oro}',
+                  style: Textos.etiqueta(color: Colores.brasa),
+                ),
+                Text(
+                  'Jugada ${_fecha(partida.ultimaVezJugada)}',
+                  style: Textos.etiqueta(color: Colores.ceniza),
+                ),
                 if (activa)
-                  Text('ÚLTIMA PARTIDA',
-                      style: Textos.etiqueta(color: Colores.brasa)),
+                  Text(
+                    'ÚLTIMA PARTIDA',
+                    style: Textos.etiqueta(color: Colores.brasa),
+                  ),
               ],
             ),
           ),
           Column(
             children: [
-              BotonUmbral(
-                  texto: 'Jugar', alPulsar: alJugar, expandido: false),
+              BotonUmbral(texto: 'Jugar', alPulsar: alJugar, expandido: false),
               const SizedBox(height: Espacios.paso2),
               IconButton(
                 onPressed: alBorrar,

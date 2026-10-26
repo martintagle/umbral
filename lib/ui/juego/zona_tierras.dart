@@ -88,22 +88,26 @@ class ZonaTierras extends Escenario {
     for (final e in mapa.estructuras) {
       final imagen = imagenes.fromCache('sprites/estructuras/${e.sprite}.png');
       final base = (e.y + e.h) * _lado;
-      add(SpriteComponent(
-        sprite: Sprite(imagen),
-        position: Vector2(
+      add(
+        SpriteComponent(
+          sprite: Sprite(imagen),
+          position: Vector2(
             (e.x * _lado + (e.w * _lado - imagen.width) / 2).roundToDouble(),
-            base - imagen.height),
-        priority: base.round(),
-        paint: Paint()
-          ..filterQuality = FilterQuality.none
-          ..isAntiAlias = false,
-      ));
+            base - imagen.height,
+          ),
+          priority: base.round(),
+          paint: Paint()
+            ..filterQuality = FilterQuality.none
+            ..isAntiAlias = false,
+        ),
+      );
       if (e.sprite == 'altar-de-brasas') {
         posicionAltar = Vector2((e.x + e.w / 2) * _lado, base);
         final fuego = posicionAltar + Vector2(0, -26);
         add(_Brasas(fuego));
         iluminacion.fijas.add(
-            Luz(fuego, radio: 48, tinte: Colores.brasa, parpadeo: 2));
+          Luz(fuego, radio: 48, tinte: Colores.brasa, parpadeo: 2),
+        );
       }
     }
 
@@ -112,21 +116,29 @@ class ZonaTierras extends Escenario {
       add(antorcha);
       _obstaculos.add(antorcha.huella);
       iluminacion.fijas.add(
-          Luz(antorcha.llama, radio: 36, tinte: Colores.brasa, parpadeo: 2));
+        Luz(antorcha.llama, radio: 36, tinte: Colores.brasa, parpadeo: 2),
+      );
     }
 
     // Las runas de los tocones brillan en azul; las ventanas, en ámbar.
     for (final (x, y) in mapa.portales) {
-      iluminacion.fijas.add(Luz(Vector2((x + 0.5) * _lado, (y + 0.5) * _lado),
-          radio: 24, tinte: Colores.alma, parpadeo: 1));
+      iluminacion.fijas.add(
+        Luz(
+          Vector2((x + 0.5) * _lado, (y + 0.5) * _lado),
+          radio: 24,
+          tinte: Colores.alma,
+          parpadeo: 1,
+        ),
+      );
     }
     for (final p in [
       Vector2(626, 264), // campanario de la capilla
       Vector2(950, 274), // farol del árbol de la jaula
       Vector2(504, 633), // ventana de la torre derruida
     ]) {
-      iluminacion.fijas
-          .add(Luz(p, radio: 20, tinte: Colores.brasa, parpadeo: 1));
+      iluminacion.fijas.add(
+        Luz(p, radio: 20, tinte: Colores.brasa, parpadeo: 1),
+      );
     }
     add(iluminacion);
 
@@ -170,16 +182,18 @@ class ZonaTierras extends Escenario {
   List<AccionContexto> accionesEn(Vector2 pies) {
     if (cercaDelAltar(pies)) {
       return [
-        AccionContexto('Descansar', game.descansar,
-            icono: 'altar', estilo: EstiloBoton.acento),
+        AccionContexto(
+          'Descansar',
+          game.descansar,
+          icono: 'altar',
+          estilo: EstiloBoton.acento,
+        ),
         game.accionSubirNivel(icono: 'vigor'),
       ];
     }
     for (final (punto, sala) in puertas) {
       if (punto.distanceTo(pies) < _distanciaPuerta) {
-        return [
-          AccionContexto('Entrar', () => game.entrar(sala, punto)),
-        ];
+        return [AccionContexto('Entrar', () => game.entrar(sala, punto))];
       }
     }
     return const [];
@@ -228,9 +242,10 @@ class _Suelo extends PositionComponent {
         }
       }
     }
-    _imagen = grabadora
-        .endRecording()
-        .toImageSync(mapa.anchoPx.toInt(), mapa.altoPx.toInt());
+    _imagen = grabadora.endRecording().toImageSync(
+      mapa.anchoPx.toInt(),
+      mapa.altoPx.toInt(),
+    );
   }
 
   late final Image _imagen;
@@ -239,14 +254,15 @@ class _Suelo extends PositionComponent {
     ..isAntiAlias = false;
 
   @override
-  void render(Canvas canvas) => canvas.drawImage(_imagen, Offset.zero, _pintura);
+  void render(Canvas canvas) =>
+      canvas.drawImage(_imagen, Offset.zero, _pintura);
 }
 
 /// Árboles, rocas, cercas, cofres y letreros de una fila del mapa. Comparte
 /// orden con los sprites según su base: el jugador pasa por detrás o delante.
 class _FilaAlta extends PositionComponent with HasGameReference<UmbralJuego> {
   _FilaAlta(this._mapa, this._tileset, this._fila)
-      : super(priority: ((_fila + 1) * _lado).round()) {
+    : super(priority: ((_fila + 1) * _lado).round()) {
     final entidades = _mapa.nombresEntidades;
     for (var x = 0; x < _mapa.ancho; x++) {
       final o = _mapa.objetos[_fila][x];
@@ -261,7 +277,10 @@ class _FilaAlta extends PositionComponent with HasGameReference<UmbralJuego> {
     }
     for (final l in _mapa.letreros) {
       if (l.y == _fila) {
-        _celdas.add((l.x, _mapa.indiceEntidades + entidades.indexOf('letrero')));
+        _celdas.add((
+          l.x,
+          _mapa.indiceEntidades + entidades.indexOf('letrero'),
+        ));
       }
     }
   }
@@ -286,12 +305,24 @@ class _FilaAlta extends PositionComponent with HasGameReference<UmbralJuego> {
   }
 }
 
-void _tile(Canvas canvas, Image tileset, MapaMundo mapa, int cuadro, int x,
-    int y, Paint pintura) {
+void _tile(
+  Canvas canvas,
+  Image tileset,
+  MapaMundo mapa,
+  int cuadro,
+  int x,
+  int y,
+  Paint pintura,
+) {
   final columnas = mapa.columnasTileset;
   canvas.drawImageRect(
     tileset,
-    Rect.fromLTWH((cuadro % columnas) * _lado, (cuadro ~/ columnas) * _lado, _lado, _lado),
+    Rect.fromLTWH(
+      (cuadro % columnas) * _lado,
+      (cuadro ~/ columnas) * _lado,
+      _lado,
+      _lado,
+    ),
     Rect.fromLTWH(x * _lado, y * _lado, _lado, _lado),
     pintura,
   );

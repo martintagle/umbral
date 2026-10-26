@@ -74,14 +74,21 @@ class _BotonUmbralState extends State<BotonUmbral> {
           duration: const Duration(milliseconds: 40),
           constraints: const BoxConstraints(minHeight: 48),
           transform: Matrix4.translationValues(
-              hundido ? 4 : 0, hundido ? 4 : 0, 0),
+            hundido ? 4 : 0,
+            hundido ? 4 : 0,
+            0,
+          ),
           padding: const EdgeInsets.symmetric(
-              horizontal: Espacios.paso4, vertical: Espacios.paso2),
+            horizontal: Espacios.paso4,
+            vertical: Espacios.paso2,
+          ),
           decoration: BoxDecoration(
             color: activo ? fondo : Colores.piedra,
             borderRadius: Radios.astilla,
             border: Border.all(
-                color: activo ? contorno : Colores.borde, width: 2),
+              color: activo ? contorno : Colores.borde,
+              width: 2,
+            ),
             boxShadow: hundido || !activo ? null : sombraDura,
           ),
           // Center con factor 1 se ajusta al contenido: `alignment` haría que
@@ -105,9 +112,12 @@ class _BotonUmbralState extends State<BotonUmbral> {
                 ),
                 if (widget.costo != null) ...[
                   const SizedBox(width: Espacios.paso4),
-                  Text(widget.costo!,
-                      style: Textos.contador(
-                          color: activo ? texto : Colores.ceniza)),
+                  Text(
+                    widget.costo!,
+                    style: Textos.contador(
+                      color: activo ? texto : Colores.ceniza,
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -176,7 +186,10 @@ class _BotonIconoState extends State<BotonIcono> {
                 height: 48,
                 alignment: Alignment.center,
                 transform: Matrix4.translationValues(
-                    hundido ? 4 : 0, hundido ? 4 : 0, 0),
+                  hundido ? 4 : 0,
+                  hundido ? 4 : 0,
+                  0,
+                ),
                 decoration: BoxDecoration(
                   color: Colores.piedra,
                   borderRadius: Radios.astilla,
@@ -191,10 +204,11 @@ class _BotonIconoState extends State<BotonIcono> {
                   top: -6,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: Espacios.paso1, vertical: 2),
+                      horizontal: Espacios.paso1,
+                      vertical: 2,
+                    ),
                     color: Colores.sangre,
-                    child: Text('${widget.insignia}',
-                        style: Textos.etiqueta()),
+                    child: Text('${widget.insignia}', style: Textos.etiqueta()),
                   ),
                 ),
             ],

@@ -10,7 +10,9 @@ class EnemigoServicio {
     if (_recompensas case final guardadas?) return guardadas;
     final datos = await ApiCliente.get('/enemigos') as List;
     return _recompensas = {
-      for (final r in datos.map((r) => Recompensa.fromMap(r as Map<String, dynamic>)))
+      for (final r in datos.map(
+        (r) => Recompensa.fromMap(r as Map<String, dynamic>),
+      ))
         r.id: r,
     };
   }

@@ -7,6 +7,10 @@ enum Ataque { cuerpoACuerpo, distancia }
 /// Estadísticas y comportamiento de cada criatura. Las distancias están en
 /// píxeles de arte y los tiempos en segundos. Lo que da al ser derrotada lo
 /// decide el servidor (`EnemigoServicio`), por [id].
+///
+/// La dificultad es la de un souls: pocos golpes bastan para caer, así que
+/// cada ataque se avisa (la criatura se agazapa y parpadea en [preparacion]) y
+/// se puede esquivar rodando.
 class TipoEnemigo {
   final String id;
   final String nombre;
@@ -17,7 +21,7 @@ class TipoEnemigo {
   final double alcance;
 
   /// Tiempo de aviso antes de golpear: el jugador lo ve parpadear y puede
-  /// apartarse.
+  /// apartarse o rodar.
   final double preparacion;
   final double recarga;
   final Ataque ataque;
@@ -35,6 +39,20 @@ class TipoEnemigo {
   /// Cuánto zigzaguea al moverse (0 = en línea recta).
   final double erratico;
   final Color colorProyectil;
+  final double velocidadProyectil;
+  final double tamanoProyectil;
+
+  /// Proyectiles por disparo, abiertos en abanico.
+  final int proyectiles;
+
+  /// Golpes seguidos que encadena, con un aviso más corto entre ellos.
+  final int combo;
+
+  /// Si es firme, los golpes del jugador no le interrumpen el ataque.
+  final bool firme;
+
+  /// Los jefes no vuelven a su sitio ni se curan al alejarse el jugador.
+  final bool jefe;
 
   /// Radio del cuerpo para golpes y choques, en píxeles de arte.
   final double radio;
@@ -59,6 +77,12 @@ class TipoEnemigo {
     this.regeneracion = 0,
     this.erratico = 0,
     this.colorProyectil = Colores.ceniza,
+    this.velocidadProyectil = 110,
+    this.tamanoProyectil = 2,
+    this.proyectiles = 1,
+    this.combo = 1,
+    this.firme = false,
+    this.jefe = false,
     this.radio = 6,
     double? alturaCentro,
   }) : alturaCentro = alturaCentro ?? (vuela ? 10 : 6);
@@ -67,112 +91,127 @@ class TipoEnemigo {
 }
 
 abstract final class Enemigos {
-  /// Débil y esquivo: se mueve en zigzag.
+  /// Débil y esquivo: se mueve en zigzag y muerde dos veces.
   static const ojoErrante = TipoEnemigo(
     id: 'ojo-errante',
     nombre: 'Ojo errante',
-    vida: 22,
-    dano: 7,
-    velocidad: 52,
-    deteccion: 105,
+    vida: 34,
+    dano: 15,
+    velocidad: 60,
+    deteccion: 120,
     alcance: 10,
-    preparacion: 0.35,
-    recarga: 1.1,
+    preparacion: 0.32,
+    recarga: 0.9,
     vuela: true,
     erratico: 1,
+    combo: 2,
   );
 
-  /// Mordida fuerte: se agazapa y salta sobre el jugador.
+  /// Mordida brutal: se agazapa y salta sobre el jugador desde lejos.
   static const fauce = TipoEnemigo(
     id: 'fauce',
     nombre: 'Fauce',
-    vida: 48,
-    dano: 17,
-    velocidad: 36,
-    deteccion: 100,
-    alcance: 26,
-    preparacion: 0.6,
-    recarga: 1.6,
-    embestida: 170,
+    vida: 80,
+    dano: 34,
+    velocidad: 44,
+    deteccion: 125,
+    alcance: 34,
+    preparacion: 0.55,
+    recarga: 1.3,
+    embestida: 210,
   );
 
-  /// Vuela y escupe polvo a distancia; huye si te acercas.
+  /// Vuela y escupe polvo de hueso en abanico; huye si te acercas.
   static const polillaOsaria = TipoEnemigo(
     id: 'polilla-osaria',
     nombre: 'Polilla osaria',
-    vida: 26,
-    dano: 9,
-    velocidad: 44,
-    deteccion: 130,
-    alcance: 85,
+    vida: 40,
+    dano: 18,
+    velocidad: 52,
+    deteccion: 150,
+    alcance: 95,
     preparacion: 0.5,
-    recarga: 2.0,
+    recarga: 1.7,
     ataque: Ataque.distancia,
     vuela: true,
     colorProyectil: Colores.ceniza,
+    velocidadProyectil: 125,
+    proyectiles: 3,
   );
 
-  /// Lenta y resistente; lanza fuego de sus velas.
+  /// Lenta y resistente; lanza fuego de sus velas y no se inmuta al recibir
+  /// golpes.
   static const larvaCirio = TipoEnemigo(
     id: 'larva-cirio',
     nombre: 'Larva cirio',
-    vida: 95,
-    dano: 14,
-    velocidad: 16,
-    deteccion: 95,
-    alcance: 95,
-    preparacion: 0.9,
-    recarga: 2.4,
+    vida: 150,
+    dano: 30,
+    velocidad: 18,
+    deteccion: 110,
+    alcance: 105,
+    preparacion: 0.8,
+    recarga: 2.0,
     ataque: Ataque.distancia,
     colorProyectil: Colores.brasa,
+    velocidadProyectil: 95,
+    tamanoProyectil: 3,
+    firme: true,
   );
 
-  /// Muchos golpes débiles que te agarran y te frenan.
+  /// Muchos golpes rápidos que te agarran y te frenan.
   static const manojo = TipoEnemigo(
     id: 'manojo',
     nombre: 'Manojo',
-    vida: 60,
-    dano: 6,
-    velocidad: 30,
-    deteccion: 90,
-    alcance: 11,
-    preparacion: 0.25,
-    recarga: 0.6,
-    ralentiza: 1.0,
+    vida: 90,
+    dano: 12,
+    velocidad: 36,
+    deteccion: 105,
+    alcance: 12,
+    preparacion: 0.24,
+    recarga: 0.7,
+    ralentiza: 1.4,
+    combo: 3,
   );
 
-  /// Se cura si no lo matas rápido.
+  /// Se cura si no lo matas rápido, y golpea dos veces con su farol.
   static const ahorcadoFungico = TipoEnemigo(
     id: 'ahorcado-fungico',
     nombre: 'Ahorcado fúngico',
-    vida: 52,
-    dano: 10,
-    velocidad: 28,
-    deteccion: 95,
-    alcance: 11,
-    preparacion: 0.45,
-    recarga: 1.3,
-    regeneracion: 5,
+    vida: 85,
+    dano: 24,
+    velocidad: 34,
+    deteccion: 110,
+    alcance: 13,
+    preparacion: 0.42,
+    recarga: 1.1,
+    regeneracion: 9,
+    combo: 2,
   );
 
-  /// Jefe de la sala del trono de la cripta. Lento, pero cada golpe pesa y
-  /// salta sobre el jugador desde lejos.
+  /// Jefe de la sala del trono de la cripta. Alterna barridos, saltos que
+  /// aplastan y lluvias de ojos; a media vida se enfurece y es más rápido.
   static const reyHueco = TipoEnemigo(
     id: 'jefe-rey-hueco',
     nombre: 'El Rey Hueco',
-    vida: 650,
-    dano: 26,
-    velocidad: 24,
-    deteccion: 120,
+    vida: 950,
+    dano: 46,
+    velocidad: 30,
+    deteccion: 140,
     alcance: 30,
-    preparacion: 0.8,
-    recarga: 1.5,
-    embestida: 140,
+    preparacion: 0.75,
+    recarga: 1.0,
+    embestida: 180,
+    colorProyectil: Colores.alma,
+    velocidadProyectil: 115,
+    tamanoProyectil: 4,
+    firme: true,
+    jefe: true,
     radio: 11,
     alturaCentro: 14,
   );
 
-  /// Las criaturas que aparecen en el mundo (el jefe va aparte).
+  /// Las criaturas que aparecen en el mundo y en las salas (el jefe va
+  /// aparte).
   static const todos = [
     ojoErrante,
     fauce,
@@ -181,4 +220,7 @@ abstract final class Enemigos {
     manojo,
     ahorcadoFungico,
   ];
+
+  static TipoEnemigo? porId(String id) =>
+      [...todos, reyHueco].where((t) => t.id == id).firstOrNull;
 }

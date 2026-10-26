@@ -10,22 +10,36 @@ class UsuarioServicio {
     required String email,
     required String password,
   }) async {
-    final datos = await ApiCliente.post('/usuarios/registro',
-        {'username': username, 'email': email, 'password': password});
+    final datos = await ApiCliente.post('/usuarios/registro', {
+      'username': username,
+      'email': email,
+      'password': password,
+    });
     return _abrirSesion(datos as Map<String, dynamic>);
   }
 
   /// [identificador] puede ser el email o el username.
-  Future<UsuarioDto> iniciarSesion(String identificador, String password) async {
-    final datos = await ApiCliente.post('/usuarios/login',
-        {'identificador': identificador, 'password': password});
+  Future<UsuarioDto> iniciarSesion(
+    String identificador,
+    String password,
+  ) async {
+    final datos = await ApiCliente.post('/usuarios/login', {
+      'identificador': identificador,
+      'password': password,
+    });
     return _abrirSesion(datos as Map<String, dynamic>);
   }
+
+  /// Vuelve a abrir la última sesión guardada en el teléfono, sin pedir la
+  /// contraseña. Devuelve `false` si no había ninguna. El token puede haber
+  /// caducado: la primera petición lo dirá con `sesionCaducada`.
+  bool restaurarSesion() => SesionServicio.restaurar();
 
   /// Pide el usuario al servidor y actualiza la sesión con él.
   Future<UsuarioDto> obtenerYo() async {
     final usuario = UsuarioDto.fromMap(
-        await ApiCliente.get('/usuarios/yo') as Map<String, dynamic>);
+      await ApiCliente.get('/usuarios/yo') as Map<String, dynamic>,
+    );
     SesionServicio.actualizar(usuario);
     return usuario;
   }
@@ -41,7 +55,9 @@ class UsuarioServicio {
   void cerrarSesion() => SesionServicio.cerrar();
 
   UsuarioDto _abrirSesion(Map<String, dynamic> datos) {
-    final usuario = UsuarioDto.fromMap(datos['usuario'] as Map<String, dynamic>);
+    final usuario = UsuarioDto.fromMap(
+      datos['usuario'] as Map<String, dynamic>,
+    );
     SesionServicio.abrir(usuario, datos['token'] as String);
     return usuario;
   }

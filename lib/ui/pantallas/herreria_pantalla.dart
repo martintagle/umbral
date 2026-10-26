@@ -4,6 +4,7 @@ import '../../servicio/modelos/combate.dart';
 import '../../servicio/modelos/partida_jugable.dart';
 import '../../servicio/servicio_excepcion.dart';
 import '../clases_ui.dart';
+import '../sonido.dart';
 import '../tema/tema_umbral.dart';
 import '../widgets/boton_umbral.dart';
 import '../widgets/icono_umbral.dart';
@@ -17,8 +18,11 @@ class HerreriaPantalla extends StatefulWidget {
   /// Mejora la pieza (`arma` o `armadura`) y devuelve la partida resultante.
   final Future<PartidaJugable> Function(String pieza) alMejorar;
 
-  const HerreriaPantalla(
-      {super.key, required this.partida, required this.alMejorar});
+  const HerreriaPantalla({
+    super.key,
+    required this.partida,
+    required this.alMejorar,
+  });
 
   @override
   State<HerreriaPantalla> createState() => _HerreriaPantallaState();
@@ -42,6 +46,7 @@ class _HerreriaPantallaState extends State<HerreriaPantalla> {
     });
     try {
       final nueva = await widget.alMejorar(_pieza);
+      Sonido.efecto(Audios.oro);
       if (!mounted) return;
       final equipo = nueva.partida.personaje.equipo;
       final nivel = _pieza == 'arma' ? equipo.nivelArma : equipo.nivelArmadura;
@@ -65,131 +70,158 @@ class _HerreriaPantallaState extends State<HerreriaPantalla> {
     final nivel = esArma
         ? personaje.equipo.nivelArma
         : personaje.equipo.nivelArmadura;
-    final Mejora? mejora =
-        esArma ? combate.mejoraArma : combate.mejoraArmadura;
+    final Mejora? mejora = esArma ? combate.mejoraArma : combate.mejoraArmadura;
     final valor = esArma ? combate.dano : combate.defensa;
     final falta = mejora == null ? 0 : mejora.costo - personaje.oro;
+
+    // En horizontal: a la izquierda la pieza y su nivel; a la derecha lo que
+    // cambia, el costo y el botón.
+    final pieza = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _Pestanas(
+          elegida: _pieza,
+          alElegir: (p) => setState(() {
+            _pieza = p;
+            _error = null;
+            _hecho = null;
+          }),
+        ),
+        const SizedBox(height: Espacios.paso4),
+        Row(
+          children: [
+            _Ranura(icono: esArma ? clase.iconoArma : 'armadura', nivel: nivel),
+            const SizedBox(width: Espacios.paso4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    esArma ? clase.arma : clase.armadura,
+                    style: Textos.encabezado(),
+                  ),
+                  Text(
+                    mejora == null
+                        ? 'NIVEL $nivel · MÁXIMO'
+                        : 'NIVEL $nivel ▶ ${nivel + 1}',
+                    style: Textos.etiqueta(color: Colores.brasa),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: Espacios.paso4),
+        _Pips(nivel: nivel, maximo: _nivelMaximo),
+      ],
+    );
+
+    final detalle = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        PanelUmbral(
+          padding: const EdgeInsets.all(Espacios.paso2),
+          child: Column(
+            children: [
+              _Cambio(
+                esArma ? 'Daño' : 'Defensa',
+                '$valor',
+                mejora == null ? null : '${mejora.valorSiguiente}',
+              ),
+              if (mejora != null)
+                _Material(
+                  icono: 'oro',
+                  nombre: 'Oro',
+                  tengo: personaje.oro,
+                  necesito: mejora.costo,
+                ),
+            ],
+          ),
+        ),
+        if (mejora != null && falta > 0) ...[
+          const SizedBox(height: Espacios.paso4),
+          AvisoError(
+            'Te faltan $falta de oro. Las criaturas lo sueltan al caer.',
+          ),
+        ],
+        if (_error != null) ...[
+          const SizedBox(height: Espacios.paso4),
+          AvisoError(_error!),
+        ],
+        if (_hecho != null) ...[
+          const SizedBox(height: Espacios.paso4),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              _hecho!,
+              textAlign: TextAlign.center,
+              style: Textos.cuerpo(color: Colores.brasa),
+            ),
+          ),
+        ],
+        const SizedBox(height: Espacios.paso4),
+        BotonUmbral(
+          texto: mejora == null ? 'Nivel máximo' : 'Mejorar',
+          icono: 'yunque',
+          estilo: EstiloBoton.acento,
+          costo: mejora == null ? null : '${mejora.costo} ORO',
+          cargando: _cargando,
+          alPulsar: mejora != null && falta <= 0 ? _mejorar : null,
+        ),
+      ],
+    );
 
     return Scaffold(
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
+            constraints: const BoxConstraints(maxWidth: 900),
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(Espacios.paso4),
+                  padding: const EdgeInsets.fromLTRB(
+                    Espacios.paso4,
+                    Espacios.paso2,
+                    Espacios.paso4,
+                    Espacios.paso2,
+                  ),
                   child: Row(
                     children: [
                       BotonIcono(
-                          icono: 'atras',
-                          descripcion: 'Volver',
-                          alPulsar: () => Navigator.of(context).pop()),
+                        icono: 'atras',
+                        descripcion: 'Volver',
+                        alPulsar: () => Navigator.of(context).pop(),
+                      ),
                       const SizedBox(width: Espacios.paso4),
                       Expanded(
-                          child: Text('Herrería', style: Textos.tituloZona())),
+                        child: Text('Herrería', style: Textos.tituloZona()),
+                      ),
                       const IconoUmbral('oro', escala: 1),
                       const SizedBox(width: Espacios.paso1),
-                      Text('${personaje.oro}',
-                          style: Textos.contador(color: Colores.brasa)),
+                      Text(
+                        '${personaje.oro}',
+                        style: Textos.contador(color: Colores.brasa),
+                      ),
                     ],
-                  ),
-                ),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: Espacios.paso4),
-                  child: _Pestanas(
-                    elegida: _pieza,
-                    alElegir: (p) => setState(() {
-                      _pieza = p;
-                      _error = null;
-                      _hecho = null;
-                    }),
                   ),
                 ),
                 Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.all(Espacios.paso4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          _Ranura(
-                              icono: esArma ? clase.iconoArma : 'armadura',
-                              nivel: nivel),
-                          const SizedBox(width: Espacios.paso4),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(esArma ? clase.arma : clase.armadura,
-                                    style: Textos.encabezado()),
-                                Text(
-                                  mejora == null
-                                      ? 'NIVEL $nivel · MÁXIMO'
-                                      : 'NIVEL $nivel ▶ ${nivel + 1}',
-                                  style: Textos.etiqueta(color: Colores.brasa),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: Espacios.paso4),
-                      _Pips(nivel: nivel, maximo: _nivelMaximo),
-                      const SizedBox(height: Espacios.paso4),
-                      PanelUmbral(
-                        padding: const EdgeInsets.all(Espacios.paso2),
-                        child: Column(
-                          children: [
-                            _Cambio(
-                              esArma ? 'Daño' : 'Defensa',
-                              '$valor',
-                              mejora == null ? null : '${mejora.valorSiguiente}',
-                            ),
-                            if (mejora != null)
-                              _Material(
-                                  icono: 'oro',
-                                  nombre: 'Oro',
-                                  tengo: personaje.oro,
-                                  necesito: mejora.costo),
-                          ],
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(Espacios.paso4),
+                          child: pieza,
                         ),
                       ),
-                      if (mejora != null && falta > 0) ...[
-                        const SizedBox(height: Espacios.paso4),
-                        AvisoError('Te faltan $falta de oro. Las criaturas lo '
-                            'sueltan al caer.'),
-                      ],
-                      if (_error != null) ...[
-                        const SizedBox(height: Espacios.paso4),
-                        AvisoError(_error!),
-                      ],
-                      if (_hecho != null) ...[
-                        const SizedBox(height: Espacios.paso4),
-                        Semantics(
-                          liveRegion: true,
-                          child: Text(_hecho!,
-                              textAlign: TextAlign.center,
-                              style: Textos.cuerpo(color: Colores.brasa)),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(Espacios.paso4),
+                          child: detalle,
                         ),
-                      ],
+                      ),
                     ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(Espacios.paso4),
-                  decoration: const BoxDecoration(
-                    color: Colores.piedra,
-                    border:
-                        Border(top: BorderSide(color: Colores.borde, width: 2)),
-                  ),
-                  child: BotonUmbral(
-                    texto: mejora == null ? 'Nivel máximo' : 'Mejorar',
-                    icono: 'yunque',
-                    estilo: EstiloBoton.acento,
-                    costo: mejora == null ? null : '${mejora.costo} ORO',
-                    cargando: _cargando,
-                    alPulsar: mejora != null && falta <= 0 ? _mejorar : null,
                   ),
                 ),
               ],
@@ -231,9 +263,12 @@ class _Pestanas extends StatelessWidget {
                 children: [
                   IconoUmbral(icono, escala: 1),
                   const SizedBox(width: Espacios.paso2),
-                  Text(texto.toUpperCase(),
-                      style: Textos.etiqueta(
-                          color: activa ? Colores.brasa : Colores.ceniza)),
+                  Text(
+                    texto.toUpperCase(),
+                    style: Textos.etiqueta(
+                      color: activa ? Colores.brasa : Colores.ceniza,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -274,8 +309,10 @@ class _Ranura extends StatelessWidget {
           Positioned(
             left: 4,
             top: 2,
-            child: Text('+$nivel',
-                style: Textos.etiqueta(color: Colores.brasa)),
+            child: Text(
+              '+$nivel',
+              style: Textos.etiqueta(color: Colores.brasa),
+            ),
           ),
           Positioned(
             right: 4,
@@ -309,8 +346,9 @@ class _Pips extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: i <= nivel ? Colores.brasa : Colores.abismo,
                   border: Border.all(
-                      color: i == nivel + 1 ? Colores.hueso : Colores.borde,
-                      width: 2),
+                    color: i == nivel + 1 ? Colores.hueso : Colores.borde,
+                    width: 2,
+                  ),
                 ),
               ),
             ),
@@ -351,11 +389,12 @@ class _Material extends StatelessWidget {
   final int tengo;
   final int necesito;
 
-  const _Material(
-      {required this.icono,
-      required this.nombre,
-      required this.tengo,
-      required this.necesito});
+  const _Material({
+    required this.icono,
+    required this.nombre,
+    required this.tengo,
+    required this.necesito,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -375,9 +414,12 @@ class _Material extends StatelessWidget {
             ),
             const SizedBox(width: Espacios.paso2),
           ],
-          Text('$tengo/$necesito',
-              style: Textos.contador(
-                  color: alcanza ? Colores.podredumbre : Colores.hueso)),
+          Text(
+            '$tengo/$necesito',
+            style: Textos.contador(
+              color: alcanza ? Colores.podredumbre : Colores.hueso,
+            ),
+          ),
         ],
       ),
     );

@@ -53,54 +53,53 @@ class MapaMundo {
   late final Set<int> objetosAltos;
 
   MapaMundo._(Map<String, dynamic> m)
-      : ancho = m['ancho'] as int,
-        alto = m['alto'] as int,
-        columnasTileset = m['columnasTileset'] as int,
-        indiceObjetos = m['tiles']['indiceObjetos'] as int,
-        indiceEntidades = m['tiles']['indiceEntidades'] as int,
-        nombresObjetos = List<String>.from(m['tiles']['objetos'] as List),
-        nombresEntidades = List<String>.from(m['tiles']['entidades'] as List),
-        suelo = _rejilla(m['capas']['suelo']),
-        objetos = _rejilla(m['capas']['objetos']),
-        estructuras = [
-          for (final e in m['estructuras'] as List)
-            (
-              sprite: e['sprite'] as String,
-              x: e['x'] as int,
-              y: e['y'] as int,
-              w: e['w'] as int,
-              h: e['h'] as int,
-              huellaFilas: e['huellaFilas'] as int,
-              puerta: [
-                for (final p in e['puerta'] as List)
-                  (p[0] as int, p[1] as int)
-              ],
-            )
-        ],
-        cofres = _celdas(m['cofres']),
-        letreros = [
-          for (final l in m['letreros'] as List)
-            (x: l['x'] as int, y: l['y'] as int, texto: l['texto'] as String)
-        ],
-        portales = _celdas(m['portales']),
-        enemigos = [
-          for (final e in m['enemigos'] as List)
-            (tipo: e['tipo'] as String, x: e['x'] as int, y: e['y'] as int)
-        ],
-        regiones = [
-          for (final z in m['zonas'] as List)
-            (
-              nombre: z['nombre'] as String,
-              x: z['x'] as int,
-              y: z['y'] as int,
-              w: z['w'] as int,
-              h: z['h'] as int,
-            )
-        ],
-        inicio = Vector2(
-          (m['inicio']['x'] as num) * tile,
-          (m['inicio']['y'] as num) * tile + 12,
-        ) {
+    : ancho = m['ancho'] as int,
+      alto = m['alto'] as int,
+      columnasTileset = m['columnasTileset'] as int,
+      indiceObjetos = m['tiles']['indiceObjetos'] as int,
+      indiceEntidades = m['tiles']['indiceEntidades'] as int,
+      nombresObjetos = List<String>.from(m['tiles']['objetos'] as List),
+      nombresEntidades = List<String>.from(m['tiles']['entidades'] as List),
+      suelo = _rejilla(m['capas']['suelo']),
+      objetos = _rejilla(m['capas']['objetos']),
+      estructuras = [
+        for (final e in m['estructuras'] as List)
+          (
+            sprite: e['sprite'] as String,
+            x: e['x'] as int,
+            y: e['y'] as int,
+            w: e['w'] as int,
+            h: e['h'] as int,
+            huellaFilas: e['huellaFilas'] as int,
+            puerta: [
+              for (final p in e['puerta'] as List) (p[0] as int, p[1] as int),
+            ],
+          ),
+      ],
+      cofres = _celdas(m['cofres']),
+      letreros = [
+        for (final l in m['letreros'] as List)
+          (x: l['x'] as int, y: l['y'] as int, texto: l['texto'] as String),
+      ],
+      portales = _celdas(m['portales']),
+      enemigos = [
+        for (final e in m['enemigos'] as List)
+          (tipo: e['tipo'] as String, x: e['x'] as int, y: e['y'] as int),
+      ],
+      regiones = [
+        for (final z in m['zonas'] as List)
+          (
+            nombre: z['nombre'] as String,
+            x: z['x'] as int,
+            y: z['y'] as int,
+            w: z['w'] as int,
+            h: z['h'] as int,
+          ),
+      ],
+      inicio = Vector2(
+        (m['inicio']['x'] as num) * tile,
+        (m['inicio']['y'] as num) * tile + 12,
+      ) {
     final nombresSuelo = List<String>.from(m['tiles']['suelo'] as List);
     final reglas = m['reglas'] as Map<String, dynamic>;
     final sueloSolido = {
@@ -108,7 +107,7 @@ class MapaMundo {
         ...reglas['sueloBloquea'] as List,
         ...reglas['sueloSoloDiminuto'] as List,
       ])
-        nombresSuelo.indexOf(n as String)
+        nombresSuelo.indexOf(n as String),
     };
     final agua = nombresSuelo.indexOf('agua');
     objetosAltos = {
@@ -116,7 +115,7 @@ class MapaMundo {
         ...reglas['objetosBloquean'] as List,
         ...(reglas['objetosConLlave'] as Map).keys,
       ])
-        nombresObjetos.indexOf(n as String)
+        nombresObjetos.indexOf(n as String),
     };
     final portal = nombresObjetos.indexOf('portal');
 
@@ -150,16 +149,17 @@ class MapaMundo {
   }
 
   static Future<MapaMundo> cargar() async => MapaMundo._(
-      jsonDecode(await rootBundle.loadString('assets/mapas/mundo.json'))
-          as Map<String, dynamic>);
+    jsonDecode(await rootBundle.loadString('assets/mapas/mundo.json'))
+        as Map<String, dynamic>,
+  );
 
   static List<List<int>> _rejilla(Object? capa) => [
-        for (final fila in capa as List) List<int>.from(fila as List),
-      ];
+    for (final fila in capa as List) List<int>.from(fila as List),
+  ];
 
   static List<(int, int)> _celdas(Object? lista) => [
-        for (final c in lista as List) (c['x'] as int, c['y'] as int),
-      ];
+    for (final c in lista as List) (c['x'] as int, c['y'] as int),
+  ];
 
   double get anchoPx => ancho * tile;
   double get altoPx => alto * tile;

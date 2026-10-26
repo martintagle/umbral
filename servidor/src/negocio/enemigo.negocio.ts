@@ -18,10 +18,20 @@ const RECOMPENSAS: Record<string, Omit<Recompensa, 'id'>> = {
   'jefe-rey-hueco': { exp: 400, oro: 150 },
 };
 
+/** Criaturas que, una vez vencidas, no vuelven: quedan en `mundo.jefesDerrotados`. */
+const JEFES = new Set(['jefe-rey-hueco']);
+
 /** Reglas de las criaturas: qué da cada una al ser derrotada. No accede a la base de datos. */
 export const enemigoNegocio = {
   catalogo(): Recompensa[] {
     return Object.entries(RECOMPENSAS).map(([id, r]) => ({ id, ...r }));
+  },
+
+  /** Jefes entre los enemigos derrotados, indicados como `{ id: cantidad }`. */
+  jefesEn(derrotados: Record<string, number>): string[] {
+    return Object.entries(derrotados)
+      .filter(([id, n]) => n > 0 && JEFES.has(id))
+      .map(([id]) => id);
   },
 
   /** Suma lo que dan los enemigos derrotados, indicados como `{ id: cantidad }`. */
