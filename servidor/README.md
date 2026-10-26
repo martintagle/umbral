@@ -5,12 +5,14 @@ API REST que usa la app. Contiene las capas que hablan con la base de datos: **c
 ```
 src/
 ├── conexion/   Conexión a MongoDB Atlas
-├── dto/        Réplica de la colección usuarios
+├── dto/        Réplica de las colecciones usuarios y clases
 ├── negocio/    Consultas a Mongo y reglas del juego
 ├── servicio/   API REST (Express)
 ├── dev/        Utilidades de desarrollo
 └── index.ts    Arranque
-bd/esquema-usuarios.json   Validador de la colección
+bd/esquema-usuarios.json   Validador de la colección usuarios
+bd/esquema-clases.json     Validador de la colección clases
+bd/clases.json             Las cinco clases, para crearlas si faltan
 ```
 
 ## Requisitos
@@ -31,10 +33,10 @@ npm run dev               # API en http://localhost:3000 con recarga automática
 | Script | Qué hace |
 |---|---|
 | `npm run dev` | Arranca la API contra Atlas y la reinicia al guardar cambios. |
-| `npm run dev:memoria` | Arranca la API con una base temporal en memoria (mismo validador e índices). No necesita Atlas ni `.env`; los datos se pierden al cerrarla. |
+| `npm run dev:memoria` | Arranca la API con una base temporal en memoria (mismos validadores, índices y clases). No necesita Atlas ni `.env`; los datos se pierden al cerrarla. |
 | `npm run tipos` | Comprueba los tipos sin compilar. |
 | `npm run build` / `npm start` | Compila a `dist/` y lo ejecuta (producción). |
-| `npm run bd:esquema` | Aplica `bd/esquema-usuarios.json` como validador de `rpg.usuarios` en Atlas. Necesita un usuario con permiso `dbAdmin`. |
+| `npm run bd:esquema` | Aplica `bd/esquema-usuarios.json` y `bd/esquema-clases.json` como validadores de `rpg.usuarios` y `rpg.clases` en Atlas e inserta las clases de `bd/clases.json` que falten (no toca las que ya existen). Necesita un usuario con permiso `dbAdmin`. |
 
 ## Conectar la app
 
@@ -43,3 +45,5 @@ npm run dev               # API en http://localhost:3000 con recarga automática
 - **Producción:** despliega el servidor con HTTPS y usa esa URL en `API_URL`. Pasos en [docs/despliegue.md](../docs/despliegue.md).
 
 La cadena de Atlas y la clave JWT viven solo en el `.env` del servidor; nunca van dentro de la app.
+
+Al arrancar, la API lee `rpg.clases` una vez y la guarda en memoria: si se cambia una clase en Atlas hay que reiniciarla. Si falta alguna de las cinco clases, no arranca.

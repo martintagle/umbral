@@ -13,23 +13,23 @@ Muestra las pantallas, recoge lo que escribe el usuario y **solo se comunica con
 | Carpeta / archivo | Contenido |
 |---|---|
 | `pantallas/` | Una pantalla por archivo: `<nombre>_pantalla.dart` (por ejemplo, `usuario_lista_pantalla.dart`, `usuario_formulario_pantalla.dart`). |
-| `widgets/` | Componentes visuales reutilizables entre pantallas, según `docs/diseno/interfaz/componentes.md`: `BotonUmbral` (variantes principal, secundario, acento y peligro, con icono y costo), `BotonIcono`, `SelectorUmbral`, `confirmar` (ventana de confirmación), `IconoUmbral` (set de `assets/iconos/`, cargado en `main`), paneles, campos y sprites. |
+| `widgets/` | Componentes visuales reutilizables entre pantallas, según `docs/diseno/interfaz/componentes.md`: `BotonUmbral` (variantes principal, secundario, acento y peligro, con icono y costo), `BotonIcono`, `SelectorUmbral`, `confirmar` (ventana de confirmación), `IconoUmbral` (set de `assets/iconos/`, cargado en `main`), paneles, campos y sprites. `pieza_hud.dart` dibuja las piezas de `assets/hud/` a 3x (cuadros en fila, barras recortadas y botones que actúan al tocar). |
 | `validaciones/validaciones.dart` | Funciones de validación locales reutilizables, pensadas para usarlas como `validator` en `TextFormField`. Devuelven `null` si el valor es válido o el texto del error si no lo es. |
 | `tema/` | Tokens del sistema de diseño (`docs/diseno/tokens.json`): colores, tipografías, espaciado, radios y sombra dura. |
 | `juego/` | El juego en tiempo real, hecho con Flame. Cada lugar es un `Escenario`: el mundo (`zona_tierras.dart`, el mapa de `assets/mapas/mundo.json`, de noche, con la luz del jugador y las antorchas en `iluminacion.dart`) o una sala interior (`sala_interior.dart`, de `assets/interiores/interiores.json`). Se entra por la puerta de las chozas, la capilla, la torre y la cripta; la cripta baja por una escalera a la sala del trono del Rey Hueco. También están el jugador, los enemigos, los proyectiles y los efectos. Personajes y criaturas se dibujan a la mitad de su tamaño de arte (`escalaSprites`) con un zoom de cámara par, y se animan por código al atacar, recibir daño y morir. Los ataques gastan estamina, que se recupera sola. Juega con los valores de combate que da el servidor y anota en `registro_progreso.dart` lo que pasa (exp, oro, enemigos, muertes, tiempo). Al descansar, revivir o salir, la pantalla envía ese registro con `PartidaServicio` y el servidor aplica la subida de nivel. |
 | `sonido.dart` | Música y efectos (`flame_audio`, archivos de `assets/audios/`) con el volumen de los ajustes. Hasta que `main` lo inicia no suena nada, y un fallo del audio nunca detiene el juego. |
-| `clases_ui.dart` | Nombre, arma, descripción y sprite de cada clase. Las estadísticas vienen del servicio. |
+| `clases_ui.dart` | Sprite, icono del arma, armadura y atributo del arma de cada clase. El nombre, el arma y la descripción vienen de la colección `clases` (`ClaseServicio`); las estadísticas, del servidor. |
 
 ## Pantallas
 
 | Archivo | Qué hace |
 |---|---|
-| `titulo_pantalla.dart` | Título "Umbral". Se toca para continuar: si el teléfono recuerda la sesión, va directo a las partidas. |
+| `titulo_pantalla.dart` | Logo y título "Umbral". Se toca para continuar: si el teléfono recuerda la sesión, va directo a las partidas. |
 | `ajustes_pantalla.dart` | Volumen de música y efectos. Se abre desde el título, las partidas y la pausa; se guarda en el teléfono y en la cuenta. |
 | `login_pantalla.dart` | Iniciar sesión con correo o usuario, o crear cuenta. |
 | `partidas_pantalla.dart` | Lista de partidas: jugar, borrar o crear una nueva. |
 | `nuevo_personaje_pantalla.dart` | Elegir clase, apariencia y nombre, con las estadísticas de la clase. |
-| `juego_pantalla.dart` | El juego con su HUD: vida, estamina, experiencia, oro, cruceta, ataque, las acciones del lugar (descansar, entrar, abrir...) y menú de pausa. Abre las dos pantallas siguientes después de guardar. |
+| `juego_pantalla.dart` | El juego con su HUD de `assets/hud/` (ver su README), sin paneles: barras de vida y estamina sin números, EXP y oro con icono, palanca, atacar con el arma de la clase, rodar, frasco, las acciones del lugar (descansar, entrar, abrir...) con su emblema, la vida del jefe y el menú de pausa, que muestra el nombre y el nivel. Abre las dos pantallas siguientes después de guardar. |
 | `estadisticas_pantalla.dart` | Altar de brasas: gasta experiencia para subir vigor, fuerza, destreza o intelecto. Cada punto es un nivel y cuesta más que el anterior, como en Elden Ring. Muestra el costo total y lo que queda antes de confirmar. Se abre en el altar de la aldea y en el de la capilla. |
 | `herreria_pantalla.dart` | Yunque de la Herrería abandonada: mejora el arma que porta el personaje o su armadura con oro. Cada mejora cuesta más que la anterior. |
 

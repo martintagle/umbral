@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
+import '../../dto/clase_codigo.dart';
 import '../tema/tema_umbral.dart';
 
 /// Cómo se siente el arma de cada clase. El daño no está aquí: lo calcula el
@@ -40,22 +41,22 @@ class EstiloCombate {
   double get autoapuntado => dispara ? distanciaProyectil : alcance * 2.5;
 }
 
-const Map<String, EstiloCombate> estilosCombate = {
-  'vagabundo': EstiloCombate(
+const Map<ClaseCodigo, EstiloCombate> estilosCombate = {
+  ClaseCodigo.vagabundo: EstiloCombate(
     velocidad: 62,
     recarga: 0.38,
     costoEstamina: 16,
     alcance: 17,
     arco: pi * 0.7,
   ),
-  'guerrero': EstiloCombate(
+  ClaseCodigo.guerrero: EstiloCombate(
     velocidad: 52,
     recarga: 0.8,
     costoEstamina: 30,
     alcance: 21,
     arco: pi * 0.95,
   ),
-  'arquero': EstiloCombate(
+  ClaseCodigo.arquero: EstiloCombate(
     velocidad: 60,
     recarga: 0.5,
     costoEstamina: 14,
@@ -63,7 +64,7 @@ const Map<String, EstiloCombate> estilosCombate = {
     velocidadProyectil: 230,
     colorProyectil: Colores.hueso,
   ),
-  'mago': EstiloCombate(
+  ClaseCodigo.mago: EstiloCombate(
     velocidad: 56,
     recarga: 0.75,
     costoEstamina: 24,
@@ -72,7 +73,7 @@ const Map<String, EstiloCombate> estilosCombate = {
     tamanoProyectil: 4,
     colorProyectil: Colores.alma,
   ),
-  'prisionero': EstiloCombate(
+  ClaseCodigo.prisionero: EstiloCombate(
     velocidad: 68,
     recarga: 0.22,
     costoEstamina: 10,
@@ -81,5 +82,4 @@ const Map<String, EstiloCombate> estilosCombate = {
   ),
 };
 
-EstiloCombate estiloDe(String clase) =>
-    estilosCombate[clase] ?? estilosCombate['vagabundo']!;
+EstiloCombate estiloDe(ClaseCodigo clase) => estilosCombate[clase]!;

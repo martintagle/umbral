@@ -1,4 +1,6 @@
+import '../dto/apariencia.dart';
 import '../dto/atributos_dto.dart';
+import '../dto/clase_codigo.dart';
 import 'modelos/partida_jugable.dart';
 import 'modelos/progreso.dart';
 import 'api_cliente.dart';
@@ -15,16 +17,16 @@ class PartidaServicio {
         .toList();
   }
 
-  /// El servidor crea el personaje con las estadísticas de su clase.
+  /// El servidor crea el personaje copiando los atributos base de su clase.
   Future<PartidaJugable> crearPartida({
     required String nombre,
-    required String clase,
-    required String apariencia,
+    required ClaseCodigo claseCodigo,
+    required Apariencia apariencia,
   }) async {
     final datos = await ApiCliente.post('/partidas', {
       'nombre': nombre,
-      'clase': clase,
-      'apariencia': apariencia,
+      'claseCodigo': claseCodigo.name,
+      'apariencia': apariencia.name,
     });
     return PartidaJugable.fromMap(datos as Map<String, dynamic>);
   }

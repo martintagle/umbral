@@ -2,25 +2,29 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 
-import '../widgets/boton_umbral.dart';
 import 'enemigo.dart';
 import 'umbral_juego.dart';
 
 /// Algo que se puede hacer donde está el jugador: descansar, entrar, abrir un
-/// cofre... La pantalla lo muestra como botón y la tecla E hace la primera.
+/// cofre... La pantalla lo muestra como emblema con su texto al lado y la
+/// tecla E hace la primera.
 class AccionContexto {
   final String etiqueta;
   final VoidCallback alPulsar;
 
-  /// Nombre en `assets/iconos/iconos.json`.
-  final String? icono;
-  final EstiloBoton estilo;
+  /// Emblema `assets/hud/boton-accion-<boton>.png`: `descansar`, `entrar`,
+  /// `yunque`, `leer`, `abrir` o `hablar`.
+  final String boton;
+
+  /// El texto va en `brasa` para llamar la atención (por ejemplo, cuando
+  /// alcanza la experiencia para subir de nivel).
+  final bool resaltada;
 
   const AccionContexto(
     this.etiqueta,
     this.alPulsar, {
-    this.icono,
-    this.estilo = EstiloBoton.secundario,
+    this.boton = 'entrar',
+    this.resaltada = false,
   });
 }
 

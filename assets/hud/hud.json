@@ -1,0 +1,214 @@
+{
+ "escalaRecomendada": 3,
+ "filtrado": "vecino-mas-cercano",
+ "piezas": {
+  "vida-marco": {
+   "archivo": "vida-marco.png",
+   "ancho": 80,
+   "alto": 11,
+   "cuadros": 1,
+   "nota": "Marco de la barra. Cuadro 0 normal.",
+   "relleno": {
+    "x": 12,
+    "y": 3,
+    "ancho": 64,
+    "alto": 5
+   }
+  },
+  "vida-relleno": {
+   "archivo": "vida-relleno.png",
+   "ancho": 64,
+   "alto": 5,
+   "cuadros": 1,
+   "nota": "Se dibuja dentro del marco en (relleno.x, relleno.y) recortado a ancho·valor."
+  },
+  "estamina-marco": {
+   "archivo": "estamina-marco.png",
+   "ancho": 60,
+   "alto": 9,
+   "cuadros": 2,
+   "nota": "Marco de la barra. Cuadro 0 normal; cuadro 1 cuando no alcanza para un ataque (filo rojo).",
+   "relleno": {
+    "x": 10,
+    "y": 3,
+    "ancho": 46,
+    "alto": 3
+   }
+  },
+  "estamina-relleno": {
+   "archivo": "estamina-relleno.png",
+   "ancho": 46,
+   "alto": 3,
+   "cuadros": 1,
+   "nota": "Se dibuja dentro del marco en (relleno.x, relleno.y) recortado a ancho·valor."
+  },
+  "vida-perdida": {
+   "archivo": "vida-perdida.png",
+   "ancho": 64,
+   "alto": 5,
+   "cuadros": 1,
+   "nota": "Tramo de vida recién perdida: se dibuja detrás del relleno y se encoge hasta el valor real en ~0,5 s."
+  },
+  "jefe-marco": {
+   "archivo": "jefe-marco.png",
+   "ancho": 120,
+   "alto": 11,
+   "cuadros": 1,
+   "nota": "Vida del jefe. En horizontal, arriba al centro; en vertical, bajo las barras del jugador. El nombre va debajo, sin panel.",
+   "relleno": {
+    "x": 12,
+    "y": 3,
+    "ancho": 104,
+    "alto": 5
+   }
+  },
+  "jefe-relleno": {
+   "archivo": "jefe-relleno.png",
+   "ancho": 104,
+   "alto": 5,
+   "cuadros": 2,
+   "nota": "Cuadro 0 normal; cuadro 1 cuando el jefe está furioso."
+  },
+  "icono-exp": {
+   "archivo": "icono-exp.png",
+   "ancho": 9,
+   "alto": 9,
+   "cuadros": 1,
+   "nota": "Delante del número de EXP. Sin barra ni panel."
+  },
+  "icono-oro": {
+   "archivo": "icono-oro.png",
+   "ancho": 9,
+   "alto": 9,
+   "cuadros": 1,
+   "nota": "Delante del número de oro. Sin barra ni panel."
+  },
+  "boton-atacar-vagabundo": {
+   "archivo": "boton-atacar-vagabundo.png",
+   "ancho": 34,
+   "alto": 34,
+   "cuadros": 3,
+   "nota": "Atacar con el arma del vagabundo. Cuadros: 0 normal, 1 presionado, 2 sin estamina.",
+   "areaTactil": 40
+  },
+  "boton-atacar-guerrero": {
+   "archivo": "boton-atacar-guerrero.png",
+   "ancho": 34,
+   "alto": 34,
+   "cuadros": 3,
+   "nota": "Atacar con el arma del guerrero. Cuadros: 0 normal, 1 presionado, 2 sin estamina.",
+   "areaTactil": 40
+  },
+  "boton-atacar-arquero": {
+   "archivo": "boton-atacar-arquero.png",
+   "ancho": 34,
+   "alto": 34,
+   "cuadros": 3,
+   "nota": "Atacar con el arma del arquero. Cuadros: 0 normal, 1 presionado, 2 sin estamina.",
+   "areaTactil": 40
+  },
+  "boton-atacar-mago": {
+   "archivo": "boton-atacar-mago.png",
+   "ancho": 34,
+   "alto": 34,
+   "cuadros": 3,
+   "nota": "Atacar con el arma del mago. Cuadros: 0 normal, 1 presionado, 2 sin estamina.",
+   "areaTactil": 40
+  },
+  "boton-atacar-prisionero": {
+   "archivo": "boton-atacar-prisionero.png",
+   "ancho": 34,
+   "alto": 34,
+   "cuadros": 3,
+   "nota": "Atacar con el arma del prisionero. Cuadros: 0 normal, 1 presionado, 2 sin estamina.",
+   "areaTactil": 40
+  },
+  "boton-rodar": {
+   "archivo": "boton-rodar.png",
+   "ancho": 24,
+   "alto": 24,
+   "cuadros": 3,
+   "nota": "Rodar / esquivar. Cuadros: 0 normal, 1 presionado, 2 sin estamina.",
+   "areaTactil": 30
+  },
+  "boton-accion-descansar": {
+   "archivo": "boton-accion-descansar.png",
+   "ancho": 24,
+   "alto": 24,
+   "cuadros": 2,
+   "nota": "Acción de lugar «descansar». El texto de la acción va a su izquierda, sin panel. Cuadros: 0 normal, 1 presionado.",
+   "areaTactil": 30
+  },
+  "boton-accion-entrar": {
+   "archivo": "boton-accion-entrar.png",
+   "ancho": 24,
+   "alto": 24,
+   "cuadros": 2,
+   "nota": "Acción de lugar «entrar». El texto de la acción va a su izquierda, sin panel. Cuadros: 0 normal, 1 presionado.",
+   "areaTactil": 30
+  },
+  "boton-accion-yunque": {
+   "archivo": "boton-accion-yunque.png",
+   "ancho": 24,
+   "alto": 24,
+   "cuadros": 2,
+   "nota": "Acción de lugar «yunque». El texto de la acción va a su izquierda, sin panel. Cuadros: 0 normal, 1 presionado.",
+   "areaTactil": 30
+  },
+  "boton-accion-leer": {
+   "archivo": "boton-accion-leer.png",
+   "ancho": 24,
+   "alto": 24,
+   "cuadros": 2,
+   "nota": "Acción de lugar «leer». El texto de la acción va a su izquierda, sin panel. Cuadros: 0 normal, 1 presionado.",
+   "areaTactil": 30
+  },
+  "boton-accion-abrir": {
+   "archivo": "boton-accion-abrir.png",
+   "ancho": 24,
+   "alto": 24,
+   "cuadros": 2,
+   "nota": "Acción de lugar «abrir». El texto de la acción va a su izquierda, sin panel. Cuadros: 0 normal, 1 presionado.",
+   "areaTactil": 30
+  },
+  "boton-accion-hablar": {
+   "archivo": "boton-accion-hablar.png",
+   "ancho": 24,
+   "alto": 24,
+   "cuadros": 2,
+   "nota": "Acción de lugar «hablar». El texto de la acción va a su izquierda, sin panel. Cuadros: 0 normal, 1 presionado.",
+   "areaTactil": 30
+  },
+  "boton-frasco": {
+   "archivo": "boton-frasco.png",
+   "ancho": 16,
+   "alto": 20,
+   "cuadros": 3,
+   "nota": "Beber un frasco. El número de frascos va abajo a la derecha, sin caja. Cuadros: 0 con frascos, 1 presionado, 2 sin frascos.",
+   "areaTactil": 24
+  },
+  "boton-menu": {
+   "archivo": "boton-menu.png",
+   "ancho": 14,
+   "alto": 14,
+   "cuadros": 2,
+   "nota": "Abrir la pausa. Arriba a la derecha. Cuadros: 0 normal, 1 presionado.",
+   "areaTactil": 18
+  },
+  "palanca-base": {
+   "archivo": "palanca-base.png",
+   "ancho": 44,
+   "alto": 44,
+   "cuadros": 1,
+   "nota": "Anillo de runas semitransparente; la perilla se mueve hasta 14 px de arte del centro.",
+   "recorrido": 14
+  },
+  "palanca-perilla": {
+   "archivo": "palanca-perilla.png",
+   "ancho": 16,
+   "alto": 16,
+   "cuadros": 2,
+   "nota": "Cuadro 0 en reposo, 1 mientras se arrastra."
+  }
+ }
+}

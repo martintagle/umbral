@@ -1,4 +1,6 @@
+import 'apariencia.dart';
 import 'atributos_dto.dart';
+import 'clase_codigo.dart';
 import 'equipo_dto.dart';
 import 'estadisticas_dto.dart';
 import 'mundo_dto.dart';
@@ -7,14 +9,18 @@ import 'ubicacion_dto.dart';
 /// Réplica del subdocumento `usuarios.partidas[].personaje`.
 class PersonajeDto {
   final String nombre;
-  final String clase;
 
-  /// `hombre` o `mujer`: qué sprite de la clase usa el personaje.
-  final String apariencia;
+  /// Llave hacia `clases._id`. El nombre, el arma y la descripción se buscan
+  /// en la clase (`ClaseServicio.clase`); no se copian en el personaje.
+  final ClaseCodigo claseCodigo;
+  final Apariencia apariencia;
   final int nivel;
   final int exp;
   final int puntosLibres;
   final int oro;
+
+  /// Al crear el personaje son los `atributosBase` de su clase; después
+  /// evolucionan solos.
   final AtributosDto atributos;
   final int vidaActual;
   final int estaminaActual;
@@ -25,7 +31,7 @@ class PersonajeDto {
 
   const PersonajeDto({
     required this.nombre,
-    required this.clase,
+    required this.claseCodigo,
     required this.apariencia,
     required this.nivel,
     required this.exp,
@@ -43,8 +49,8 @@ class PersonajeDto {
   factory PersonajeDto.fromMap(Map<String, dynamic> map) {
     return PersonajeDto(
       nombre: map['nombre'] as String,
-      clase: map['clase'] as String,
-      apariencia: map['apariencia'] as String,
+      claseCodigo: ClaseCodigo.values.byName(map['claseCodigo'] as String),
+      apariencia: Apariencia.values.byName(map['apariencia'] as String),
       nivel: map['nivel'] as int,
       exp: map['exp'] as int,
       puntosLibres: map['puntosLibres'] as int,
@@ -64,8 +70,8 @@ class PersonajeDto {
   Map<String, dynamic> toMap() {
     return {
       'nombre': nombre,
-      'clase': clase,
-      'apariencia': apariencia,
+      'claseCodigo': claseCodigo.name,
+      'apariencia': apariencia.name,
       'nivel': nivel,
       'exp': exp,
       'puntosLibres': puntosLibres,

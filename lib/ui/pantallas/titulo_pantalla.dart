@@ -73,7 +73,7 @@ class _TituloPantallaState extends State<TituloPantalla> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const SpriteUmbral(
-                            ruta: 'assets/sprites/estructuras/altar-de-brasas.png',
+                            ruta: 'assets/logo/logo-u-32.png',
                             ancho: 32,
                             alto: 32,
                             escala: 6,

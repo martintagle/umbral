@@ -16,7 +16,6 @@ import '../../servicio/modelos/recompensa.dart';
 import '../clases_ui.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
-import '../widgets/boton_umbral.dart';
 import 'animacion.dart';
 import 'efectos.dart';
 import 'enemigo.dart';
@@ -196,11 +195,11 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
 
   /// Acción de los altares de brasas: se resalta cuando alcanza la
   /// experiencia.
-  AccionContexto accionSubirNivel({required String icono}) => AccionContexto(
+  AccionContexto accionSubirNivel() => AccionContexto(
     'Subir de nivel',
     () => abrirPantalla(PantallaJuego.estadisticas),
-    icono: icono,
-    estilo: puedeSubirNivel ? EstiloBoton.acento : EstiloBoton.secundario,
+    boton: 'descansar',
+    resaltada: puedeSubirNivel,
   );
 
   /// Dónde se despierta al caer, para el botón de la pantalla de muerte.
@@ -222,7 +221,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     final mapa = await MapaMundo.cargar();
     _interiores = await MapaInteriores.cargar();
     final rutaJugador = claseUi(
-      personaje.clase,
+      personaje.claseCodigo,
     ).sprite(personaje.apariencia).replaceFirst('assets/', '');
     await images.loadAll([
       'tiles/tileset.png',
@@ -234,7 +233,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     ]);
     // Las piezas que se animan por separado (brazos, piernas, alas...).
     await Esqueletos.preparar(images, {
-      rutaJugador: 'personajes/${personaje.clase}',
+      rutaJugador: 'personajes/${personaje.claseCodigo.name}',
       for (final e in [...Enemigos.todos, Enemigos.reyHueco])
         e.sprite: 'enemigos/${e.id}',
     });
@@ -266,7 +265,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     }
     jugador = Jugador(
       rutaSprite: rutaJugador,
-      estilo: estiloDe(personaje.clase),
+      estilo: estiloDe(personaje.claseCodigo),
       pies: pies,
     );
     await world.add(jugador);
@@ -359,8 +358,8 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   /// acciones se calculan cada cuadro.
   void _ponerAcciones(List<AccionContexto> nuevas) {
     if (listEquals(
-      [for (final a in acciones.value) (a.etiqueta, a.estilo)],
-      [for (final a in nuevas) (a.etiqueta, a.estilo)],
+      [for (final a in acciones.value) (a.etiqueta, a.resaltada)],
+      [for (final a in nuevas) (a.etiqueta, a.resaltada)],
     )) {
       return;
     }

@@ -18,7 +18,7 @@ PartidaJugable _partida() => PartidaJugable.fromMap({
         'ultimaVezJugada': '2026-10-25T00:00:00Z',
         'personaje': {
           'nombre': 'Prueba',
-          'clase': 'vagabundo',
+          'claseCodigo': 'vagabundo',
           'apariencia': 'mujer',
           'nivel': 10,
           'exp': 0,

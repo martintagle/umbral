@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'servicio/clase_servicio.dart';
 import 'servicio/preferencias_servicio.dart';
 import 'ui/pantallas/titulo_pantalla.dart';
 import 'ui/sonido.dart';
@@ -18,6 +19,9 @@ Future<void> main() async {
   await PreferenciasServicio.cargar();
   await Iconos.cargar();
   await Sonido.iniciar();
+  // Las clases no cambian: se piden una vez, sin esperar, y quedan en caché.
+  // Si falla (sin conexión), se reintenta al llegar a la lista de partidas.
+  ClaseServicio().catalogo().ignore();
   runApp(const UmbralApp());
 }
 

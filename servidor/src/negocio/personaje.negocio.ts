@@ -1,4 +1,6 @@
 import type { AtributosDto } from '../dto/atributos.dto.js';
+import type { ClaseCodigo } from '../dto/clase-codigo.js';
+import type { ClaseDto } from '../dto/clase.dto.js';
 import { APARIENCIAS, type Apariencia, type PersonajeDto } from '../dto/personaje.dto.js';
 import type { UbicacionDto } from '../dto/ubicacion.dto.js';
 import { enemigoNegocio } from './enemigo.negocio.js';
@@ -32,19 +34,18 @@ export interface Combate {
 
 export type PiezaEquipo = 'arma' | 'armadura';
 
-/** Una clase tal como se muestra al crear un personaje. */
-export interface Clase {
-  id: string;
-  /** Nivel con el que empieza: depende de sus atributos. */
+/** Una clase de la colección con lo que tendría un personaje nuevo de esa clase. */
+export interface ClaseInicial {
+  clase: ClaseDto;
+  /** Nivel con el que empieza: depende de sus atributos base. */
   nivel: number;
-  atributos: AtributosDto;
   oroInicial: number;
   combate: Combate;
 }
 
 export interface CatalogoClases {
   apariencias: readonly Apariencia[];
-  clases: Clase[];
+  clases: ClaseInicial[];
 }
 
 /**
@@ -60,48 +61,42 @@ export interface Progreso {
   ubicacion: UbicacionDto;
 }
 
+/**
+ * Reglas de cada clase que no están en la colección `clases`. Los atributos
+ * base sí están allí: como en Elden Ring, cada atributo parte en 1 y cada
+ * punto por encima es un nivel, así que las clases empiezan en nivel 10 (9
+ * puntos repartidos según su estilo) y el prisionero, con todo al 1, en nivel 1.
+ */
 interface ClaseReglas {
-  atributos: AtributosDto;
   oroInicial: number;
   armaduraInicial: number;
   /** Atributo con el que escala el daño del arma de la clase. */
   atributoAtaque: 'fuerza' | 'destreza' | 'inteligencia';
 }
 
-/**
- * Atributos iniciales. Como en Elden Ring, cada atributo parte en 1 y cada
- * punto por encima es un nivel: las clases empiezan en nivel 10 (9 puntos
- * repartidos según su estilo) y el prisionero, con todo al 1, en nivel 1.
- */
-const CLASES: Record<string, ClaseReglas> = {
-  // Equilibrado, con algo más de destreza para la katana.
+const CLASES: Record<ClaseCodigo, ClaseReglas> = {
   vagabundo: {
-    atributos: { vida: 4, fuerza: 3, destreza: 5, inteligencia: 1 },
     oroInicial: 30,
     armaduraInicial: 1,
     atributoAtaque: 'destreza',
   },
   guerrero: {
-    atributos: { vida: 5, fuerza: 6, destreza: 1, inteligencia: 1 },
     oroInicial: 20,
     armaduraInicial: 2,
     atributoAtaque: 'fuerza',
   },
   arquero: {
-    atributos: { vida: 3, fuerza: 1, destreza: 7, inteligencia: 2 },
     oroInicial: 40,
     armaduraInicial: 1,
     atributoAtaque: 'destreza',
   },
   mago: {
-    atributos: { vida: 2, fuerza: 1, destreza: 2, inteligencia: 8 },
     oroInicial: 40,
     armaduraInicial: 0,
     atributoAtaque: 'inteligencia',
   },
-  // Clase de desafío: todo al 1 (nivel 1), sin armadura y sin oro.
+  // Clase de desafío: sin armadura y sin oro.
   prisionero: {
-    atributos: { vida: 1, fuerza: 1, destreza: 1, inteligencia: 1 },
     oroInicial: 0,
     armaduraInicial: 0,
     atributoAtaque: 'destreza',
@@ -129,12 +124,6 @@ const NIVEL_MAXIMO_EQUIPO = 10;
 const MARGEN_SEGUNDOS = 5;
 /** Ritmo máximo creíble de enemigos derrotados. */
 const MAXIMO_ENEMIGOS_POR_SEGUNDO = 1;
-
-function reglasDeClase(clase: string): ClaseReglas {
-  const reglas = CLASES[clase];
-  if (!reglas) throw new NegocioError(`La clase "${clase}" no existe.`);
-  return reglas;
-}
 
 /** Nivel que corresponde a unos atributos: 1 más cada punto por encima de 1. */
 function nivelDe(a: AtributosDto): number {
@@ -173,11 +162,11 @@ function costoMejora(n: number): number {
   return (n <= 6 ? 150 : 200) * n;
 }
 
-type BaseCombate = Pick<PersonajeDto, 'clase' | 'nivel' | 'atributos' | 'equipo'>;
+type BaseCombate = Pick<PersonajeDto, 'claseCodigo' | 'nivel' | 'atributos' | 'equipo'>;
 
 /** Como en Elden Ring, el nivel no da daño por sí solo: lo dan el atributo del arma y sus mejoras. */
 function dano(p: BaseCombate, nivelArma: number): number {
-  const ataque = p.atributos[reglasDeClase(p.clase).atributoAtaque];
+  const ataque = p.atributos[CLASES[p.claseCodigo].atributoAtaque];
   return DANO_BASE + ataque * DANO_POR_PUNTO + nivelArma * DANO_POR_NIVEL_ARMA;
 }
 
@@ -219,37 +208,45 @@ function validarApariencia(apariencia: string): Apariencia {
 export const personajeNegocio = {
   combate,
 
-  catalogo(): CatalogoClases {
+  /** [clases] son las de la colección, con lo que tendría un personaje nuevo de cada una. */
+  catalogo(clases: ClaseDto[]): CatalogoClases {
     return {
       apariencias: APARIENCIAS,
-      clases: Object.entries(CLASES).map(([id, c]) => ({
-        id,
-        nivel: nivelDe(c.atributos),
-        atributos: c.atributos,
-        oroInicial: c.oroInicial,
-        combate: combate({
-          clase: id,
-          nivel: nivelDe(c.atributos),
-          atributos: c.atributos,
-          equipo: { nivelArma: 1, nivelArmadura: c.armaduraInicial },
-        }),
-      })),
+      clases: clases.map((clase) => {
+        const reglas = CLASES[clase._id];
+        const nivel = nivelDe(clase.atributosBase);
+        return {
+          clase,
+          nivel,
+          oroInicial: reglas.oroInicial,
+          combate: combate({
+            claseCodigo: clase._id,
+            nivel,
+            atributos: clase.atributosBase,
+            equipo: { nivelArma: 1, nivelArmadura: reglas.armaduraInicial },
+          }),
+        };
+      }),
     };
   },
 
-  /** Personaje nuevo, con el nivel de su clase, en la entrada de la zona inicial (0,0). */
-  personajeInicial(nombre: string, clase: string, apariencia: string): PersonajeDto {
-    const reglas = reglasDeClase(clase);
+  /**
+   * Personaje nuevo, con el nivel de su clase, en la entrada de la zona inicial
+   * (0,0). Los atributos se copian de `clase.atributosBase`: a partir de aquí
+   * evolucionan en el personaje y no se vuelven a leer de la colección.
+   */
+  personajeInicial(nombre: string, clase: ClaseDto, apariencia: string): PersonajeDto {
+    const reglas = CLASES[clase._id];
     return {
       nombre: validarNombre(nombre),
-      clase,
+      claseCodigo: clase._id,
       apariencia: validarApariencia(apariencia),
-      nivel: nivelDe(reglas.atributos),
+      nivel: nivelDe(clase.atributosBase),
       exp: 0,
       puntosLibres: 0,
       oro: reglas.oroInicial,
-      atributos: { ...reglas.atributos },
-      vidaActual: vidaMaxima(reglas.atributos),
+      atributos: { ...clase.atributosBase },
+      vidaActual: vidaMaxima(clase.atributosBase),
       estaminaActual: ESTAMINA_MAXIMA,
       equipo: { nivelArma: 1, nivelArmadura: reglas.armaduraInicial },
       ubicacion: { zonaId: ZONA_INICIAL, x: 0, y: 0, ultimoPuntoGuardado: null },

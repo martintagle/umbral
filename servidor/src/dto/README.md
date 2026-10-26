@@ -2,11 +2,11 @@
 
 ## Qué debe hacer
 
-Cada interfaz es una **réplica de la estructura de los documentos** de la colección `usuarios`. Como MongoDB no obliga a seguir un esquema, el DTO y el validador `bd/esquema-usuarios.json` son los que lo definen.
+Cada interfaz es una **réplica de la estructura de los documentos** de las colecciones `usuarios` y `clases`. Como MongoDB no obliga a seguir un esquema, los DTO y los validadores `bd/esquema-usuarios.json` y `bd/esquema-clases.json` son los que lo definen.
 
-## Colección `usuarios`
+## Colecciones
 
-Hay una sola colección y todo va embebido en el documento del usuario. Cada subdocumento tiene su interfaz, pero ninguna es una colección aparte:
+`usuarios` lleva todo embebido: cada subdocumento tiene su interfaz, pero ninguna es una colección aparte. El personaje apunta a `clases` con `claseCodigo` (llave hacia `clases._id`):
 
 ```
 UsuarioDto                         usuario.dto.ts
@@ -14,11 +14,16 @@ UsuarioDto                         usuario.dto.ts
 ├── ajustes: AjustesDto            ajustes.dto.ts
 └── partidas: PartidaDto[]         partida.dto.ts
     └── personaje: PersonajeDto    personaje.dto.ts
+        ├── claseCodigo  ──►  ClaseDto
         ├── atributos              atributos.dto.ts
         ├── equipo                 equipo.dto.ts
         ├── ubicacion              ubicacion.dto.ts
         ├── mundo                  mundo.dto.ts
         └── estadisticas           estadisticas.dto.ts
+
+ClaseDto                           clase.dto.ts
+├── _id: ClaseCodigo               clase-codigo.ts
+└── atributosBase                  atributos-base.dto.ts
 ```
 
 | BSON | TypeScript |
@@ -30,7 +35,7 @@ UsuarioDto                         usuario.dto.ts
 | `array` | `T[]` |
 | `["string", "null"]` | `string \| null` |
 
-Solo hay réplicas de la colección. Los objetos que viajan por la API pero no se guardan (valores de combate, catálogos, progreso) los define la capa de negocio que los calcula o los recibe: `personaje.negocio.ts` y `enemigo.negocio.ts`.
+Solo hay réplicas de las colecciones. Los objetos que viajan por la API pero no se guardan (valores de combate, catálogos, progreso) los define la capa de negocio que los calcula o los recibe: `personaje.negocio.ts` y `enemigo.negocio.ts`.
 
 ## Cuidado con los tipos
 

@@ -1,17 +1,18 @@
+import 'dart:math';
+
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
 import '../../servicio/modelos/partida_jugable.dart';
 import '../../servicio/modelos/recompensa.dart';
 import '../../servicio/partida_servicio.dart';
-import '../clases_ui.dart';
 import '../juego/umbral_juego.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
 import '../widgets/boton_umbral.dart';
 import '../widgets/confirmacion_umbral.dart';
-import '../widgets/icono_umbral.dart';
 import '../widgets/panel_umbral.dart';
+import '../widgets/pieza_hud.dart';
 import 'ajustes_pantalla.dart';
 import 'estadisticas_pantalla.dart';
 import 'herreria_pantalla.dart';
@@ -159,21 +160,27 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
             Positioned.fill(child: GameWidget(game: _juego, autofocus: true)),
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(Espacios.paso4),
+                // Márgenes de 6 píxeles de arte, además del área segura.
+                padding: EdgeInsets.all(PiezaHud.px(6)),
                 child: Stack(
                   children: [
-                    Align(alignment: Alignment.topLeft, child: _Estado(_juego)),
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: BotonIcono(
-                        icono: 'ajustes',
-                        descripcion: 'Menú',
-                        alPulsar: _abrirMenu,
-                      ),
+                    // Arriba: el estado, la vida del jefe en el espacio libre
+                    // del centro y el menú en la esquina.
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _Estado(_juego),
+                        Expanded(child: Center(child: _BarraJefe(_juego))),
+                        BotonHud(
+                          pieza: PiezaHud.menu,
+                          descripcion: 'Menú',
+                          alPulsar: _abrirMenu,
+                        ),
+                      ],
                     ),
                     Align(
                       alignment: Alignment.bottomLeft,
-                      child: _Joystick(_juego),
+                      child: _Palanca(_juego),
                     ),
                     Align(
                       alignment: Alignment.bottomRight,
@@ -182,10 +189,6 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
                     Align(
                       alignment: const Alignment(0, 0.3),
                       child: _Aviso(_juego),
-                    ),
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: _BarraJefe(_juego),
                     ),
                     Center(child: _Titular(_juego)),
                     if (_tituloZona)
@@ -231,6 +234,8 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
             if (_menu)
               _Capa(
                 titulo: 'Pausa',
+                texto:
+                    '${_juego.personaje.nombre} · Nivel ${_juego.nivel.value}',
                 acciones: [
                   BotonUmbral(
                     texto: 'Continuar',
@@ -268,7 +273,19 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
   }
 }
 
-/// Nombre, nivel, barras de PV y EXP, y oro.
+/// Texto del HUD: va sobre el juego, sin panel, con sombra dura.
+TextStyle _textoHud(TextStyle estilo) => estilo.copyWith(
+  shadows: const [Shadow(color: Colores.abismo, offset: Offset(1, 1))],
+);
+
+/// Miles con punto: 1.240.
+String _miles(int n) => n.toString().replaceAllMapped(
+  RegExp(r'\B(?=(\d{3})+(?!\d))'),
+  (_) => '.',
+);
+
+/// Arriba a la izquierda, sin panel: vida, estamina y, debajo, EXP y oro. El
+/// nombre y el nivel están en la pausa.
 class _Estado extends StatelessWidget {
   final UmbralJuego juego;
 
@@ -277,68 +294,147 @@ class _Estado extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 220),
-        child: PanelUmbral(
-          padding: const EdgeInsets.all(Espacios.paso2),
-          child: ListenableBuilder(
-            listenable: Listenable.merge([
-              juego.vida,
-              juego.vidaMaxima,
-              juego.nivel,
-              juego.exp,
-              juego.expSiguiente,
-              juego.oro,
-            ]),
-            builder: (_, _) => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _BarraVida(juego),
+          SizedBox(height: PiezaHud.px(1)),
+          _BarraEstamina(juego),
+          SizedBox(height: PiezaHud.px(2)),
+          ListenableBuilder(
+            listenable: Listenable.merge([juego.exp, juego.oro]),
+            builder: (_, _) => Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  '${juego.personaje.nombre.toUpperCase()} · NV ${juego.nivel.value}',
-                  overflow: TextOverflow.ellipsis,
-                  style: Textos.etiqueta(),
+                _Contador(
+                  icono: PiezaHud.iconoExp,
+                  valor: juego.exp.value,
+                  color: Colores.hueso,
+                  descripcion: 'Experiencia',
                 ),
-                const SizedBox(height: Espacios.paso1),
-                _Barra(
-                  etiqueta: 'PV ${juego.vida.value}/${juego.vidaMaxima.value}',
-                  valor: juego.vida.value / juego.vidaMaxima.value,
-                  color: Colores.sangre,
-                  alto: 16,
-                ),
-                const SizedBox(height: Espacios.paso1),
-                _BarraEstamina(juego),
-                const SizedBox(height: Espacios.paso1),
-                _Barra(
-                  etiqueta:
-                      'EXP ${juego.exp.value}/${juego.expSiguiente.value}',
-                  valor: juego.exp.value / juego.expSiguiente.value,
-                  color: Colores.borde,
-                  alto: 12,
-                ),
-                const SizedBox(height: Espacios.paso1),
-                Row(
-                  children: [
-                    const IconoUmbral('oro', escala: 1),
-                    const SizedBox(width: Espacios.paso1),
-                    Text(
-                      '${juego.oro.value}',
-                      style: Textos.etiqueta(color: Colores.brasa),
-                    ),
-                  ],
+                SizedBox(width: PiezaHud.px(4)),
+                _Contador(
+                  icono: PiezaHud.iconoOro,
+                  valor: juego.oro.value,
+                  color: Colores.brasa,
+                  descripcion: 'Oro',
                 ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Contador extends StatelessWidget {
+  final PiezaHud icono;
+  final int valor;
+  final Color color;
+  final String descripcion;
+
+  const _Contador({
+    required this.icono,
+    required this.valor,
+    required this.color,
+    required this.descripcion,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: '$descripcion $valor',
+      excludeSemantics: true,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CuadroHud(icono),
+          SizedBox(width: PiezaHud.px(1)),
+          Text(_miles(valor), style: _textoHud(Textos.etiqueta(color: color))),
+        ],
+      ),
+    );
+  }
+}
+
+/// Vida sin números. Al recibir daño, el tramo perdido queda visible detrás
+/// del relleno y se encoge hasta la vida real en medio segundo.
+class _BarraVida extends StatefulWidget {
+  final UmbralJuego juego;
+
+  const _BarraVida(this.juego);
+
+  @override
+  State<_BarraVida> createState() => _BarraVidaState();
+}
+
+class _BarraVidaState extends State<_BarraVida>
+    with SingleTickerProviderStateMixin {
+  late final _encoger = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 500),
+  );
+
+  /// Fracción de vida desde la que se encoge el tramo perdido.
+  double _desde = 1;
+  late double _anterior = _valor;
+
+  double get _valor =>
+      (widget.juego.vida.value / widget.juego.vidaMaxima.value).clamp(0, 1);
+
+  double get _perdida => _encoger.isAnimating
+      ? _desde + (_valor - _desde) * Curves.easeIn.transform(_encoger.value)
+      : _valor;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.juego.vida.addListener(_cambio);
+    widget.juego.vidaMaxima.addListener(_cambio);
+  }
+
+  @override
+  void dispose() {
+    widget.juego.vida.removeListener(_cambio);
+    widget.juego.vidaMaxima.removeListener(_cambio);
+    _encoger.dispose();
+    super.dispose();
+  }
+
+  void _cambio() {
+    final valor = _valor;
+    if (valor < _anterior) {
+      // Si ya se estaba encogiendo, sigue desde donde iba.
+      _desde = max(_perdida, _anterior);
+      _encoger.forward(from: 0);
+    }
+    _anterior = valor;
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Vida ${widget.juego.vida.value} de ${widget.juego.vidaMaxima.value}',
+      excludeSemantics: true,
+      child: AnimatedBuilder(
+        animation: _encoger,
+        builder: (_, _) => BarraHud(
+          marco: PiezaHud.vidaMarco,
+          relleno: PiezaHud.vidaRelleno,
+          origen: const Offset(12, 3),
+          valor: _valor,
+          perdida: _perdida,
         ),
       ),
     );
   }
 }
 
-/// Se gasta al atacar y se recupera sola. Se redibuja aparte del resto del
-/// panel porque cambia en cada cuadro. Si no alcanza para un ataque, el borde
-/// se pone rojo.
+/// Se gasta al atacar y se recupera sola. Si no alcanza para un ataque, el
+/// filo del marco se pone rojo.
 class _BarraEstamina extends StatelessWidget {
   final UmbralJuego juego;
 
@@ -348,87 +444,40 @@ class _BarraEstamina extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: Listenable.merge([juego.estamina, juego.sinEstamina]),
-      builder: (_, _) => _Barra(
-        etiqueta: 'EST ${juego.estamina.value.floor()}',
+      builder: (_, _) => BarraHud(
+        marco: PiezaHud.estaminaMarco,
+        cuadroMarco: juego.sinEstamina.value ? 1 : 0,
+        relleno: PiezaHud.estaminaRelleno,
+        origen: const Offset(10, 3),
         valor: juego.estamina.value / UmbralJuego.estaminaMaxima,
-        color: Colores.podredumbre,
-        alto: 12,
-        colorBorde: juego.sinEstamina.value ? Colores.sangre : Colores.borde,
       ),
     );
   }
 }
 
-class _Barra extends StatelessWidget {
-  final String etiqueta;
-  final double valor;
-  final Color color;
-  final double alto;
-  final Color colorBorde;
-
-  const _Barra({
-    required this.etiqueta,
-    required this.valor,
-    required this.color,
-    required this.alto,
-    this.colorBorde = Colores.borde,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 200,
-      height: alto + 4,
-      decoration: BoxDecoration(
-        color: Colores.abismo,
-        border: Border.all(color: colorBorde, width: 2),
-      ),
-      child: Stack(
-        children: [
-          FractionallySizedBox(
-            widthFactor: valor.clamp(0, 1),
-            child: Container(color: color),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(left: Espacios.paso1),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              // Sombra dura para que el número se lea sobre cualquier relleno.
-              child: Text(
-                etiqueta,
-                style: Textos.etiqueta().copyWith(
-                  shadows: const [
-                    Shadow(color: Colores.abismo, offset: Offset(1, 1)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Cruceta táctil: la dirección es la distancia del dedo al centro.
-class _Joystick extends StatefulWidget {
+/// Palanca táctil: la dirección es la distancia del dedo al centro.
+class _Palanca extends StatefulWidget {
   final UmbralJuego juego;
 
-  const _Joystick(this.juego);
+  const _Palanca(this.juego);
 
   @override
-  State<_Joystick> createState() => _JoystickState();
+  State<_Palanca> createState() => _PalancaState();
 }
 
-class _JoystickState extends State<_Joystick> {
-  static const _tamano = 136.0;
-  static const _recorrido = 44.0;
+class _PalancaState extends State<_Palanca> {
+  static final _tamano = PiezaHud.px(PiezaHud.palancaBase.ancho);
+  static final _recorrido = PiezaHud.px(PiezaHud.recorridoPalanca);
   Offset _perilla = Offset.zero;
+  bool _arrastrando = false;
 
   void _mover(Offset local) {
-    var d = local - const Offset(_tamano / 2, _tamano / 2);
+    var d = local - Offset(_tamano / 2, _tamano / 2);
     if (d.distance > _recorrido) d = d / d.distance * _recorrido;
-    setState(() => _perilla = d);
+    setState(() {
+      _perilla = d;
+      _arrastrando = true;
+    });
     widget.juego.direccionJoystick.setValues(
       d.dx / _recorrido,
       d.dy / _recorrido,
@@ -436,40 +485,38 @@ class _JoystickState extends State<_Joystick> {
   }
 
   void _soltar() {
-    setState(() => _perilla = Offset.zero);
+    setState(() {
+      _perilla = Offset.zero;
+      _arrastrando = false;
+    });
     widget.juego.direccionJoystick.setZero();
   }
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Cruceta de movimiento',
+      label: 'Palanca de movimiento',
       child: Listener(
+        behavior: HitTestBehavior.opaque,
         onPointerDown: (e) => _mover(e.localPosition),
         onPointerMove: (e) => _mover(e.localPosition),
         onPointerUp: (_) => _soltar(),
         onPointerCancel: (_) => _soltar(),
-        child: Container(
+        child: SizedBox(
           width: _tamano,
           height: _tamano,
-          decoration: BoxDecoration(
-            color: Colores.piedra.withValues(alpha: 0.7),
-            borderRadius: Radios.astilla,
-            border: Border.all(color: Colores.borde, width: 2),
-          ),
-          child: Center(
-            child: Transform.translate(
-              offset: _perilla,
-              child: Container(
-                width: 48,
-                height: 48,
-                decoration: const BoxDecoration(
-                  color: Colores.borde,
-                  borderRadius: Radios.astilla,
-                  boxShadow: sombraDura,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              const CuadroHud(PiezaHud.palancaBase),
+              Transform.translate(
+                offset: _perilla,
+                child: CuadroHud(
+                  PiezaHud.palancaPerilla,
+                  cuadro: _arrastrando ? 1 : 0,
                 ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -477,9 +524,9 @@ class _JoystickState extends State<_Joystick> {
   }
 }
 
-/// Lo que se puede hacer en el lugar (descansar, entrar, usar el yunque...)
-/// y debajo los botones de combate: frasco y rodar a la izquierda del de
-/// ataque, que se puede mantener pulsado.
+/// Abajo a la derecha: atacar en la esquina, rodar a su izquierda con el
+/// frasco encima, y las acciones del lugar sobre atacar, con su texto a la
+/// izquierda.
 class _Acciones extends StatelessWidget {
   final UmbralJuego juego;
 
@@ -487,149 +534,114 @@ class _Acciones extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final atacar = PiezaHud.atacar(juego.personaje.claseCodigo);
+    final accion = PiezaHud.accion('entrar');
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         ListenableBuilder(
           listenable: Listenable.merge([juego.acciones, juego.guardando]),
-          builder: (_, _) => Column(
+          builder: (_, _) => Padding(
+            // Centra los emblemas sobre el botón de atacar.
+            padding: EdgeInsets.only(
+              right: PiezaHud.px(atacar.areaTactil! - accion.areaTactil!) / 2,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                for (final a in juego.acciones.value)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        a.etiqueta.toUpperCase(),
+                        style: _textoHud(
+                          Textos.etiqueta(
+                            color: juego.guardando.value
+                                ? Colores.ceniza
+                                : a.resaltada
+                                ? Colores.brasa
+                                : Colores.hueso,
+                          ),
+                        ),
+                      ),
+                      // Se apilan a la altura del dibujo: en los altares hay
+                      // dos y el área tocable completa no cabría.
+                      SizedBox(
+                        width: PiezaHud.px(accion.areaTactil!),
+                        height: PiezaHud.px(accion.alto),
+                        child: OverflowBox(
+                          maxHeight: PiezaHud.px(accion.areaTactil!),
+                          child: BotonHud(
+                            pieza: PiezaHud.accion(a.boton),
+                            descripcion: a.etiqueta,
+                            alPulsar: juego.guardando.value
+                                ? null
+                                : a.alPulsar,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+        ValueListenableBuilder(
+          valueListenable: juego.sinEstamina,
+          builder: (_, sinEstamina, _) => Row(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              for (final a in juego.acciones.value)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: Espacios.paso2),
-                  child: BotonUmbral(
-                    texto: a.etiqueta,
-                    icono: a.icono,
-                    estilo: a.estilo,
-                    expandido: false,
-                    cargando: juego.guardando.value,
-                    alPulsar: a.alPulsar,
-                  ),
-                ),
-            ],
-          ),
-        ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ValueListenableBuilder(
-                  valueListenable: juego.frascos,
-                  builder: (_, quedan, _) => _BotonCombate(
-                    etiqueta: 'Beber un frasco, quedan $quedan',
-                    tamano: 56,
-                    color: quedan > 0 ? Colores.piedra : Colores.abismo,
-                    alPulsar: juego.pedirBeber,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const IconoUmbral('pocion-vida', escala: 1),
-                        const SizedBox(width: 2),
-                        Text(
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ValueListenableBuilder(
+                    valueListenable: juego.frascos,
+                    builder: (_, quedan, _) => BotonHud(
+                      pieza: PiezaHud.frasco,
+                      descripcion: 'Beber un frasco, quedan $quedan',
+                      cuadro: quedan > 0 ? 0 : 2,
+                      alPulsar: juego.pedirBeber,
+                      encima: Align(
+                        alignment: Alignment.bottomRight,
+                        child: Text(
                           '$quedan',
-                          style: Textos.contador(
-                            color: quedan > 0 ? Colores.brasa : Colores.ceniza,
+                          style: _textoHud(
+                            Textos.etiqueta(
+                              color: quedan > 0 ? Colores.brasa : Colores.ceniza,
+                            ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: Espacios.paso2),
-                _BotonCombate(
-                  etiqueta: 'Rodar',
-                  tamano: 68,
-                  color: Colores.piedra,
-                  alPulsar: juego.pedirRodar,
-                  child: Text('RODAR', style: Textos.etiqueta()),
-                ),
-              ],
-            ),
-            const SizedBox(width: Espacios.paso2),
-            Semantics(
-              button: true,
-              label: 'Atacar',
-              child: Listener(
-                onPointerDown: (_) => juego.botonAtaque = true,
-                onPointerUp: (_) => juego.botonAtaque = false,
-                onPointerCancel: (_) => juego.botonAtaque = false,
-                child: Container(
-                  width: 96,
-                  height: 96,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colores.sangre,
-                    borderRadius: Radios.astilla,
-                    border: Border.all(color: Colores.abismo, width: 2),
-                    boxShadow: sombraDura,
+                  BotonHud(
+                    pieza: PiezaHud.rodar,
+                    descripcion: 'Rodar',
+                    cuadro: sinEstamina ? 2 : 0,
+                    alPulsar: juego.pedirRodar,
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconoUmbral(claseUi(juego.personaje.clase).iconoArma),
-                      const SizedBox(height: Espacios.paso1),
-                      Text('ATACAR', style: Textos.etiqueta()),
-                    ],
-                  ),
-                ),
+                ],
               ),
-            ),
-          ],
+              BotonHud(
+                pieza: atacar,
+                descripcion: 'Atacar',
+                cuadro: sinEstamina ? 2 : 0,
+                alPulsar: () => juego.botonAtaque = true,
+                alSoltar: () => juego.botonAtaque = false,
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 }
 
-/// Botón cuadrado que actúa al tocarlo, sin esperar a soltar: en combate
-/// cada décima cuenta.
-class _BotonCombate extends StatelessWidget {
-  final String etiqueta;
-  final double tamano;
-  final Color color;
-  final VoidCallback alPulsar;
-  final Widget child;
-
-  const _BotonCombate({
-    required this.etiqueta,
-    required this.tamano,
-    required this.color,
-    required this.alPulsar,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: etiqueta,
-      excludeSemantics: true,
-      child: Listener(
-        onPointerDown: (_) => alPulsar(),
-        child: Container(
-          width: tamano,
-          height: tamano,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.85),
-            borderRadius: Radios.astilla,
-            border: Border.all(color: Colores.borde, width: 2),
-            boxShadow: sombraDura,
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-/// Nombre y vida del jefe, abajo y a lo ancho, mientras dura el combate.
+/// Vida del jefe mientras dura el combate, con su nombre debajo, sin panel.
 class _BarraJefe extends StatelessWidget {
   final UmbralJuego juego;
 
@@ -643,40 +655,25 @@ class _BarraJefe extends StatelessWidget {
         builder: (context, _) {
           final jefe = juego.jefe.value;
           if (jefe == null) return const SizedBox.shrink();
-          final ancho = MediaQuery.sizeOf(context).width * 0.4;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: Espacios.paso2),
-            child: SizedBox(
-              width: ancho,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    jefe.tipo.nombre,
-                    style: Textos.cuerpo().copyWith(
-                      shadows: const [
-                        Shadow(color: Colores.abismo, offset: Offset(2, 2)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: Espacios.paso1),
-                  Container(
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: Colores.abismo,
-                      border: Border.all(color: Colores.borde, width: 2),
-                    ),
-                    alignment: Alignment.centerLeft,
-                    child: FractionallySizedBox(
-                      widthFactor: juego.vidaJefe.value.clamp(0, 1),
-                      child: Container(
-                        color: jefe.furioso ? Colores.brasa : Colores.sangre,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+          return Semantics(
+            liveRegion: true,
+            label: jefe.tipo.nombre,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                BarraHud(
+                  marco: PiezaHud.jefeMarco,
+                  relleno: PiezaHud.jefeRelleno,
+                  cuadroRelleno: jefe.furioso ? 1 : 0,
+                  origen: const Offset(12, 3),
+                  valor: juego.vidaJefe.value,
+                ),
+                SizedBox(height: PiezaHud.px(1)),
+                Text(
+                  jefe.tipo.nombre.toUpperCase(),
+                  style: _textoHud(Textos.contador()),
+                ),
+              ],
             ),
           );
         },

@@ -1,0 +1,47 @@
+{
+  "bsonType": "object",
+  "required": [
+    "_id",
+    "nombre",
+    "arma",
+    "descripcion",
+    "atributosBase"
+  ],
+  "properties": {
+    "_id": {
+      "bsonType": "string"
+    },
+    "nombre": {
+      "bsonType": "string"
+    },
+    "arma": {
+      "bsonType": "string"
+    },
+    "descripcion": {
+      "bsonType": "string"
+    },
+    "atributosBase": {
+      "bsonType": "object",
+      "required": [
+        "vida",
+        "fuerza",
+        "destreza",
+        "inteligencia"
+      ],
+      "properties": {
+        "vida": {
+          "bsonType": "int"
+        },
+        "fuerza": {
+          "bsonType": "int"
+        },
+        "destreza": {
+          "bsonType": "int"
+        },
+        "inteligencia": {
+          "bsonType": "int"
+        }
+      }
+    }
+  }
+}

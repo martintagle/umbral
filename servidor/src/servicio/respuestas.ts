@@ -1,7 +1,8 @@
+import type { ClaseDto } from '../dto/clase.dto.js';
 import type { PartidaDto } from '../dto/partida.dto.js';
 import type { PersonajeDto } from '../dto/personaje.dto.js';
 import type { UsuarioDto } from '../dto/usuario.dto.js';
-import { personajeNegocio, type Combate } from '../negocio/personaje.negocio.js';
+import { personajeNegocio, type CatalogoClases, type Combate } from '../negocio/personaje.negocio.js';
 
 /** Partida tal como viaja a la app: fechas en ISO 8601. */
 export interface PartidaJson {
@@ -44,5 +45,23 @@ export function usuarioJson(u: UsuarioDto) {
     ajustes: u.ajustes,
     partidaActiva: u.partidaActiva,
     partidas: u.partidas.map(partidaJson),
+  };
+}
+
+/** Clase tal como viaja a la app: `_id` (el código) llega como `id`. */
+export function claseJson(c: ClaseDto) {
+  return {
+    id: c._id,
+    nombre: c.nombre,
+    arma: c.arma,
+    descripcion: c.descripcion,
+    atributosBase: c.atributosBase,
+  };
+}
+
+export function catalogoJson(c: CatalogoClases) {
+  return {
+    apariencias: c.apariencias,
+    clases: c.clases.map((inicial) => ({ ...inicial, clase: claseJson(inicial.clase) })),
   };
 }

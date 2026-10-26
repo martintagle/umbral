@@ -1,10 +1,11 @@
 /**
- * Arranca la API con una base MongoDB temporal en memoria, con el mismo
- * validador e índices que la colección de Atlas. Sirve para probar sin
+ * Arranca la API con una base MongoDB temporal en memoria, con los mismos
+ * validadores, índices y clases que las colecciones de Atlas. Sirve para probar sin
  * credenciales; los datos se pierden al cerrarla.
  */
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
+import { prepararColeccionClases } from '../negocio/coleccion-clases.js';
 import { prepararColeccion } from '../negocio/coleccion-usuarios.js';
 
 const servidor = await MongoMemoryServer.create();
@@ -13,6 +14,7 @@ process.env.JWT_SECRETO ??= 'solo-para-pruebas-locales-nunca-en-produccion';
 
 // Usa la misma conexión que la API: index.ts la encuentra ya abierta.
 await prepararColeccion();
+await prepararColeccionClases();
 
-console.log('Base en memoria lista (rpg.usuarios con validador e índices).');
+console.log('Base en memoria lista (rpg.usuarios y rpg.clases con validador e índices).');
 await import('../index.js');

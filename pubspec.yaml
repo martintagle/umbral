@@ -1,7 +1,7 @@
 name: umbral
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.1.3+4
+version: 0.1.4+5
 
 environment:
   sdk: ^3.13.7
@@ -19,6 +19,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
@@ -32,3 +33,13 @@ flutter:
     - assets/interiores/
     - assets/audios/
     - assets/sprites/animaciones.json
+    - assets/hud/
+    - assets/logo/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/logo/icono-app-1024.png
+  adaptive_icon_foreground: assets/logo/icono-android-frente-432.png
+  adaptive_icon_background: assets/logo/icono-android-fondo-432.png
+  remove_alpha_ios: true

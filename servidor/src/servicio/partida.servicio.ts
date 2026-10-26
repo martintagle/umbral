@@ -15,8 +15,8 @@ partidaServicio.get('/', async (_req, res) => {
 });
 
 partidaServicio.post('/', async (req, res) => {
-  const { nombre, clase, apariencia } = v.crearPartida.parse(req.body);
-  const partida = await partidaNegocio.crearPartida(idDeSesion(res), nombre, clase, apariencia);
+  const { nombre, claseCodigo, apariencia } = v.crearPartida.parse(req.body);
+  const partida = await partidaNegocio.crearPartida(idDeSesion(res), nombre, claseCodigo, apariencia);
   res.status(201).json(partidaJugableJson(partida));
 });
 

@@ -1,0 +1,37 @@
+[
+  {
+    "_id": "vagabundo",
+    "nombre": "Vagabundo",
+    "arma": "Katana",
+    "descripcion": "Ágil y equilibrado. Cortes rápidos de alcance medio.",
+    "atributosBase": { "vida": 4, "fuerza": 3, "destreza": 5, "inteligencia": 1 }
+  },
+  {
+    "_id": "guerrero",
+    "nombre": "Guerrero",
+    "arma": "Espadón",
+    "descripcion": "Resiste mucho y golpea fuerte en un arco amplio, pero despacio.",
+    "atributosBase": { "vida": 5, "fuerza": 6, "destreza": 1, "inteligencia": 1 }
+  },
+  {
+    "_id": "arquero",
+    "nombre": "Arquero",
+    "arma": "Arco largo",
+    "descripcion": "Ataca desde lejos. Frágil si lo alcanzan.",
+    "atributosBase": { "vida": 3, "fuerza": 1, "destreza": 7, "inteligencia": 2 }
+  },
+  {
+    "_id": "mago",
+    "nombre": "Mago",
+    "arma": "Libro de hechizos",
+    "descripcion": "Lanza orbes de alma que hacen mucho daño. Poca vida.",
+    "atributosBase": { "vida": 2, "fuerza": 1, "destreza": 2, "inteligencia": 8 }
+  },
+  {
+    "_id": "prisionero",
+    "nombre": "Prisionero",
+    "arma": "Daga",
+    "descripcion": "Sin armadura ni oro. Puñaladas muy rápidas. Para quien busca desafío.",
+    "atributosBase": { "vida": 1, "fuerza": 1, "destreza": 1, "inteligencia": 1 }
+  }
+]

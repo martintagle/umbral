@@ -12,7 +12,7 @@ PartidaJugable _partida({required int exp}) => PartidaJugable.fromMap({
         'ultimaVezJugada': '2026-10-25T00:00:00Z',
         'personaje': {
           'nombre': 'Prueba',
-          'clase': 'guerrero',
+          'claseCodigo': 'guerrero',
           'apariencia': 'hombre',
           'nivel': 1,
           'exp': exp,

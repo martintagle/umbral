@@ -1,10 +1,12 @@
-/// Textos y sprites de cada clase. Las estadísticas vienen del servidor
-/// (`ClaseServicio`); aquí solo está lo que se muestra.
+import '../dto/apariencia.dart';
+import '../dto/clase_codigo.dart';
+import '../servicio/clase_servicio.dart';
+
+/// Sprites e iconos de cada clase. El nombre, el arma y la descripción están
+/// en la colección `clases` (`ClaseServicio`) y las estadísticas las calcula el
+/// servidor; aquí solo está lo que es de la interfaz.
 class ClaseUi {
-  final String id;
-  final String nombre;
-  final String arma;
-  final String descripcion;
+  final ClaseCodigo id;
 
   /// Icono del arma en `assets/iconos/iconos.json`.
   final String iconoArma;
@@ -15,65 +17,52 @@ class ClaseUi {
   final String atributoArma;
 
   const ClaseUi(
-    this.id,
-    this.nombre,
-    this.arma,
-    this.descripcion, {
+    this.id, {
     required this.iconoArma,
     required this.armadura,
     required this.atributoArma,
   });
 
-  String sprite(String apariencia) =>
-      'assets/sprites/personajes/$id-$apariencia.png';
+  String sprite(Apariencia apariencia) =>
+      'assets/sprites/personajes/${id.name}-${apariencia.name}.png';
 }
 
-const Map<String, ClaseUi> clasesUi = {
-  'vagabundo': ClaseUi(
-    'vagabundo',
-    'Vagabundo',
-    'Katana',
-    'Ágil y equilibrado. Cortes rápidos de alcance medio.',
+const Map<ClaseCodigo, ClaseUi> clasesUi = {
+  ClaseCodigo.vagabundo: ClaseUi(
+    ClaseCodigo.vagabundo,
     iconoArma: 'espada',
     armadura: 'Ropa de viaje',
     atributoArma: 'destreza',
   ),
-  'guerrero': ClaseUi(
-    'guerrero',
-    'Guerrero',
-    'Espadón',
-    'Resiste mucho y golpea fuerte en un arco amplio, pero despacio.',
+  ClaseCodigo.guerrero: ClaseUi(
+    ClaseCodigo.guerrero,
     iconoArma: 'espada',
     armadura: 'Armadura de placas',
     atributoArma: 'fuerza',
   ),
-  'arquero': ClaseUi(
-    'arquero',
-    'Arquero',
-    'Arco largo',
-    'Ataca desde lejos. Frágil si lo alcanzan.',
+  ClaseCodigo.arquero: ClaseUi(
+    ClaseCodigo.arquero,
     iconoArma: 'arco',
     armadura: 'Jubón de cuero',
     atributoArma: 'destreza',
   ),
-  'mago': ClaseUi(
-    'mago',
-    'Mago',
-    'Libro de hechizos',
-    'Lanza orbes de alma que hacen mucho daño. Poca vida.',
+  ClaseCodigo.mago: ClaseUi(
+    ClaseCodigo.mago,
     iconoArma: 'grimorio',
     armadura: 'Túnica',
     atributoArma: 'inteligencia',
   ),
-  'prisionero': ClaseUi(
-    'prisionero',
-    'Prisionero',
-    'Daga',
-    'Sin armadura ni oro. Puñaladas muy rápidas. Para quien busca desafío.',
+  ClaseCodigo.prisionero: ClaseUi(
+    ClaseCodigo.prisionero,
     iconoArma: 'daga',
     armadura: 'Harapos',
     atributoArma: 'destreza',
   ),
 };
 
-ClaseUi claseUi(String id) => clasesUi[id] ?? clasesUi['vagabundo']!;
+ClaseUi claseUi(ClaseCodigo id) => clasesUi[id]!;
+
+/// Nombre de la clase según la colección `clases`. Mientras no ha llegado el
+/// catálogo (o en las pruebas) se muestra el código.
+String nombreClase(ClaseCodigo codigo) =>
+    ClaseServicio.clase(codigo)?.nombre ?? codigo.name;

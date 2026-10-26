@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../dto/partida_dto.dart';
+import '../../servicio/clase_servicio.dart';
 import '../../servicio/enemigo_servicio.dart';
 import '../../servicio/modelos/partida_jugable.dart';
 import '../../servicio/modelos/recompensa.dart';
@@ -52,6 +53,9 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
         await UsuarioServicio().obtenerYo();
         _usuarioAlDia = true;
       }
+      // Las tarjetas muestran el nombre de la clase de cada personaje. Suele
+      // estar ya en caché: se pide al abrir la app.
+      await ClaseServicio().catalogo();
       final partidas = await _servicio.listarPartidas();
       partidas.sort(
         (a, b) =>
@@ -294,7 +298,7 @@ class _TarjetaPartida extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = partida.personaje;
-    final clase = claseUi(p.clase);
+    final clase = claseUi(p.claseCodigo);
     return PanelUmbral(
       colorBorde: activa ? Colores.brasa : Colores.borde,
       padding: const EdgeInsets.all(Espacios.paso2),
@@ -313,7 +317,7 @@ class _TarjetaPartida extends StatelessWidget {
               children: [
                 Text(p.nombre, style: Textos.encabezado()),
                 Text(
-                  '${clase.nombre} · Nivel ${p.nivel}',
+                  '${nombreClase(p.claseCodigo)} · Nivel ${p.nivel}',
                   style: Textos.cuerpo(),
                 ),
                 Text(

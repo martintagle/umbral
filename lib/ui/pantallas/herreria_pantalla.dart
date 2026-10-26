@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../servicio/clase_servicio.dart';
 import '../../servicio/modelos/combate.dart';
 import '../../servicio/modelos/partida_jugable.dart';
 import '../../servicio/servicio_excepcion.dart';
@@ -64,7 +65,8 @@ class _HerreriaPantallaState extends State<HerreriaPantalla> {
   @override
   Widget build(BuildContext context) {
     final personaje = _partida.partida.personaje;
-    final clase = claseUi(personaje.clase);
+    final clase = claseUi(personaje.claseCodigo);
+    final arma = ClaseServicio.clase(personaje.claseCodigo)?.arma ?? 'Arma';
     final combate = _partida.combate;
     final esArma = _pieza == 'arma';
     final nivel = esArma
@@ -97,7 +99,7 @@ class _HerreriaPantallaState extends State<HerreriaPantalla> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    esArma ? clase.arma : clase.armadura,
+                    esArma ? arma : clase.armadura,
                     style: Textos.encabezado(),
                   ),
                   Text(

@@ -10,15 +10,17 @@ Contiene **todas las operaciones sobre la base de datos** y **todas las reglas**
 |---|---|
 | `usuario.negocio.ts` | Registro (hash con bcrypt), login por email o username, ajustes y borrado de la cuenta. |
 | `partida.negocio.ts` | Partidas embebidas en el usuario: listar, crear, registrar progreso, subir atributos, mejorar equipo, borrar y elegir la activa. |
-| `personaje.negocio.ts` | Reglas del personaje: estadísticas de cada clase, valores de combate (con el costo y efecto de la siguiente mejora de equipo), personaje inicial, aplicación del progreso, subida de atributos con experiencia (curva de Elden Ring) y mejora de equipo. |
+| `clase.negocio.ts` | Colección `clases`: la lee una vez al arrancar (`cargar`, desde `index.ts`) y después la sirve desde memoria (`listar`, `obtener`). |
+| `personaje.negocio.ts` | Reglas del personaje: oro, armadura y atributo del arma de cada clase, valores de combate (con el costo y efecto de la siguiente mejora de equipo), personaje inicial, aplicación del progreso, subida de atributos con experiencia (curva de Elden Ring) y mejora de equipo. |
 | `enemigo.negocio.ts` | Recompensa (exp y oro) de cada enemigo, incluido el jefe Rey Hueco, y suma de lo ganado en un progreso. |
+| `coleccion-clases.ts` | Acceso a la colección `clases` y preparación de su validador y de las clases iniciales (`bd/clases.json`) que usan los scripts de `dev/`. |
 | `coleccion-usuarios.ts` | Acceso a la colección `usuarios`, conversión entre el DTO y el documento guardado (los `double` del esquema) y preparación del validador e índices que usan los scripts de `dev/`. |
 | `negocio-error.ts` | `NegocioError` con su tipo, conversión de ids y `conErroresMongo`, que traduce los errores de Mongo (11000 duplicado, 121 esquema). |
 
 ## Reglas que aplica
 
 - **Cuentas:** username de 3 a 20 caracteres sin `@`, correo válido y en minúsculas, contraseña de 8 a 72 caracteres guardada solo como hash de bcrypt. El login da el mismo mensaje si el usuario no existe o la contraseña es incorrecta, y rechaza las cuentas `baneado` o `eliminado`.
-- **Personaje nuevo:** lo crea el servidor con las estadísticas de su clase; la app solo elige clase, apariencia y nombre (de 2 a 16 caracteres). Como en Elden Ring, cada atributo parte en 1 y cada punto por encima es un nivel (nivel = 1 + suma de atributos − 4). Las clases empiezan en nivel 10 con 9 puntos repartidos según su estilo:
+- **Personaje nuevo:** lo crea el servidor; la app solo elige `claseCodigo`, apariencia y nombre (de 2 a 16 caracteres). Los atributos se copian de `atributosBase` de su clase en `rpg.clases` y a partir de ahí evolucionan en el personaje: no se vuelven a leer de la colección. El nombre, el arma y la descripción no se copian. Como en Elden Ring, cada atributo parte en 1 y cada punto por encima es un nivel (nivel = 1 + suma de atributos − 4). Las clases empiezan en nivel 10 con 9 puntos repartidos según su estilo (valores de `bd/clases.json`):
 
   | Clase | Vigor | Fuerza | Destreza | Intelecto | Nivel |
   | --- | --- | --- | --- | --- | --- |

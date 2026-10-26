@@ -158,7 +158,8 @@ class _EstadisticasPantallaState extends State<EstadisticasPantalla> {
   @override
   Widget build(BuildContext context) {
     final personaje = _partida.partida.personaje;
-    final clase = claseUi(personaje.clase);
+    final clase = claseUi(personaje.claseCodigo);
+    final nombre = nombreClase(personaje.claseCodigo);
     final combate = _partida.combate;
     final niveles = _niveles(_elegidos);
     final costo = _costo(niveles) ?? 0;
@@ -177,7 +178,7 @@ class _EstadisticasPantallaState extends State<EstadisticasPantalla> {
                 ancho: 32,
                 alto: 40,
                 escala: 2,
-                descripcion: clase.nombre,
+                descripcion: nombre,
               ),
               const SizedBox(width: Espacios.paso4),
               Expanded(
@@ -187,8 +188,8 @@ class _EstadisticasPantallaState extends State<EstadisticasPantalla> {
                     Text(personaje.nombre, style: Textos.encabezado()),
                     Text(
                       niveles > 0
-                          ? '${clase.nombre.toUpperCase()} · NV ${personaje.nivel} ▶ ${personaje.nivel + niveles}'
-                          : '${clase.nombre.toUpperCase()} · NV ${personaje.nivel}',
+                          ? '${nombre.toUpperCase()} · NV ${personaje.nivel} ▶ ${personaje.nivel + niveles}'
+                          : '${nombre.toUpperCase()} · NV ${personaje.nivel}',
                       style: Textos.etiqueta(
                         color: niveles > 0 ? Colores.brasa : Colores.ceniza,
                       ),

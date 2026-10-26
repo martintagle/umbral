@@ -17,7 +17,7 @@ export const login = z.object({ identificador: texto, password: texto });
 
 export const ajustes = z.object({ idioma: texto, musica: z.number(), efectos: z.number() });
 
-export const crearPartida = z.object({ nombre: texto, clase: texto, apariencia: texto });
+export const crearPartida = z.object({ nombre: texto, claseCodigo: texto, apariencia: texto });
 
 export const partidaActiva = z.object({ partidaId: texto.nullable() });
 

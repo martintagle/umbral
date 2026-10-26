@@ -5,7 +5,6 @@ import 'package:flame/components.dart';
 
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
-import '../widgets/boton_umbral.dart';
 import 'efectos.dart';
 import 'enemigo.dart';
 import 'escenario.dart';
@@ -240,32 +239,30 @@ class SalaInterior extends Escenario {
         AccionContexto(
           'Usar el yunque',
           () => game.abrirPantalla(PantallaJuego.herreria),
-          icono: 'yunque',
-          estilo: EstiloBoton.acento,
+          boton: 'yunque',
         ),
       ],
-      'estadisticas' => [game.accionSubirNivel(icono: 'altar')],
+      'estadisticas' => [game.accionSubirNivel()],
       'hoguera' => [
         AccionContexto(
           'Descansar',
           () => game.descansar(enSala: this),
-          icono: 'altar',
-          estilo: EstiloBoton.acento,
+          boton: 'descansar',
         ),
-        game.accionSubirNivel(icono: 'vigor'),
+        game.accionSubirNivel(),
       ],
       'cofre' => [
         AccionContexto(
           _abiertos.contains(cerca) ? 'Cofre vacío' : 'Abrir el cofre',
           () => _abrirCofre(cerca!),
-          icono: 'mochila',
+          boton: 'abrir',
         ),
       ],
       'secreto' => [
         AccionContexto(
           'Examinar',
           () => game.mostrarAviso('La trampilla está atrancada desde abajo.'),
-          icono: 'candado',
+          boton: 'leer',
         ),
       ],
       'subida' => [
@@ -274,7 +271,6 @@ class SalaInterior extends Escenario {
           () => game.mostrarAviso(
             'La escalera al mirador se derrumbó a mitad de camino.',
           ),
-          icono: 'candado',
         ),
       ],
       _ => const [],

@@ -5,7 +5,6 @@ import 'package:flame/cache.dart';
 import 'package:flame/components.dart';
 
 import '../tema/tema_umbral.dart';
-import '../widgets/boton_umbral.dart';
 import 'efectos.dart';
 import 'enemigo.dart';
 import 'escenario.dart';
@@ -185,10 +184,9 @@ class ZonaTierras extends Escenario {
         AccionContexto(
           'Descansar',
           game.descansar,
-          icono: 'altar',
-          estilo: EstiloBoton.acento,
+          boton: 'descansar',
         ),
-        game.accionSubirNivel(icono: 'vigor'),
+        game.accionSubirNivel(),
       ];
     }
     for (final (punto, sala) in puertas) {

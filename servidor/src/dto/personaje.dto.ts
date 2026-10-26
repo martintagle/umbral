@@ -1,4 +1,5 @@
 import type { AtributosDto } from './atributos.dto.js';
+import type { ClaseCodigo } from './clase-codigo.js';
 import type { EquipoDto } from './equipo.dto.js';
 import type { EstadisticasDto } from './estadisticas.dto.js';
 import type { MundoDto } from './mundo.dto.js';
@@ -10,7 +11,8 @@ export type Apariencia = (typeof APARIENCIAS)[number];
 /** Réplica del subdocumento `usuarios.partidas[].personaje`. */
 export interface PersonajeDto {
   nombre: string;
-  clase: string;
+  /** Llave hacia `clases._id`. */
+  claseCodigo: ClaseCodigo;
   apariencia: Apariencia;
   nivel: number;
   exp: number;

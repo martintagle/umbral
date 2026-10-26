@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../dto/apariencia.dart';
+import '../../dto/clase_dto.dart';
 import '../../servicio/clase_servicio.dart';
-import '../../servicio/modelos/clase.dart';
+import '../../servicio/modelos/catalogo_clases.dart';
 import '../../servicio/partida_servicio.dart';
 import '../../servicio/servicio_excepcion.dart';
 import '../clases_ui.dart';
@@ -27,8 +29,8 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
   final _nombre = TextEditingController();
 
   CatalogoClases? _catalogo;
-  Clase? _clase;
-  String _apariencia = 'hombre';
+  ClaseInicial? _clase;
+  Apariencia _apariencia = Apariencia.hombre;
   bool _cargando = false;
   String? _error;
 
@@ -69,7 +71,7 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
     try {
       final partida = await _partidas.crearPartida(
         nombre: _nombre.text.trim(),
-        clase: _clase!.id,
+        claseCodigo: _clase!.clase.id,
         apariencia: _apariencia,
       );
       if (mounted) Navigator.of(context).pop(partida);
@@ -125,9 +127,10 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
 
   /// En horizontal: a la izquierda se elige (clase, apariencia y nombre) y a
   /// la derecha se ve el personaje con sus estadísticas.
-  Widget _formularioPersonaje(CatalogoClases catalogo, Clase elegida) {
-    final clase = claseUi(elegida.id);
-    final a = elegida.atributos;
+  Widget _formularioPersonaje(CatalogoClases catalogo, ClaseInicial elegida) {
+    final clase = elegida.clase;
+    final ui = claseUi(clase.id);
+    final a = clase.atributosBase;
     final combate = elegida.combate;
     return Center(
       child: ConstrainedBox(
@@ -165,9 +168,9 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
                             children: [
                               for (final c in catalogo.clases)
                                 _OpcionClase(
-                                  clase: claseUi(c.id),
+                                  clase: c.clase,
                                   apariencia: _apariencia,
-                                  elegida: c.id == elegida.id,
+                                  elegida: c.clase.id == clase.id,
                                   ancho:
                                       ((limites.maxWidth -
                                                   Espacios.paso2 *
@@ -191,7 +194,9 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
                           for (final ap in catalogo.apariencias) ...[
                             Expanded(
                               child: BotonUmbral(
-                                texto: ap == 'hombre' ? 'Hombre' : 'Mujer',
+                                texto: ap == Apariencia.hombre
+                                    ? 'Hombre'
+                                    : 'Mujer',
                                 estilo: ap == _apariencia
                                     ? EstiloBoton.acento
                                     : EstiloBoton.secundario,
@@ -238,11 +243,12 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
                         Row(
                           children: [
                             SpriteUmbral(
-                              ruta: clase.sprite(_apariencia),
+                              ruta: ui.sprite(_apariencia),
                               ancho: 32,
                               alto: 40,
                               escala: 3,
-                              descripcion: '${clase.nombre}, $_apariencia',
+                              descripcion:
+                                  '${clase.nombre}, ${_apariencia.name}',
                             ),
                             const SizedBox(width: Espacios.paso4),
                             Expanded(
@@ -311,8 +317,8 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
 }
 
 class _OpcionClase extends StatelessWidget {
-  final ClaseUi clase;
-  final String apariencia;
+  final ClaseDto clase;
+  final Apariencia apariencia;
   final bool elegida;
   final double ancho;
   final VoidCallback alElegir;
@@ -349,7 +355,7 @@ class _OpcionClase extends StatelessWidget {
           child: Column(
             children: [
               SpriteUmbral(
-                ruta: clase.sprite(apariencia),
+                ruta: claseUi(clase.id).sprite(apariencia),
                 ancho: 32,
                 alto: 40,
                 escala: 2,

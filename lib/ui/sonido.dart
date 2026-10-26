@@ -4,6 +4,8 @@ import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../dto/ajustes_dto.dart';
+import '../dto/apariencia.dart';
+import '../dto/clase_codigo.dart';
 import '../servicio/preferencias_servicio.dart';
 import '../servicio/sesion_servicio.dart';
 import '../servicio/usuario_servicio.dart';
@@ -23,13 +25,10 @@ abstract final class Audios {
   static const danoHombre = 'dano-masculino.mp3';
   static const danoMujer = 'dano-femenino.mp3';
 
-  static String ataque(String clase) => switch (clase) {
-    'guerrero' || 'arquero' || 'mago' || 'prisionero' => 'ataque-$clase.mp3',
-    _ => 'ataque-vagabundo.mp3',
-  };
+  static String ataque(ClaseCodigo clase) => 'ataque-${clase.name}.mp3';
 
-  static String dano(String apariencia) =>
-      apariencia == 'mujer' ? danoMujer : danoHombre;
+  static String dano(Apariencia apariencia) =>
+      apariencia == Apariencia.mujer ? danoMujer : danoHombre;
 }
 
 /// Música y efectos del juego, con el volumen de los ajustes. Hasta que se

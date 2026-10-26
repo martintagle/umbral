@@ -93,7 +93,7 @@
             "bsonType": "object",
             "required": [
               "nombre",
-              "clase",
+              "claseCodigo",
               "apariencia",
               "nivel",
               "exp",
@@ -111,8 +111,15 @@
               "nombre": {
                 "bsonType": "string"
               },
-              "clase": {
-                "bsonType": "string"
+              "claseCodigo": {
+                "bsonType": "string",
+                "enum": [
+                  "vagabundo",
+                  "guerrero",
+                  "arquero",
+                  "mago",
+                  "prisionero"
+                ]
               },
               "apariencia": {
                 "enum": [

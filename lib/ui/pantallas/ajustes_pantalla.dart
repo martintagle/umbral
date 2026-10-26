@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../dto/clase_codigo.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
 import '../widgets/boton_umbral.dart';
@@ -60,8 +61,9 @@ class _AjustesPantallaState extends State<AjustesPantalla> {
                           nombre: 'Efectos',
                           valor: Sonido.efectos,
                           // Un golpe de muestra al soltar el control.
-                          alSoltar: () =>
-                              Sonido.efecto(Audios.ataque('guerrero')),
+                          alSoltar: () => Sonido.efecto(
+                            Audios.ataque(ClaseCodigo.guerrero),
+                          ),
                         ),
                       ],
                     ),

@@ -347,7 +347,7 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
     _ataque = 0;
     _impactoPendiente = true;
     _apuntar();
-    Sonido.efecto(Audios.ataque(game.personaje.clase), volumen: 0.8);
+    Sonido.efecto(Audios.ataque(game.personaje.claseCodigo), volumen: 0.8);
   }
 
   /// El instante en que el arma toca o el disparo sale.

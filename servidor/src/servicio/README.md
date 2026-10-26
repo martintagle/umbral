@@ -11,11 +11,11 @@
 | `app.ts` | Crea la app de Express, monta las rutas y convierte los errores en respuestas HTTP. |
 | `usuario.servicio.ts` | Rutas de `/api/usuarios`. |
 | `partida.servicio.ts` | Rutas de `/api/partidas` (todas requieren sesión). |
-| `clase.servicio.ts` | `GET /api/clases`: clases para crear un personaje. |
+| `clase.servicio.ts` | `GET /api/clases`: las clases de la colección con lo que tendría un personaje nuevo de cada una. |
 | `enemigo.servicio.ts` | `GET /api/enemigos`: lo que da cada enemigo al ser derrotado. |
 | `autenticacion.ts` | Firma y comprueba el token JWT de la sesión. |
 | `validacion.ts` | Esquemas `zod` con la **forma** de cada petición: tipos, campos obligatorios y enteros de 32 bits. Las reglas de dominio están en negocio. |
-| `respuestas.ts` | Cómo viaja cada DTO en JSON: fechas en ISO, `id` en texto, sin `passwordHash` y cada partida con sus valores de combate. |
+| `respuestas.ts` | Cómo viaja cada DTO en JSON: fechas en ISO, `_id` como `id` en texto, sin `passwordHash` y cada partida con sus valores de combate. |
 
 ## Rutas
 
@@ -26,10 +26,10 @@
 | GET | `/api/usuarios/yo` | `usuarioNegocio.obtenerPorId` |
 | PUT | `/api/usuarios/yo/ajustes` | `usuarioNegocio.actualizarAjustes` |
 | DELETE | `/api/usuarios/yo` | `usuarioNegocio.eliminar` |
-| GET | `/api/clases` | `personajeNegocio.catalogo` |
+| GET | `/api/clases` | `claseNegocio.listar` + `personajeNegocio.catalogo` → `{ apariencias, clases: [{ clase, nivel, oroInicial, combate }] }` |
 | GET | `/api/enemigos` | `enemigoNegocio.catalogo` |
 | GET | `/api/partidas` | `partidaNegocio.listarPartidas` → `[{ partida, combate }]` |
-| POST | `/api/partidas` | `partidaNegocio.crearPartida` → `{ partida, combate }` |
+| POST | `/api/partidas` | `partidaNegocio.crearPartida` (`{ nombre, claseCodigo, apariencia }`) → `{ partida, combate }` |
 | PUT | `/api/partidas/activa` | `partidaNegocio.seleccionarPartidaActiva` |
 | POST | `/api/partidas/:partidaId/progreso` | `partidaNegocio.registrarProgreso` → `{ partida, combate }` |
 | POST | `/api/partidas/:partidaId/atributos` | `partidaNegocio.subirAtributos` (`{ vida, fuerza, destreza, inteligencia }`, se paga con experiencia) → `{ partida, combate }` |

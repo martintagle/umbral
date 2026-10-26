@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 import type { AtributosDto } from '../dto/atributos.dto.js';
 import type { PartidaDto } from '../dto/partida.dto.js';
 import type { PersonajeDto } from '../dto/personaje.dto.js';
+import { claseNegocio } from './clase.negocio.js';
 import { usuarios } from './coleccion-usuarios.js';
 import { conErroresMongo, idMongo, NegocioError } from './negocio-error.js';
 import { personajeNegocio, type PiezaEquipo, type Progreso } from './personaje.negocio.js';
@@ -77,9 +78,10 @@ export const partidaNegocio = {
   async crearPartida(
     idUsuario: string,
     nombre: string,
-    clase: string,
+    claseCodigo: string,
     apariencia: string,
   ): Promise<PartidaDto> {
+    const clase = claseNegocio.obtener(claseCodigo);
     const ahora = new Date();
     const partida: PartidaDto = {
       partidaId: new ObjectId().toHexString(),
