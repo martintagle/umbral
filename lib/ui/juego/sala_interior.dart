@@ -130,17 +130,31 @@ class SalaInterior extends Escenario {
     for (final c in children.whereType<Proyectil>().toList()) {
       c.removeFromParent();
     }
+    // Con el nivel, cada punto trae compañía en las celdas libres de al lado.
+    final fuerza = game.fuerzaEnemigos;
+    final n = game.criaturasPorPuntoDeSala;
     for (final p in sala.puntos.where((p) => p.tipo == 'enemigo')) {
       if (Enemigos.porId(p.texto) case final tipo?) {
-        add(Enemigo(tipo, piesEn(p.x, p.y)));
+        final celdas = [
+          for (final (dx, dy) in const [(0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)])
+            if (_cabe(piesEn(p.x + dx, p.y + dy))) piesEn(p.x + dx, p.y + dy),
+        ];
+        for (final pies in celdas.take(n)) {
+          add(Enemigo(tipo, pies, fuerza: fuerza));
+        }
       }
     }
-    // El Rey Hueco espera delante de su trono, si aún no ha caído.
+    // El Rey Hueco espera delante de su trono, si aún no ha caído. Crece la
+    // mitad que el resto: ya cuesta bastante vencerlo.
     if (sala.punto('jefe') case final p?
         when !game.jefesDerrotados.contains(Enemigos.reyHueco.id)) {
-      add(Enemigo(Enemigos.reyHueco, piesEn(p.x, p.y)));
+      add(Enemigo(Enemigos.reyHueco, piesEn(p.x, p.y),
+          fuerza: 1 + (fuerza - 1) / 2));
     }
   }
+
+  bool _cabe(Vector2 pies) => libre(
+      Rect.fromCenter(center: Offset(pies.x, pies.y - 1.5), width: 8, height: 3));
 
   @override
   void update(double dt) {

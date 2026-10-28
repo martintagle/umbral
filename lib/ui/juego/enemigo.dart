@@ -28,7 +28,11 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
   final TipoEnemigo tipo;
   final Vector2 hogar;
 
-  Enemigo(this.tipo, Vector2 pies)
+  /// Multiplica la vida de [tipo]; el daño crece algo menos. Lo da
+  /// [UmbralJuego.fuerzaEnemigos] según el nivel del jugador.
+  final double fuerza;
+
+  Enemigo(this.tipo, Vector2 pies, {this.fuerza = 1})
       : hogar = pies.clone(),
         super(position: pies.clone());
 
@@ -40,7 +44,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
   static final _azar = Random();
 
   late final ModeloAnimado _modelo;
-  late double vida = tipo.vida.toDouble();
+  late double vida = vidaMaxima;
   _Estado _estado = _Estado.deambular;
   _Golpe _golpeElegido = _Golpe.cuerpo;
   double _temporizador = 0;
@@ -72,13 +76,15 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
 
   bool get vivo => vida > 0;
   double get radio => tipo.radio;
+  double get vidaMaxima => tipo.vida * fuerza;
+  int get dano => (tipo.dano * (1 + (fuerza - 1) * 0.6)).round();
 
   /// Ya vio al jugador y pelea (para el jefe: la niebla y la barra de vida).
   bool get despierto =>
       vivo && _estado != _Estado.deambular && _estado != _Estado.volver;
 
   /// El Rey Hueco a media vida: más rápido y con más golpes.
-  bool get furioso => tipo.jefe && vida < tipo.vida / 2;
+  bool get furioso => tipo.jefe && vida < vidaMaxima / 2;
 
   double get _velocidad => tipo.velocidad * (furioso ? 1.35 : 1);
   double get _preparacion => tipo.preparacion * (furioso ? 0.75 : 1);
@@ -112,8 +118,8 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
     _herido = max(0, _herido - dt);
     _retrocesos = max(0, _retrocesos - dt * 0.8);
 
-    if (tipo.regeneracion > 0 && _sinDano > 2 && vida < tipo.vida) {
-      vida = min(tipo.vida.toDouble(), vida + tipo.regeneracion * dt);
+    if (tipo.regeneracion > 0 && _sinDano > 2 && vida < vidaMaxima) {
+      vida = min(vidaMaxima, vida + tipo.regeneracion * dt);
     }
 
     final jugador = game.jugador;
@@ -151,7 +157,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
             jugador.centro.distanceTo(centro) <= radio + jugador.radio + 2) {
           _embestidaAcerto = true;
           _morder();
-          jugador.recibirGolpe(tipo.dano, desde: centro);
+          jugador.recibirGolpe(dano, desde: centro);
         }
         if (_temporizador <= 0) {
           if (furioso) _ondaExpansiva();
@@ -166,7 +172,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
       case _Estado.volver:
         _moverHacia(hogar, _velocidad, dt);
         if (position.distanceTo(hogar) < 4) {
-          vida = tipo.vida.toDouble();
+          vida = vidaMaxima;
           _estado = _Estado.deambular;
         } else if (jugador.vivo &&
             distancia < tipo.deteccion * 0.6 &&
@@ -263,7 +269,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
             direccion: angulo, arco: pi * 1.1, radio: tipo.alcance + 6));
         if (hacia.length <= tipo.alcance + jugador.radio + 8) {
           _morder();
-          jugador.recibirGolpe(tipo.dano, desde: centro);
+          jugador.recibirGolpe(dano, desde: centro);
         }
         _siguienteDelCombo(hacia, furioso ? 2 : 1);
       case _Golpe.cuerpo:
@@ -271,7 +277,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
         // Si el jugador se apartó durante el aviso, el golpe falla.
         if (hacia.length <= tipo.alcance + jugador.radio + 3) {
           _morder();
-          jugador.recibirGolpe(tipo.dano,
+          jugador.recibirGolpe(dano,
               ralentiza: tipo.ralentiza, desde: centro);
         }
         _siguienteDelCombo(hacia, _comboRestante);
@@ -300,7 +306,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
         direccion: Vector2(cos(a), sin(a)),
         rapidez: tipo.velocidadProyectil,
         distanciaMaxima: distancia,
-        dano: (tipo.dano * (tipo.jefe ? 0.6 : 1)).round(),
+        dano: (dano * (tipo.jefe ? 0.6 : 1)).round(),
         delJugador: false,
         tamano: tipo.tamanoProyectil,
         color: tipo.colorProyectil,
@@ -317,7 +323,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
         direccion: Vector2(cos(a), sin(a)),
         rapidez: 90,
         distanciaMaxima: 110,
-        dano: tipo.dano ~/ 2,
+        dano: dano ~/ 2,
         delJugador: false,
         tamano: 3,
         color: Colores.alma,
@@ -473,7 +479,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
     canvas.drawRect(Rect.fromLTWH(-ancho / 2 - 0.5, y - 0.5, ancho + 1, 2),
         _fondoBarra);
     canvas.drawRect(
-        Rect.fromLTWH(-ancho / 2, y, ancho * (vida / tipo.vida), 1),
+        Rect.fromLTWH(-ancho / 2, y, ancho * (vida / vidaMaxima), 1),
         _rellenoBarra);
   }
 

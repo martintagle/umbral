@@ -60,7 +60,7 @@ En el prototipo, el jugador tiene una caja de colisión en los pies de 10×6 px,
 | --- | --- | --- | --- |
 | Aldea Cenizal (centro) | 22–41 × 15–31 | Inicio en el altar de brasas, capilla, dos chozas, pozo, estatua sin rostro que recibe los fragmentos, jardín amurallado con un hueco | Ninguno |
 | Bosque Podrido (norte) | 0–63 × 0–14 | Senderos entre pinos, el cofre de la **Hoz** (9,4) y una arboleda secreta tras un muro con hueco | Ninguno |
-| Cementerio de los Callados (este) | 43–62 × 15–34 | Lápidas, árbol de la jaula, cofre de oro y la cripta del jefe | Zarzas en la entrada (42,23–24): requiere la Hoz. Reja de la cripta: requiere la Llave |
+| Cementerio de los Callados (este) | 43–62 × 15–34 | Lápidas, árbol de la jaula, cofre de oro y la cripta del jefe | Ninguno por ahora: las zarzas de la entrada (42,23–24) ya están cortadas y la reja de la cripta abierta, hasta que el juego tenga la Hoz y la Llave |
 | Lago Negro (oeste) | 0–20 × 15–38 | Puente roto, tronco hacia la isla con el cofre de la **Llave de hueso** (10,26), alcoba de roca con hueco | El tronco y el hueco solo se cruzan siendo diminuto |
 | Ruinas del Sur | 14–62 × 33–46 | Torre derruida dentro de un recinto amurallado y el cofre del **Corazón de ceniza** (34,43) | La piedra sellada se abre con 4 fragmentos |
 

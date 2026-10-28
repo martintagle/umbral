@@ -188,6 +188,22 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     return pedido;
   }
 
+  /// Las criaturas aguantan más y pegan más fuerte a medida que el jugador
+  /// sube: un 25 % de base y un 3 % por nivel, hasta el triple.
+  double get fuerzaEnemigos =>
+      (1.25 + 0.03 * (personaje.nivel - 1)).clamp(1.25, 3.0);
+
+  /// Criaturas en cada punto de aparición del mundo: dos de base y una más
+  /// cada diez niveles, hasta cinco.
+  int get criaturasPorGrupo => (2 + personaje.nivel ~/ 10).clamp(2, 5);
+
+  /// En las salas, que son estrechas: una más cada doce niveles, hasta tres.
+  int get criaturasPorPuntoDeSala => (1 + personaje.nivel ~/ 12).clamp(1, 3);
+
+  /// Segundos entre refuerzos en el mundo: más seguidos con el nivel.
+  double get intervaloRefuerzos =>
+      (20.0 - personaje.nivel * 0.5).clamp(6.0, 20.0);
+
   /// Si la experiencia alcanza para al menos un nivel (o quedan puntos de la
   /// regla anterior sin repartir).
   bool get puedeSubirNivel =>
@@ -338,7 +354,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
       Sonido.pista(zona.pista, volumen: 0.6);
       return;
     }
-    vidaJefe.value = e.vida / e.tipo.vida;
+    vidaJefe.value = e.vida / e.vidaMaxima;
     if (e.furioso && !_avisoFuria) {
       _avisoFuria = true;
       mostrarAviso('${e.tipo.nombre} se alza, furioso.');
@@ -349,7 +365,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   void jefeDespierta(Enemigo e) {
     if (jefe.value == e) return;
     jefe.value = e;
-    vidaJefe.value = e.vida / e.tipo.vida;
+    vidaJefe.value = e.vida / e.vidaMaxima;
     _avisoFuria = false;
     Sonido.pista(Audios.jefe);
   }

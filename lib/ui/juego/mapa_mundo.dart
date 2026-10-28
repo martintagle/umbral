@@ -13,7 +13,7 @@ typedef Estructura = ({
   List<(int, int)> puerta,
 });
 typedef Letrero = ({int x, int y, String texto});
-typedef EnemigoMapa = ({String tipo, int x, int y});
+typedef EnemigoMapa = ({String tipo, int x, int y, int radio});
 typedef Region = ({String nombre, int x, int y, int w, int h});
 
 /// `assets/mapas/mundo.json` (ver `docs/diseno/mundo.md`). Las posiciones del
@@ -84,7 +84,12 @@ class MapaMundo {
       portales = _celdas(m['portales']),
       enemigos = [
         for (final e in m['enemigos'] as List)
-          (tipo: e['tipo'] as String, x: e['x'] as int, y: e['y'] as int),
+          (
+            tipo: e['tipo'] as String,
+            x: e['x'] as int,
+            y: e['y'] as int,
+            radio: e['radio'] as int? ?? 2,
+          ),
       ],
       regiones = [
         for (final z in m['zonas'] as List)

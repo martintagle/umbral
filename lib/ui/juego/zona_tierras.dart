@@ -152,16 +152,63 @@ class ZonaTierras extends Escenario {
     for (final c in children.whereType<Proyectil>().toList()) {
       c.removeFromParent();
     }
+    // Cada punto del mapa es un grupo que crece con el nivel del jugador.
+    final n = game.criaturasPorGrupo;
     for (final e in mapa.enemigos) {
-      // El jefe no está en el catálogo del servidor: queda para más adelante.
-      final tipo = Enemigos.todos.where((t) => t.id == e.tipo).firstOrNull;
-      if (tipo != null) add(Enemigo(tipo, MapaMundo.piesEnCelda(e.x, e.y)));
+      for (var i = 0; i < n; i++) {
+        _aparecer(e, cerca: i > 0);
+      }
     }
+    _maximoVivos = (mapa.enemigos.length * n * 1.5).round();
+    _esperaRefuerzo = game.intervaloRefuerzos;
+  }
+
+  final _azar = Random();
+  int _maximoVivos = 0;
+  double _esperaRefuerzo = 0;
+
+  /// Pone una criatura del punto [e]: en su celda o, si [cerca], en una celda
+  /// libre dentro de su radio.
+  void _aparecer(EnemigoMapa e, {bool cerca = true}) {
+    final tipo = Enemigos.todos.where((t) => t.id == e.tipo).firstOrNull;
+    if (tipo == null) return;
+    var pies = MapaMundo.piesEnCelda(e.x, e.y);
+    if (cerca) {
+      for (var intento = 0; intento < 8; intento++) {
+        final p = MapaMundo.piesEnCelda(
+          e.x + _azar.nextInt(e.radio * 2 + 1) - e.radio,
+          e.y + _azar.nextInt(e.radio * 2 + 1) - e.radio,
+        );
+        if (libre(
+          Rect.fromCenter(center: Offset(p.x, p.y - 1.5), width: 8, height: 3),
+          enemigo: true,
+        )) {
+          pies = p;
+          break;
+        }
+      }
+    }
+    add(Enemigo(tipo, pies, fuerza: game.fuerzaEnemigos));
+  }
+
+  /// Mientras el jugador está en el mundo llegan criaturas nuevas a puntos
+  /// alejados de él, cada vez más seguido según su nivel.
+  void _refuerzos(double dt) {
+    _esperaRefuerzo -= dt;
+    if (_esperaRefuerzo > 0) return;
+    _esperaRefuerzo = game.intervaloRefuerzos;
+    if (enemigosVivos.length >= _maximoVivos) return;
+    final pies = game.jugador.position;
+    final lejanos = mapa.enemigos
+        .where((e) => MapaMundo.piesEnCelda(e.x, e.y).distanceTo(pies) > 180)
+        .toList();
+    if (lejanos.isNotEmpty) _aparecer(lejanos[_azar.nextInt(lejanos.length)]);
   }
 
   @override
   void update(double dt) {
     super.update(dt);
+    if (identical(game.zona, this) && game.jugador.vivo) _refuerzos(dt);
     final pies = game.jugador.position;
 
     // Al acercarse a un letrero se lee una vez, hasta alejarse de él.
