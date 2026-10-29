@@ -2,9 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import '../../dto/atributos_dto.dart';
-import '../../servicio/modelos/partida_jugable.dart';
-import '../../servicio/servicio_excepcion.dart';
+import '../../contrato/atributos.dart';
+import '../../contrato/partida_jugable.dart';
+import '../../api/api_excepcion.dart';
 import '../clases_ui.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
@@ -24,7 +24,7 @@ class EstadisticasPantalla extends StatefulWidget {
   final PartidaJugable partida;
 
   /// Envía los puntos de cada atributo y devuelve la partida resultante.
-  final Future<PartidaJugable> Function(AtributosDto incrementos) alSubir;
+  final Future<PartidaJugable> Function(Atributos incrementos) alSubir;
 
   const EstadisticasPantalla({
     super.key,
@@ -119,7 +119,7 @@ class _EstadisticasPantallaState extends State<EstadisticasPantalla> {
     });
     try {
       final nueva = await widget.alSubir(
-        AtributosDto(
+        Atributos(
           vida: _sumados['vida']!,
           fuerza: _sumados['fuerza']!,
           destreza: _sumados['destreza']!,
@@ -135,7 +135,7 @@ class _EstadisticasPantallaState extends State<EstadisticasPantalla> {
             'Las brasas aceptan tu ofrenda. '
             'Ahora eres nivel ${nueva.partida.personaje.nivel}.';
       });
-    } on ServicioExcepcion catch (e) {
+    } on ApiExcepcion catch (e) {
       if (mounted) setState(() => _error = e.mensaje);
     } finally {
       if (mounted) setState(() => _cargando = false);

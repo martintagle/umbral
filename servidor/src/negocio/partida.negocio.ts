@@ -6,16 +6,32 @@ import type { PersonajeDto } from '../dto/personaje.dto.js';
 import { claseNegocio } from './clase.negocio.js';
 import { usuarios } from './coleccion-usuarios.js';
 import { conErroresMongo, idMongo, NegocioError } from './negocio-error.js';
-import { personajeNegocio, type PiezaEquipo, type Progreso } from './personaje.negocio.js';
+import {
+  personajeNegocio,
+  type Combate,
+  type PiezaEquipo,
+  type Progreso,
+} from './personaje.negocio.js';
 
 const MAXIMO_PARTIDAS = 10;
 /** Reintentos si otra petición guarda la misma partida a la vez. */
 const INTENTOS_GUARDADO = 3;
 
+/** Partida con los valores de combate que el juego necesita para jugarla. */
+export interface PartidaJugable {
+  partida: PartidaDto;
+  combate: Combate;
+}
+
+const jugable = (partida: PartidaDto): PartidaJugable => ({
+  partida,
+  combate: personajeNegocio.combate(partida.personaje),
+});
+
 const noExisteUsuario = () => new NegocioError('El usuario no existe.', 'no-encontrado');
 const noExistePartida = () => new NegocioError('La partida no existe.', 'no-encontrado');
 
-async function listarPartidas(idUsuario: string): Promise<PartidaDto[]> {
+async function leerPartidas(idUsuario: string): Promise<PartidaDto[]> {
   const usuario = await (await usuarios()).findOne(
     { _id: idMongo(idUsuario) },
     { projection: { partidas: 1 } },
@@ -34,11 +50,11 @@ async function actualizarPersonaje(
   idUsuario: string,
   partidaId: string,
   cambio: (anterior: PartidaDto, ahora: Date) => PersonajeDto,
-): Promise<PartidaDto> {
+): Promise<PartidaJugable> {
   const id = idMongo(idUsuario);
   const coleccion = await usuarios();
   for (let intento = 0; intento < INTENTOS_GUARDADO; intento++) {
-    const anterior = (await listarPartidas(idUsuario)).find((p) => p.partidaId === partidaId);
+    const anterior = (await leerPartidas(idUsuario)).find((p) => p.partidaId === partidaId);
     if (!anterior) throw noExistePartida();
 
     const ahora = new Date();
@@ -61,7 +77,7 @@ async function actualizarPersonaje(
       ),
     );
     if (resultado.matchedCount === 1) {
-      return { ...anterior, ultimaVezJugada: ahora, personaje };
+      return jugable({ ...anterior, ultimaVezJugada: ahora, personaje });
     }
   }
   throw new NegocioError('La partida cambió mientras se guardaba. Inténtalo de nuevo.', 'conflicto');
@@ -73,14 +89,16 @@ async function actualizarPersonaje(
  * sobre el documento del usuario.
  */
 export const partidaNegocio = {
-  listarPartidas,
+  async listarPartidas(idUsuario: string): Promise<PartidaJugable[]> {
+    return (await leerPartidas(idUsuario)).map(jugable);
+  },
 
   async crearPartida(
     idUsuario: string,
     nombre: string,
     claseCodigo: string,
     apariencia: string,
-  ): Promise<PartidaDto> {
+  ): Promise<PartidaJugable> {
     const clase = claseNegocio.obtener(claseCodigo);
     const ahora = new Date();
     const partida: PartidaDto = {
@@ -99,14 +117,14 @@ export const partidaNegocio = {
       ),
     );
     if (resultado.matchedCount === 0) {
-      await listarPartidas(idUsuario); // distingue "no existe" de "límite"
+      await leerPartidas(idUsuario); // distingue "no existe" de "límite"
       throw new NegocioError(`No puedes tener más de ${MAXIMO_PARTIDAS} partidas.`, 'conflicto');
     }
-    return partida;
+    return jugable(partida);
   },
 
   /** Aplica el progreso con las reglas del personaje. */
-  registrarProgreso(idUsuario: string, partidaId: string, progreso: Progreso): Promise<PartidaDto> {
+  registrarProgreso(idUsuario: string, partidaId: string, progreso: Progreso): Promise<PartidaJugable> {
     return actualizarPersonaje(idUsuario, partidaId, (anterior, ahora) =>
       personajeNegocio.aplicarProgreso(
         anterior.personaje,
@@ -117,14 +135,14 @@ export const partidaNegocio = {
   },
 
   /** Sube atributos (y nivel) gastando experiencia en un altar de brasas. */
-  subirAtributos(idUsuario: string, partidaId: string, incrementos: AtributosDto): Promise<PartidaDto> {
+  subirAtributos(idUsuario: string, partidaId: string, incrementos: AtributosDto): Promise<PartidaJugable> {
     return actualizarPersonaje(idUsuario, partidaId, (anterior) =>
       personajeNegocio.subirAtributos(anterior.personaje, incrementos),
     );
   },
 
   /** Mejora el arma o la armadura con oro (yunque de la herrería). */
-  mejorarEquipo(idUsuario: string, partidaId: string, pieza: PiezaEquipo): Promise<PartidaDto> {
+  mejorarEquipo(idUsuario: string, partidaId: string, pieza: PiezaEquipo): Promise<PartidaJugable> {
     return actualizarPersonaje(idUsuario, partidaId, (anterior) =>
       personajeNegocio.mejorarEquipo(anterior.personaje, pieza),
     );

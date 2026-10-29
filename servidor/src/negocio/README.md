@@ -4,13 +4,19 @@
 
 Contiene **todas las operaciones sobre la base de datos** y **todas las reglas** del juego y de las cuentas. Es la única capa que habla con MongoDB, siempre **a través de la capa de conexión** y usando los **DTO**.
 
+Cada método entrega su resultado **listo para que la capa servicio lo exponga** sin tocarlo:
+
+- `usuarioNegocio` devuelve `UsuarioPublico`: el `UsuarioDto` sin `passwordHash` y con `_id` como `id` en texto.
+- `partidaNegocio` devuelve `PartidaJugable`: la `PartidaDto` con sus valores de combate.
+- `claseNegocio.catalogo` devuelve cada clase (`_id` como `id`) con el nivel, el oro y el combate con que empieza.
+
 ## Qué contiene
 
 | Archivo | Responsabilidad |
 |---|---|
-| `usuario.negocio.ts` | Registro (hash con bcrypt), login por email o username, ajustes y borrado de la cuenta. |
-| `partida.negocio.ts` | Partidas embebidas en el usuario: listar, crear, registrar progreso, subir atributos, mejorar equipo, borrar y elegir la activa. |
-| `clase.negocio.ts` | Colección `clases`: la lee una vez al arrancar (`cargar`, desde `index.ts`) y después la sirve desde memoria (`listar`, `obtener`). |
+| `usuario.negocio.ts` | Registro (hash con bcrypt), login por email o username, ajustes y borrado de la cuenta. Entrega `UsuarioPublico`. |
+| `partida.negocio.ts` | Partidas embebidas en el usuario: listar, crear, registrar progreso, subir atributos, mejorar equipo, borrar y elegir la activa. Entrega `PartidaJugable`. |
+| `clase.negocio.ts` | Colección `clases`: la lee una vez al arrancar (`cargar`, desde `index.ts`) y después la sirve desde memoria (`catalogo`, `obtener`). |
 | `personaje.negocio.ts` | Reglas del personaje: oro, armadura y atributo del arma de cada clase, valores de combate (con el costo y efecto de la siguiente mejora de equipo), personaje inicial, aplicación del progreso, subida de atributos con experiencia (curva de Elden Ring) y mejora de equipo. |
 | `enemigo.negocio.ts` | Recompensa (exp y oro) de cada enemigo, incluido el jefe Rey Hueco, y suma de lo ganado en un progreso. |
 | `coleccion-clases.ts` | Acceso a la colección `clases` y preparación de su validador y de las clases iniciales (`bd/clases.json`) que usan los scripts de `dev/`. |

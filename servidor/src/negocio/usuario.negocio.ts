@@ -12,6 +12,25 @@ const RONDAS_BCRYPT = 10;
 const USERNAME = /^[A-Za-z0-9_.-]{3,20}$/;
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
+/** Usuario tal como lo entrega negocio: sin `passwordHash` y con `_id` como `id` en texto. */
+export type UsuarioPublico = Omit<UsuarioDto, '_id' | 'passwordHash'> & { id: string };
+
+function publico(u: UsuarioDto): UsuarioPublico {
+  return {
+    id: u._id.toHexString(),
+    username: u.username,
+    email: u.email,
+    estado: u.estado,
+    creadoEn: u.creadoEn,
+    ultimoLogin: u.ultimoLogin,
+    actualizadoEn: u.actualizadoEn,
+    versionEsquema: u.versionEsquema,
+    ajustes: u.ajustes,
+    partidaActiva: u.partidaActiva,
+    partidas: u.partidas,
+  };
+}
+
 /**
  * El username no admite '@': como el login acepta email o username en el
  * mismo campo, así nunca puede coincidir con el email de otra cuenta.
@@ -41,7 +60,7 @@ function validarAjustes(a: AjustesDto): void {
 }
 
 export const usuarioNegocio = {
-  async registrar(username: string, email: string, password: string): Promise<UsuarioDto> {
+  async registrar(username: string, email: string, password: string): Promise<UsuarioPublico> {
     const nombre = username.trim();
     const correo = email.trim().toLowerCase();
     validarRegistro(nombre, correo, password);
@@ -62,11 +81,11 @@ export const usuarioNegocio = {
     };
     const coleccion = await usuarios();
     await conErroresMongo(() => coleccion.insertOne(documentoUsuario(usuario)));
-    return usuario;
+    return publico(usuario);
   },
 
   /** `identificador` puede ser el email o el username. */
-  async iniciarSesion(identificador: string, password: string): Promise<UsuarioDto> {
+  async iniciarSesion(identificador: string, password: string): Promise<UsuarioPublico> {
     const valor = identificador.trim();
     if (!valor || !password) {
       throw new NegocioError('Escribe tu correo o usuario y tu contraseña.');
@@ -92,13 +111,13 @@ export const usuarioNegocio = {
       { _id: documento._id },
       { $set: { ultimoLogin: ahora, actualizadoEn: ahora } },
     );
-    return usuarioDto({ ...documento, ultimoLogin: ahora, actualizadoEn: ahora });
+    return publico(usuarioDto({ ...documento, ultimoLogin: ahora, actualizadoEn: ahora }));
   },
 
-  async obtenerPorId(id: string): Promise<UsuarioDto> {
+  async obtenerPorId(id: string): Promise<UsuarioPublico> {
     const documento = await (await usuarios()).findOne({ _id: idMongo(id) });
     if (!documento) throw new NegocioError('El usuario no existe.', 'no-encontrado');
-    return usuarioDto(documento);
+    return publico(usuarioDto(documento));
   },
 
   async actualizarAjustes(id: string, ajustes: AjustesDto): Promise<void> {

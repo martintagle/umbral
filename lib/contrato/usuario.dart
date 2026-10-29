@@ -1,11 +1,11 @@
-import 'ajustes_dto.dart';
+import 'ajustes.dart';
 import 'estado_usuario.dart';
-import 'partida_dto.dart';
+import 'partida.dart';
 
-/// Réplica de un documento de la colección `usuarios`, con sus subdocumentos
+/// Documento de la colección `usuarios`, con sus subdocumentos
 /// embebidos, tal como lo envía la API: `_id` llega como [id] en texto y
 /// `passwordHash` nunca sale del servidor.
-class UsuarioDto {
+class Usuario {
   final String id;
   final String username;
   final String email;
@@ -14,11 +14,11 @@ class UsuarioDto {
   final DateTime? ultimoLogin;
   final DateTime actualizadoEn;
   final int versionEsquema;
-  final AjustesDto ajustes;
+  final Ajustes ajustes;
   final String? partidaActiva;
-  final List<PartidaDto> partidas;
+  final List<Partida> partidas;
 
-  const UsuarioDto({
+  const Usuario({
     required this.id,
     required this.username,
     required this.email,
@@ -32,9 +32,9 @@ class UsuarioDto {
     required this.partidas,
   });
 
-  factory UsuarioDto.fromMap(Map<String, dynamic> map) {
+  factory Usuario.fromMap(Map<String, dynamic> map) {
     final ultimoLogin = map['ultimoLogin'] as String?;
-    return UsuarioDto(
+    return Usuario(
       id: map['id'] as String,
       username: map['username'] as String,
       email: map['email'] as String,
@@ -43,10 +43,10 @@ class UsuarioDto {
       ultimoLogin: ultimoLogin == null ? null : DateTime.parse(ultimoLogin),
       actualizadoEn: DateTime.parse(map['actualizadoEn'] as String),
       versionEsquema: map['versionEsquema'] as int,
-      ajustes: AjustesDto.fromMap(map['ajustes'] as Map<String, dynamic>),
+      ajustes: Ajustes.fromMap(map['ajustes'] as Map<String, dynamic>),
       partidaActiva: map['partidaActiva'] as String?,
       partidas: (map['partidas'] as List)
-          .map((p) => PartidaDto.fromMap(p as Map<String, dynamic>))
+          .map((p) => Partida.fromMap(p as Map<String, dynamic>))
           .toList(),
     );
   }

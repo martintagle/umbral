@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../dto/clase_codigo.dart';
+import '../../contrato/clase_codigo.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
 import '../widgets/boton_umbral.dart';

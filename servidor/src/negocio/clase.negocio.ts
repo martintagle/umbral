@@ -2,6 +2,25 @@ import { CLASES_CODIGO, type ClaseCodigo } from '../dto/clase-codigo.js';
 import type { ClaseDto } from '../dto/clase.dto.js';
 import { clases } from './coleccion-clases.js';
 import { NegocioError } from './negocio-error.js';
+import { personajeNegocio, type CatalogoClases, type ClaseInicial } from './personaje.negocio.js';
+
+/** Clase tal como la entrega negocio: `_id` (el código) sale como `id`. */
+export type ClasePublica = Omit<ClaseDto, '_id'> & { id: ClaseCodigo };
+
+export interface CatalogoPublico {
+  apariencias: CatalogoClases['apariencias'];
+  clases: (Omit<ClaseInicial, 'clase'> & { clase: ClasePublica })[];
+}
+
+function publica(c: ClaseDto): ClasePublica {
+  return {
+    id: c._id,
+    nombre: c.nombre,
+    arma: c.arma,
+    descripcion: c.descripcion,
+    atributosBase: c.atributosBase,
+  };
+}
 
 let cache: ReadonlyMap<ClaseCodigo, ClaseDto> | null = null;
 
@@ -28,8 +47,13 @@ export const claseNegocio = {
     cache = new Map(CLASES_CODIGO.map((codigo) => [codigo, porCodigo.get(codigo)!]));
   },
 
-  listar(): ClaseDto[] {
-    return [...enCache().values()];
+  /** Las clases con lo que tendría un personaje nuevo de cada una. */
+  catalogo(): CatalogoPublico {
+    const { apariencias, clases } = personajeNegocio.catalogo([...enCache().values()]);
+    return {
+      apariencias,
+      clases: clases.map((inicial) => ({ ...inicial, clase: publica(inicial.clase) })),
+    };
   },
 
   obtener(codigo: string): ClaseDto {

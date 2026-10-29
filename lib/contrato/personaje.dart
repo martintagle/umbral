@@ -1,17 +1,17 @@
 import 'apariencia.dart';
-import 'atributos_dto.dart';
+import 'atributos.dart';
 import 'clase_codigo.dart';
-import 'equipo_dto.dart';
-import 'estadisticas_dto.dart';
-import 'mundo_dto.dart';
-import 'ubicacion_dto.dart';
+import 'equipo.dart';
+import 'estadisticas.dart';
+import 'mundo.dart';
+import 'ubicacion.dart';
 
-/// Réplica del subdocumento `usuarios.partidas[].personaje`.
-class PersonajeDto {
+/// Subdocumento `usuarios.partidas[].personaje` tal como viaja en el JSON de la API.
+class Personaje {
   final String nombre;
 
   /// Llave hacia `clases._id`. El nombre, el arma y la descripción se buscan
-  /// en la clase (`ClaseServicio.clase`); no se copian en el personaje.
+  /// en la clase (`ClaseApi.clase`); no se copian en el personaje.
   final ClaseCodigo claseCodigo;
   final Apariencia apariencia;
   final int nivel;
@@ -21,15 +21,15 @@ class PersonajeDto {
 
   /// Al crear el personaje son los `atributosBase` de su clase; después
   /// evolucionan solos.
-  final AtributosDto atributos;
+  final Atributos atributos;
   final int vidaActual;
   final int estaminaActual;
-  final EquipoDto equipo;
-  final UbicacionDto ubicacion;
-  final MundoDto mundo;
-  final EstadisticasDto estadisticas;
+  final Equipo equipo;
+  final Ubicacion ubicacion;
+  final Mundo mundo;
+  final Estadisticas estadisticas;
 
-  const PersonajeDto({
+  const Personaje({
     required this.nombre,
     required this.claseCodigo,
     required this.apariencia,
@@ -46,8 +46,8 @@ class PersonajeDto {
     required this.estadisticas,
   });
 
-  factory PersonajeDto.fromMap(Map<String, dynamic> map) {
-    return PersonajeDto(
+  factory Personaje.fromMap(Map<String, dynamic> map) {
+    return Personaje(
       nombre: map['nombre'] as String,
       claseCodigo: ClaseCodigo.values.byName(map['claseCodigo'] as String),
       apariencia: Apariencia.values.byName(map['apariencia'] as String),
@@ -55,13 +55,13 @@ class PersonajeDto {
       exp: map['exp'] as int,
       puntosLibres: map['puntosLibres'] as int,
       oro: map['oro'] as int,
-      atributos: AtributosDto.fromMap(map['atributos'] as Map<String, dynamic>),
+      atributos: Atributos.fromMap(map['atributos'] as Map<String, dynamic>),
       vidaActual: map['vidaActual'] as int,
       estaminaActual: map['estaminaActual'] as int,
-      equipo: EquipoDto.fromMap(map['equipo'] as Map<String, dynamic>),
-      ubicacion: UbicacionDto.fromMap(map['ubicacion'] as Map<String, dynamic>),
-      mundo: MundoDto.fromMap(map['mundo'] as Map<String, dynamic>),
-      estadisticas: EstadisticasDto.fromMap(
+      equipo: Equipo.fromMap(map['equipo'] as Map<String, dynamic>),
+      ubicacion: Ubicacion.fromMap(map['ubicacion'] as Map<String, dynamic>),
+      mundo: Mundo.fromMap(map['mundo'] as Map<String, dynamic>),
+      estadisticas: Estadisticas.fromMap(
         map['estadisticas'] as Map<String, dynamic>,
       ),
     );

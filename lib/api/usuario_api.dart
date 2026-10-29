@@ -1,11 +1,11 @@
-import '../dto/ajustes_dto.dart';
-import '../dto/usuario_dto.dart';
+import '../contrato/ajustes.dart';
+import '../contrato/usuario.dart';
 import 'api_cliente.dart';
-import 'sesion_servicio.dart';
+import 'sesion.dart';
 
-class UsuarioServicio {
+class UsuarioApi {
   /// Crea la cuenta y deja la sesión iniciada.
-  Future<UsuarioDto> registrar({
+  Future<Usuario> registrar({
     required String username,
     required String email,
     required String password,
@@ -19,10 +19,7 @@ class UsuarioServicio {
   }
 
   /// [identificador] puede ser el email o el username.
-  Future<UsuarioDto> iniciarSesion(
-    String identificador,
-    String password,
-  ) async {
+  Future<Usuario> iniciarSesion(String identificador, String password) async {
     final datos = await ApiCliente.post('/usuarios/login', {
       'identificador': identificador,
       'password': password,
@@ -33,32 +30,30 @@ class UsuarioServicio {
   /// Vuelve a abrir la última sesión guardada en el teléfono, sin pedir la
   /// contraseña. Devuelve `false` si no había ninguna. El token puede haber
   /// caducado: la primera petición lo dirá con `sesionCaducada`.
-  bool restaurarSesion() => SesionServicio.restaurar();
+  bool restaurarSesion() => Sesion.restaurar();
 
   /// Pide el usuario al servidor y actualiza la sesión con él.
-  Future<UsuarioDto> obtenerYo() async {
-    final usuario = UsuarioDto.fromMap(
+  Future<Usuario> obtenerYo() async {
+    final usuario = Usuario.fromMap(
       await ApiCliente.get('/usuarios/yo') as Map<String, dynamic>,
     );
-    SesionServicio.actualizar(usuario);
+    Sesion.actualizar(usuario);
     return usuario;
   }
 
-  Future<void> actualizarAjustes(AjustesDto ajustes) =>
+  Future<void> actualizarAjustes(Ajustes ajustes) =>
       ApiCliente.put('/usuarios/yo/ajustes', ajustes.toMap());
 
   Future<void> eliminarCuenta() async {
     await ApiCliente.delete('/usuarios/yo');
-    SesionServicio.cerrar();
+    Sesion.cerrar();
   }
 
-  void cerrarSesion() => SesionServicio.cerrar();
+  void cerrarSesion() => Sesion.cerrar();
 
-  UsuarioDto _abrirSesion(Map<String, dynamic> datos) {
-    final usuario = UsuarioDto.fromMap(
-      datos['usuario'] as Map<String, dynamic>,
-    );
-    SesionServicio.abrir(usuario, datos['token'] as String);
+  Usuario _abrirSesion(Map<String, dynamic> datos) {
+    final usuario = Usuario.fromMap(datos['usuario'] as Map<String, dynamic>);
+    Sesion.abrir(usuario, datos['token'] as String);
     return usuario;
   }
 }

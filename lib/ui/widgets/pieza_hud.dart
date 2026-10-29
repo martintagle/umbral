@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../dto/clase_codigo.dart';
+import '../../contrato/clase_codigo.dart';
 
 /// Una pieza de `assets/hud/` (ver `hud.json`). Las que tienen varios estados
 /// traen los cuadros en fila: el cuadro `i` está en `x = i · ancho`. Las

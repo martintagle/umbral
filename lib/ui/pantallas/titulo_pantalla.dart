@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../servicio/sesion_servicio.dart';
-import '../../servicio/usuario_servicio.dart';
+import '../../api/sesion.dart';
+import '../../api/usuario_api.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
 import '../widgets/boton_umbral.dart';
@@ -24,7 +24,7 @@ class _TituloPantallaState extends State<TituloPantalla> {
   bool _visible = true;
 
   /// Si el teléfono recuerda una sesión, se entra directo a las partidas.
-  late final bool _recordada = UsuarioServicio().restaurarSesion();
+  late final bool _recordada = UsuarioApi().restaurarSesion();
 
   @override
   void initState() {
@@ -53,7 +53,7 @@ class _TituloPantallaState extends State<TituloPantalla> {
 
   @override
   Widget build(BuildContext context) {
-    final nombre = SesionServicio.usuario?.username;
+    final nombre = Sesion.usuario?.username;
     return Scaffold(
       body: Stack(
         children: [

@@ -3,8 +3,8 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:umbral/servicio/modelos/partida_jugable.dart';
-import 'package:umbral/servicio/modelos/recompensa.dart';
+import 'package:umbral/contrato/partida_jugable.dart';
+import 'package:umbral/contrato/recompensa.dart';
 import 'package:umbral/ui/juego/enemigo.dart';
 import 'package:umbral/ui/juego/sala_interior.dart';
 import 'package:umbral/ui/juego/tipos_enemigo.dart';

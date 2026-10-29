@@ -1,11 +1,11 @@
-import '../dto/clase_codigo.dart';
-import '../dto/clase_dto.dart';
+import '../contrato/clase_codigo.dart';
+import '../contrato/clase.dart';
 import 'api_cliente.dart';
-import 'modelos/catalogo_clases.dart';
+import '../contrato/catalogo_clases.dart';
 
 /// Colección `clases`: las que se pueden elegir al crear un personaje y de
 /// donde salen el nombre, el arma y la descripción de cada personaje.
-class ClaseServicio {
+class ClaseApi {
   static Future<CatalogoClases>? _pedido;
   static CatalogoClases? _catalogo;
 
@@ -26,5 +26,5 @@ class ClaseServicio {
 
   /// Clase de un personaje, buscada por su `claseCodigo`. `null` mientras no
   /// ha llegado el catálogo.
-  static ClaseDto? clase(ClaseCodigo codigo) => _catalogo?.clase(codigo);
+  static Clase? clase(ClaseCodigo codigo) => _catalogo?.clase(codigo);
 }

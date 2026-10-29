@@ -1,19 +1,19 @@
-/// Réplica del subdocumento `usuarios.partidas[].personaje.atributos`.
-class AtributosDto {
+/// Subdocumento `usuarios.partidas[].personaje.atributos` tal como viaja en el JSON de la API.
+class Atributos {
   final int vida;
   final int fuerza;
   final int destreza;
   final int inteligencia;
 
-  const AtributosDto({
+  const Atributos({
     required this.vida,
     required this.fuerza,
     required this.destreza,
     required this.inteligencia,
   });
 
-  factory AtributosDto.fromMap(Map<String, dynamic> map) {
-    return AtributosDto(
+  factory Atributos.fromMap(Map<String, dynamic> map) {
+    return Atributos(
       vida: map['vida'] as int,
       fuerza: map['fuerza'] as int,
       destreza: map['destreza'] as int,

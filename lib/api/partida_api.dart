@@ -1,14 +1,14 @@
-import '../dto/apariencia.dart';
-import '../dto/atributos_dto.dart';
-import '../dto/clase_codigo.dart';
-import 'modelos/partida_jugable.dart';
-import 'modelos/progreso.dart';
+import '../contrato/apariencia.dart';
+import '../contrato/atributos.dart';
+import '../contrato/clase_codigo.dart';
+import '../contrato/partida_jugable.dart';
+import '../contrato/progreso.dart';
 import 'api_cliente.dart';
-import 'usuario_servicio.dart';
+import 'usuario_api.dart';
 
 /// Partidas del usuario con la sesión iniciada.
-class PartidaServicio {
-  final _usuarios = UsuarioServicio();
+class PartidaApi {
+  final _usuarios = UsuarioApi();
 
   Future<List<PartidaJugable>> listarPartidas() async {
     final datos = await ApiCliente.get('/partidas') as List;
@@ -48,7 +48,7 @@ class PartidaServicio {
   /// van a cada uno. Cada punto es un nivel; el servidor cobra y valida.
   Future<PartidaJugable> subirAtributos(
     String partidaId,
-    AtributosDto incrementos,
+    Atributos incrementos,
   ) async {
     final datos = await ApiCliente.post(
       '/partidas/$partidaId/atributos',

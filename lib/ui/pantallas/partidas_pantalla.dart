@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../../dto/partida_dto.dart';
-import '../../servicio/clase_servicio.dart';
-import '../../servicio/enemigo_servicio.dart';
-import '../../servicio/modelos/partida_jugable.dart';
-import '../../servicio/modelos/recompensa.dart';
-import '../../servicio/partida_servicio.dart';
-import '../../servicio/servicio_excepcion.dart';
-import '../../servicio/sesion_servicio.dart';
-import '../../servicio/usuario_servicio.dart';
+import '../../contrato/partida.dart';
+import '../../api/clase_api.dart';
+import '../../api/enemigo_api.dart';
+import '../../contrato/partida_jugable.dart';
+import '../../contrato/recompensa.dart';
+import '../../api/partida_api.dart';
+import '../../api/api_excepcion.dart';
+import '../../api/sesion.dart';
+import '../../api/usuario_api.dart';
 import '../clases_ui.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
@@ -29,14 +29,14 @@ class PartidasPantalla extends StatefulWidget {
 }
 
 class _PartidasPantallaState extends State<PartidasPantalla> {
-  final _servicio = PartidaServicio();
+  final _api = PartidaApi();
   List<PartidaJugable>? _partidas;
   String? _error;
-  final _enemigos = EnemigoServicio();
+  final _enemigos = EnemigoApi();
   bool _usuarioAlDia = false;
 
-  /// Los servicios mantienen la sesión al día al cambiar la partida activa.
-  String? get _partidaActiva => SesionServicio.usuario?.partidaActiva;
+  /// Las clases de `api/` mantienen la sesión al día al cambiar la partida activa.
+  String? get _partidaActiva => Sesion.usuario?.partidaActiva;
 
   @override
   void initState() {
@@ -50,27 +50,27 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
       // Con la sesión recordada se refresca el usuario (y se comprueba que el
       // token sigue valiendo).
       if (!_usuarioAlDia) {
-        await UsuarioServicio().obtenerYo();
+        await UsuarioApi().obtenerYo();
         _usuarioAlDia = true;
       }
       // Las tarjetas muestran el nombre de la clase de cada personaje. Suele
       // estar ya en caché: se pide al abrir la app.
-      await ClaseServicio().catalogo();
-      final partidas = await _servicio.listarPartidas();
+      await ClaseApi().catalogo();
+      final partidas = await _api.listarPartidas();
       partidas.sort(
         (a, b) =>
             b.partida.ultimaVezJugada.compareTo(a.partida.ultimaVezJugada),
       );
       if (mounted) setState(() => _partidas = partidas);
-    } on ServicioExcepcion catch (e) {
+    } on ApiExcepcion catch (e) {
       _mostrarError(e);
     }
   }
 
-  void _mostrarError(ServicioExcepcion e) {
+  void _mostrarError(ApiExcepcion e) {
     if (!mounted) return;
     if (e.sesionCaducada) {
-      UsuarioServicio().cerrarSesion();
+      UsuarioApi().cerrarSesion();
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const LoginPantalla()),
       );
@@ -83,13 +83,13 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
     final Map<String, Recompensa> recompensas;
     try {
       recompensas = await _enemigos.recompensas();
-    } on ServicioExcepcion catch (e) {
+    } on ApiExcepcion catch (e) {
       _mostrarError(e);
       return;
     }
     try {
-      await _servicio.seleccionarPartidaActiva(partida.partida.partidaId);
-    } on ServicioExcepcion {
+      await _api.seleccionarPartidaActiva(partida.partida.partidaId);
+    } on ApiExcepcion {
       // No impide jugar: solo marca la partida en la lista.
     }
     if (!mounted) return;
@@ -152,15 +152,15 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
     );
     if (confirmado != true) return;
     try {
-      await _servicio.eliminarPartida(partida.partidaId);
+      await _api.eliminarPartida(partida.partidaId);
       _cargar();
-    } on ServicioExcepcion catch (e) {
+    } on ApiExcepcion catch (e) {
       _mostrarError(e);
     }
   }
 
   void _cerrarSesion() {
-    UsuarioServicio().cerrarSesion();
+    UsuarioApi().cerrarSesion();
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const TituloPantalla()),
     );
@@ -183,7 +183,7 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
                   const SizedBox(width: Espacios.paso4),
                   Expanded(
                     child: Text(
-                      'Hola, ${SesionServicio.usuario?.username ?? ''}.',
+                      'Hola, ${Sesion.usuario?.username ?? ''}.',
                       overflow: TextOverflow.ellipsis,
                       style: Textos.cuerpo(color: Colores.ceniza),
                     ),
@@ -277,7 +277,7 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
 }
 
 class _TarjetaPartida extends StatelessWidget {
-  final PartidaDto partida;
+  final Partida partida;
   final bool activa;
   final VoidCallback alJugar;
   final VoidCallback alBorrar;

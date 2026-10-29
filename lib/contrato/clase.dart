@@ -1,17 +1,17 @@
-import 'atributos_base_dto.dart';
+import 'atributos_base.dart';
 import 'clase_codigo.dart';
 
-/// Réplica de un documento de la colección `clases`, tal como lo envía la API:
+/// Documento de la colección `clases` tal como lo envía la API (`GET /clases`):
 /// `_id` (el código de la clase) llega como [id]. Es la clase a la que apunta
-/// `PersonajeDto.claseCodigo`.
-class ClaseDto {
+/// `Personaje.claseCodigo`.
+class Clase {
   final ClaseCodigo id;
   final String nombre;
   final String arma;
   final String descripcion;
-  final AtributosBaseDto atributosBase;
+  final AtributosBase atributosBase;
 
-  const ClaseDto({
+  const Clase({
     required this.id,
     required this.nombre,
     required this.arma,
@@ -19,13 +19,13 @@ class ClaseDto {
     required this.atributosBase,
   });
 
-  factory ClaseDto.fromJson(Map<String, dynamic> json) {
-    return ClaseDto(
+  factory Clase.fromJson(Map<String, dynamic> json) {
+    return Clase(
       id: ClaseCodigo.values.byName(json['id'] as String),
       nombre: json['nombre'] as String,
       arma: json['arma'] as String,
       descripcion: json['descripcion'] as String,
-      atributosBase: AtributosBaseDto.fromJson(
+      atributosBase: AtributosBase.fromJson(
         json['atributosBase'] as Map<String, dynamic>,
       ),
     );

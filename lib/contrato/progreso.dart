@@ -1,4 +1,4 @@
-import '../../dto/ubicacion_dto.dart';
+import 'ubicacion.dart';
 
 /// Lo ocurrido en la partida desde el último guardado. La app envía los hechos
 /// y el servidor calcula la experiencia, el oro y la subida de nivel. No
@@ -9,7 +9,7 @@ class Progreso {
   final int muertes;
   final int segundosJugados;
   final int vidaActual;
-  final UbicacionDto ubicacion;
+  final Ubicacion ubicacion;
 
   const Progreso({
     required this.enemigosDerrotados,

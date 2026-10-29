@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../servicio/preferencias_servicio.dart';
-import '../../servicio/servicio_excepcion.dart';
-import '../../servicio/usuario_servicio.dart';
+import '../../api/preferencias.dart';
+import '../../api/api_excepcion.dart';
+import '../../api/usuario_api.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
 import '../validaciones/validaciones.dart';
@@ -19,12 +19,12 @@ class LoginPantalla extends StatefulWidget {
 }
 
 class _LoginPantallaState extends State<LoginPantalla> {
-  final _servicio = UsuarioServicio();
+  final _api = UsuarioApi();
   final _formulario = GlobalKey<FormState>();
 
   /// Si ya se entró antes en este teléfono, el usuario viene escrito.
   final _identificador = TextEditingController(
-    text: PreferenciasServicio.identificador,
+    text: Preferencias.identificador,
   );
   final _username = TextEditingController();
   final _email = TextEditingController();
@@ -66,9 +66,9 @@ class _LoginPantallaState extends State<LoginPantalla> {
       _error = null;
     });
     try {
-      // El servicio deja la sesión abierta.
+      // UsuarioApi deja la sesión abierta.
       if (_registro) {
-        await _servicio.registrar(
+        await _api.registrar(
           username: _username.text,
           email: _email.text,
           password: _password.text,
@@ -76,7 +76,7 @@ class _LoginPantallaState extends State<LoginPantalla> {
         // La cuenta nueva se queda con el volumen de este teléfono.
         Sonido.guardarAjustes();
       } else {
-        final usuario = await _servicio.iniciarSesion(
+        final usuario = await _api.iniciarSesion(
           _identificador.text,
           _password.text,
         );
@@ -86,7 +86,7 @@ class _LoginPantallaState extends State<LoginPantalla> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const PartidasPantalla()),
       );
-    } on ServicioExcepcion catch (e) {
+    } on ApiExcepcion catch (e) {
       if (mounted) setState(() => _error = e.mensaje);
     } finally {
       if (mounted) setState(() => _cargando = false);

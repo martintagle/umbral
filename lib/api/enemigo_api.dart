@@ -1,8 +1,8 @@
 import 'api_cliente.dart';
-import 'modelos/recompensa.dart';
+import '../contrato/recompensa.dart';
 
 /// Lo que da cada enemigo al ser derrotado.
-class EnemigoServicio {
+class EnemigoApi {
   static Map<String, Recompensa>? _recompensas;
 
   /// Las recompensas no cambian mientras la app está abierta: se piden una vez.

@@ -6,7 +6,7 @@ enum Ataque { cuerpoACuerpo, distancia }
 
 /// Estadísticas y comportamiento de cada criatura. Las distancias están en
 /// píxeles de arte y los tiempos en segundos. Lo que da al ser derrotada lo
-/// decide el servidor (`EnemigoServicio`), por [id].
+/// decide el servidor (`EnemigoApi`), por [id].
 ///
 /// La dificultad es la de un souls: pocos golpes bastan para caer, así que
 /// cada ataque se avisa (la criatura se agazapa y parpadea en [preparacion]) y

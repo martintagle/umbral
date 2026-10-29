@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/foundation.dart';
 
-import '../dto/ajustes_dto.dart';
-import '../dto/apariencia.dart';
-import '../dto/clase_codigo.dart';
-import '../servicio/preferencias_servicio.dart';
-import '../servicio/sesion_servicio.dart';
-import '../servicio/usuario_servicio.dart';
+import '../contrato/ajustes.dart';
+import '../contrato/apariencia.dart';
+import '../contrato/clase_codigo.dart';
+import '../api/preferencias.dart';
+import '../api/sesion.dart';
+import '../api/usuario_api.dart';
 
 /// Archivos de `assets/audios/`.
 abstract final class Audios {
@@ -63,8 +63,8 @@ abstract final class Sonido {
   };
 
   static Future<void> iniciar() async {
-    musica.value = PreferenciasServicio.musica ?? musica.value;
-    efectos.value = PreferenciasServicio.efectos ?? efectos.value;
+    musica.value = Preferencias.musica ?? musica.value;
+    efectos.value = Preferencias.efectos ?? efectos.value;
     try {
       FlameAudio.updatePrefix('assets/audios/');
       await FlameAudio.bgm.initialize();
@@ -187,16 +187,13 @@ abstract final class Sonido {
 
   /// Guarda el volumen en el teléfono y, si hay sesión, en la cuenta.
   static void guardarAjustes() {
-    PreferenciasServicio.guardarVolumen(
-      musica: musica.value,
-      efectos: efectos.value,
-    );
-    final usuario = SesionServicio.usuario;
-    if (SesionServicio.token == null) return;
+    Preferencias.guardarVolumen(musica: musica.value, efectos: efectos.value);
+    final usuario = Sesion.usuario;
+    if (Sesion.token == null) return;
     unawaited(
-      UsuarioServicio()
+      UsuarioApi()
           .actualizarAjustes(
-            AjustesDto(
+            Ajustes(
               idioma: usuario?.ajustes.idioma ?? 'es',
               musica: musica.value,
               efectos: efectos.value,
@@ -207,13 +204,10 @@ abstract final class Sonido {
   }
 
   /// Aplica los ajustes de la cuenta (al iniciar sesión en otro teléfono).
-  static void aplicarAjustes(AjustesDto ajustes) {
+  static void aplicarAjustes(Ajustes ajustes) {
     musica.value = ajustes.musica.clamp(0, 1).toDouble();
     efectos.value = ajustes.efectos.clamp(0, 1).toDouble();
-    PreferenciasServicio.guardarVolumen(
-      musica: musica.value,
-      efectos: efectos.value,
-    );
+    Preferencias.guardarVolumen(musica: musica.value, efectos: efectos.value);
   }
 
   static void _intentar(Future<void> Function() accion) {

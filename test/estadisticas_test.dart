@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:umbral/dto/atributos_dto.dart';
-import 'package:umbral/servicio/modelos/partida_jugable.dart';
+import 'package:umbral/contrato/atributos.dart';
+import 'package:umbral/contrato/partida_jugable.dart';
 import 'package:umbral/ui/pantallas/estadisticas_pantalla.dart';
 
 PartidaJugable _partida({required int exp}) => PartidaJugable.fromMap({
@@ -62,7 +62,7 @@ void main() {
       ..physicalSize = const Size(915, 412)
       ..devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    AtributosDto? enviado;
+    Atributos? enviado;
     await tester.pumpWidget(MaterialApp(
       home: EstadisticasPantalla(
         partida: _partida(exp: 150),

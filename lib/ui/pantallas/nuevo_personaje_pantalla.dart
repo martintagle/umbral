@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../dto/apariencia.dart';
-import '../../dto/clase_dto.dart';
-import '../../servicio/clase_servicio.dart';
-import '../../servicio/modelos/catalogo_clases.dart';
-import '../../servicio/partida_servicio.dart';
-import '../../servicio/servicio_excepcion.dart';
+import '../../contrato/apariencia.dart';
+import '../../contrato/clase.dart';
+import '../../api/clase_api.dart';
+import '../../contrato/catalogo_clases.dart';
+import '../../api/partida_api.dart';
+import '../../api/api_excepcion.dart';
 import '../clases_ui.dart';
 import '../tema/tema_umbral.dart';
 import '../validaciones/validaciones.dart';
@@ -23,8 +23,8 @@ class NuevoPersonajePantalla extends StatefulWidget {
 }
 
 class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
-  final _clases = ClaseServicio();
-  final _partidas = PartidaServicio();
+  final _clases = ClaseApi();
+  final _partidas = PartidaApi();
   final _formulario = GlobalKey<FormState>();
   final _nombre = TextEditingController();
 
@@ -56,7 +56,7 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
         _clase = catalogo.clases.first;
         _apariencia = catalogo.apariencias.first;
       });
-    } on ServicioExcepcion catch (e) {
+    } on ApiExcepcion catch (e) {
       if (mounted) setState(() => _error = e.mensaje);
     }
   }
@@ -75,7 +75,7 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
         apariencia: _apariencia,
       );
       if (mounted) Navigator.of(context).pop(partida);
-    } on ServicioExcepcion catch (e) {
+    } on ApiExcepcion catch (e) {
       if (mounted) setState(() => _error = e.mensaje);
     } finally {
       if (mounted) setState(() => _cargando = false);
@@ -317,7 +317,7 @@ class _NuevoPersonajePantallaState extends State<NuevoPersonajePantalla> {
 }
 
 class _OpcionClase extends StatelessWidget {
-  final ClaseDto clase;
+  final Clase clase;
   final Apariencia apariencia;
   final bool elegida;
   final double ancho;

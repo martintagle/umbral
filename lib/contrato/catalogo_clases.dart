@@ -1,12 +1,12 @@
-import '../../dto/apariencia.dart';
-import '../../dto/clase_codigo.dart';
-import '../../dto/clase_dto.dart';
+import 'apariencia.dart';
+import 'clase_codigo.dart';
+import 'clase.dart';
 import 'combate.dart';
 
 /// Una clase con lo que tendría un personaje nuevo de esa clase. No replica
 /// ninguna colección: la clase sí ([clase]); el resto lo calcula el servidor.
 class ClaseInicial {
-  final ClaseDto clase;
+  final Clase clase;
 
   /// Nivel con el que empieza: 1 más cada punto de atributo por encima de 1.
   final int nivel;
@@ -24,7 +24,7 @@ class ClaseInicial {
 
   factory ClaseInicial.fromMap(Map<String, dynamic> map) {
     return ClaseInicial(
-      clase: ClaseDto.fromJson(map['clase'] as Map<String, dynamic>),
+      clase: Clase.fromJson(map['clase'] as Map<String, dynamic>),
       nivel: map['nivel'] as int,
       oroInicial: map['oroInicial'] as int,
       combate: Combate.fromMap(map['combate'] as Map<String, dynamic>),
@@ -50,6 +50,6 @@ class CatalogoClases {
     );
   }
 
-  ClaseDto? clase(ClaseCodigo codigo) =>
+  Clase? clase(ClaseCodigo codigo) =>
       clases.where((c) => c.clase.id == codigo).firstOrNull?.clase;
 }

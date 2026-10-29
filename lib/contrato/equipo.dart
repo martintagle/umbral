@@ -1,12 +1,12 @@
-/// Réplica del subdocumento `usuarios.partidas[].personaje.equipo`.
-class EquipoDto {
+/// Subdocumento `usuarios.partidas[].personaje.equipo` tal como viaja en el JSON de la API.
+class Equipo {
   final int nivelArma;
   final int nivelArmadura;
 
-  const EquipoDto({required this.nivelArma, required this.nivelArmadura});
+  const Equipo({required this.nivelArma, required this.nivelArmadura});
 
-  factory EquipoDto.fromMap(Map<String, dynamic> map) {
-    return EquipoDto(
+  factory Equipo.fromMap(Map<String, dynamic> map) {
+    return Equipo(
       nivelArma: map['nivelArma'] as int,
       nivelArmadura: map['nivelArmadura'] as int,
     );

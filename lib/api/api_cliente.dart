@@ -3,8 +3,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import 'servicio_excepcion.dart';
-import 'sesion_servicio.dart';
+import 'api_excepcion.dart';
+import 'sesion.dart';
 
 /// Habla con la API de Umbral (carpeta `servidor/`).
 ///
@@ -34,7 +34,7 @@ abstract final class ApiCliente {
   ]) async {
     final peticion = http.Request(metodo, Uri.parse('$base$ruta'))
       ..headers['accept'] = 'application/json';
-    final token = SesionServicio.token;
+    final token = Sesion.token;
     if (token != null) peticion.headers['authorization'] = 'Bearer $token';
     if (cuerpo != null) {
       peticion.headers['content-type'] = 'application/json';
@@ -47,11 +47,11 @@ abstract final class ApiCliente {
         await _cliente.send(peticion).timeout(_espera),
       );
     } on TimeoutException {
-      throw const ServicioExcepcion(
+      throw const ApiExcepcion(
         'El servidor tarda demasiado en responder. Inténtalo de nuevo.',
       );
     } on http.ClientException {
-      throw const ServicioExcepcion(
+      throw const ApiExcepcion(
         'No se pudo contactar con el servidor. Revisa tu conexión.',
       );
     }
@@ -62,7 +62,7 @@ abstract final class ApiCliente {
       final mensaje = datos is Map && datos['error'] is String
           ? datos['error'] as String
           : 'Error del servidor (${respuesta.statusCode}).';
-      throw ServicioExcepcion(mensaje, estado: respuesta.statusCode);
+      throw ApiExcepcion(mensaje, estado: respuesta.statusCode);
     }
     return datos;
   }
@@ -71,9 +71,7 @@ abstract final class ApiCliente {
     try {
       return jsonDecode(texto);
     } on FormatException {
-      throw const ServicioExcepcion(
-        'El servidor envió una respuesta no válida.',
-      );
+      throw const ApiExcepcion('El servidor envió una respuesta no válida.');
     }
   }
 }

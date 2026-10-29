@@ -1,26 +1,26 @@
-import 'personaje_dto.dart';
+import 'personaje.dart';
 
-/// Réplica de cada elemento del array `usuarios.partidas`, tal como lo envía
+/// Cada elemento del array `usuarios.partidas` tal como lo envía
 /// la API (fechas en ISO 8601).
-class PartidaDto {
+class Partida {
   final String partidaId;
   final DateTime creadaEn;
   final DateTime ultimaVezJugada;
-  final PersonajeDto personaje;
+  final Personaje personaje;
 
-  const PartidaDto({
+  const Partida({
     required this.partidaId,
     required this.creadaEn,
     required this.ultimaVezJugada,
     required this.personaje,
   });
 
-  factory PartidaDto.fromMap(Map<String, dynamic> map) {
-    return PartidaDto(
+  factory Partida.fromMap(Map<String, dynamic> map) {
+    return Partida(
       partidaId: map['partidaId'] as String,
       creadaEn: DateTime.parse(map['creadaEn'] as String),
       ultimaVezJugada: DateTime.parse(map['ultimaVezJugada'] as String),
-      personaje: PersonajeDto.fromMap(map['personaje'] as Map<String, dynamic>),
+      personaje: Personaje.fromMap(map['personaje'] as Map<String, dynamic>),
     );
   }
 

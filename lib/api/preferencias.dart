@@ -2,12 +2,12 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../dto/usuario_dto.dart';
+import '../contrato/usuario.dart';
 
 /// Lo que el teléfono recuerda entre aperturas de la app: la última sesión
 /// iniciada y el volumen. Se guarda en el almacenamiento privado de la app.
 /// Si no se pudo cargar (por ejemplo, en las pruebas), no recuerda nada.
-abstract final class PreferenciasServicio {
+abstract final class Preferencias {
   static const _token = 'sesion.token';
   static const _usuario = 'sesion.usuario';
   static const _identificador = 'sesion.identificador';
@@ -28,11 +28,11 @@ abstract final class PreferenciasServicio {
 
   /// Usuario de la última sesión, para mostrarlo antes de que responda el
   /// servidor.
-  static UsuarioDto? get usuario {
+  static Usuario? get usuario {
     final texto = _prefs?.getString(_usuario);
     if (texto == null) return null;
     try {
-      return UsuarioDto.fromMap(jsonDecode(texto) as Map<String, dynamic>);
+      return Usuario.fromMap(jsonDecode(texto) as Map<String, dynamic>);
     } catch (_) {
       return null;
     }
@@ -42,14 +42,14 @@ abstract final class PreferenciasServicio {
   /// aunque la sesión haya caducado.
   static String? get identificador => _prefs?.getString(_identificador);
 
-  static void guardarSesion(UsuarioDto usuario, String token) {
+  static void guardarSesion(Usuario usuario, String token) {
     _prefs
       ?..setString(_token, token)
       ..setString(_usuario, jsonEncode(usuario.toMap()))
       ..setString(_identificador, usuario.username);
   }
 
-  static void guardarUsuario(UsuarioDto usuario) =>
+  static void guardarUsuario(Usuario usuario) =>
       _prefs?.setString(_usuario, jsonEncode(usuario.toMap()));
 
   /// Olvida el token, pero no el identificador.

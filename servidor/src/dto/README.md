@@ -2,7 +2,7 @@
 
 ## Qué debe hacer
 
-Cada interfaz es una **réplica de la estructura de los documentos** de las colecciones `usuarios` y `clases`. Como MongoDB no obliga a seguir un esquema, los DTO y los validadores `bd/esquema-usuarios.json` y `bd/esquema-clases.json` son los que lo definen.
+Es la **única capa DTO del proyecto**. Cada interfaz es una **réplica de la estructura de los documentos** de las colecciones `usuarios` y `clases`, tal como están en la base (con `_id`, `passwordHash` y fechas `Date`). La app no tiene DTO: lee las respuestas de la API con su propio [contrato](../../../lib/contrato/README.md). Como MongoDB no obliga a seguir un esquema, los DTO y los validadores `bd/esquema-usuarios.json` y `bd/esquema-clases.json` son los que lo definen.
 
 ## Colecciones
 
@@ -35,7 +35,7 @@ ClaseDto                           clase.dto.ts
 | `array` | `T[]` |
 | `["string", "null"]` | `string \| null` |
 
-Solo hay réplicas de las colecciones. Los objetos que viajan por la API pero no se guardan (valores de combate, catálogos, progreso) los define la capa de negocio que los calcula o los recibe: `personaje.negocio.ts` y `enemigo.negocio.ts`.
+Solo hay réplicas de las colecciones. Los objetos que viajan por la API pero no se guardan (valores de combate, catálogos, progreso) los define la capa de negocio que los calcula o los recibe: `personaje.negocio.ts`, `enemigo.negocio.ts`, `partida.negocio.ts` (`PartidaJugable`), `usuario.negocio.ts` (`UsuarioPublico`) y `clase.negocio.ts` (catálogo).
 
 ## Cuidado con los tipos
 
@@ -50,4 +50,4 @@ El validador de Atlas es estricto y rechaza el documento entero si un tipo no co
 
 ## Quién la usa
 
-Negocio y servicio.
+Solo negocio.

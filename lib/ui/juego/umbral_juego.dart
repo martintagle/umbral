@@ -7,12 +7,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
-import '../../dto/personaje_dto.dart';
-import '../../dto/ubicacion_dto.dart';
-import '../../servicio/modelos/combate.dart';
-import '../../servicio/modelos/partida_jugable.dart';
-import '../../servicio/modelos/progreso.dart';
-import '../../servicio/modelos/recompensa.dart';
+import '../../contrato/personaje.dart';
+import '../../contrato/ubicacion.dart';
+import '../../contrato/combate.dart';
+import '../../contrato/partida_jugable.dart';
+import '../../contrato/progreso.dart';
+import '../../contrato/recompensa.dart';
 import '../clases_ui.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
@@ -29,7 +29,7 @@ import 'sala_interior.dart';
 import 'tipos_enemigo.dart';
 import 'zona_tierras.dart';
 
-/// Envía el progreso. La pantalla lo implementa con `PartidaServicio`.
+/// Envía el progreso. La pantalla lo implementa con `PartidaApi`.
 typedef GuardarProgreso = Future<PartidaJugable> Function(
   String partidaId,
   Progreso progreso,
@@ -84,7 +84,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   /// Jefes vencidos en esta sesión, por si el servidor aún no los anota.
   final Set<String> _jefesVencidos = {};
 
-  PersonajeDto get personaje => _guardada.partida.personaje;
+  Personaje get personaje => _guardada.partida.personaje;
   Combate get combate => _guardada.combate;
   PartidaJugable get partidaGuardada => _guardada;
 
@@ -691,7 +691,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     final pies = jugador.position;
     final enviado = _registro.aProgreso(
       vidaActual: vida.value,
-      ubicacion: UbicacionDto(
+      ubicacion: Ubicacion(
         zonaId: enSala?.sala.slug ?? ZonaTierras.id,
         x: pies.x.round(),
         y: pies.y.round(),

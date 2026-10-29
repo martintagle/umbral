@@ -1,19 +1,19 @@
-/// Réplica del subdocumento `clases.atributosBase`.
-class AtributosBaseDto {
+/// Subdocumento `clases.atributosBase` tal como viaja en el JSON de la API.
+class AtributosBase {
   final int vida;
   final int fuerza;
   final int destreza;
   final int inteligencia;
 
-  const AtributosBaseDto({
+  const AtributosBase({
     required this.vida,
     required this.fuerza,
     required this.destreza,
     required this.inteligencia,
   });
 
-  factory AtributosBaseDto.fromJson(Map<String, dynamic> json) {
-    return AtributosBaseDto(
+  factory AtributosBase.fromJson(Map<String, dynamic> json) {
+    return AtributosBase(
       vida: json['vida'] as int,
       fuerza: json['fuerza'] as int,
       destreza: json['destreza'] as int,

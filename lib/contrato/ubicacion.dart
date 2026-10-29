@@ -1,19 +1,19 @@
-/// Réplica del subdocumento `usuarios.partidas[].personaje.ubicacion`.
-class UbicacionDto {
+/// Subdocumento `usuarios.partidas[].personaje.ubicacion` tal como viaja en el JSON de la API.
+class Ubicacion {
   final String zonaId;
   final int x;
   final int y;
   final String? ultimoPuntoGuardado;
 
-  const UbicacionDto({
+  const Ubicacion({
     required this.zonaId,
     required this.x,
     required this.y,
     this.ultimoPuntoGuardado,
   });
 
-  factory UbicacionDto.fromMap(Map<String, dynamic> map) {
-    return UbicacionDto(
+  factory Ubicacion.fromMap(Map<String, dynamic> map) {
+    return Ubicacion(
       zonaId: map['zonaId'] as String,
       x: map['x'] as int,
       y: map['y'] as int,

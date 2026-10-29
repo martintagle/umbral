@@ -2,7 +2,7 @@
 
 ## Qué debe hacer
 
-**Pone a disposición los métodos de negocio como servicios web** (API REST con Express). Cada ruta comprueba la forma de lo que recibe, llama al método de negocio que corresponde y devuelve el resultado en JSON.
+**Llama a los métodos de negocio y los pone a disposición como servicios web** (API REST con Express). Es la única capa de servicio del proyecto: la app solo los consume. Cada ruta comprueba la forma de lo que recibe, llama a un método de negocio y devuelve tal cual lo que este entrega: negocio ya lo da listo para exponer (sin `passwordHash`, con `id` en texto y cada partida con sus valores de combate). Express convierte las fechas a ISO 8601 al enviar el JSON.
 
 ## Qué contiene
 
@@ -15,7 +15,7 @@
 | `enemigo.servicio.ts` | `GET /api/enemigos`: lo que da cada enemigo al ser derrotado. |
 | `autenticacion.ts` | Firma y comprueba el token JWT de la sesión. |
 | `validacion.ts` | Esquemas `zod` con la **forma** de cada petición: tipos, campos obligatorios y enteros de 32 bits. Las reglas de dominio están en negocio. |
-| `respuestas.ts` | Cómo viaja cada DTO en JSON: fechas en ISO, `_id` como `id` en texto, sin `passwordHash` y cada partida con sus valores de combate. |
+| `limites.ts` | Límite de peticiones por IP (general, y más estricto para login y registro). |
 
 ## Rutas
 
@@ -26,7 +26,7 @@
 | GET | `/api/usuarios/yo` | `usuarioNegocio.obtenerPorId` |
 | PUT | `/api/usuarios/yo/ajustes` | `usuarioNegocio.actualizarAjustes` |
 | DELETE | `/api/usuarios/yo` | `usuarioNegocio.eliminar` |
-| GET | `/api/clases` | `claseNegocio.listar` + `personajeNegocio.catalogo` → `{ apariencias, clases: [{ clase, nivel, oroInicial, combate }] }` |
+| GET | `/api/clases` | `claseNegocio.catalogo` → `{ apariencias, clases: [{ clase, nivel, oroInicial, combate }] }` |
 | GET | `/api/enemigos` | `enemigoNegocio.catalogo` |
 | GET | `/api/partidas` | `partidaNegocio.listarPartidas` → `[{ partida, combate }]` |
 | POST | `/api/partidas` | `partidaNegocio.crearPartida` (`{ nombre, claseCodigo, apariencia }`) → `{ partida, combate }` |
@@ -43,7 +43,8 @@ Los errores se devuelven como `{ "error": "mensaje" }` con este código: 400 dat
 ## Qué NO debe hacer
 
 - No contiene consultas a Mongo ni usa la conexión.
-- No contiene reglas de negocio: solo comprueba la forma de los datos y llama a negocio.
+- No contiene reglas de negocio ni calcula nada: solo comprueba la forma de los datos, llama a negocio y devuelve su resultado.
+- No usa los DTO: lo que expone sale de negocio.
 
 ```
 app (Flutter)  ──HTTP──►  servicio  ──►  negocio

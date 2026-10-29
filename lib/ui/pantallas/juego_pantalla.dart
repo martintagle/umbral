@@ -3,9 +3,9 @@ import 'dart:math';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
-import '../../servicio/modelos/partida_jugable.dart';
-import '../../servicio/modelos/recompensa.dart';
-import '../../servicio/partida_servicio.dart';
+import '../../contrato/partida_jugable.dart';
+import '../../contrato/recompensa.dart';
+import '../../api/partida_api.dart';
 import '../juego/umbral_juego.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
@@ -32,7 +32,7 @@ class JuegoPantalla extends StatefulWidget {
 }
 
 class _JuegoPantallaState extends State<JuegoPantalla> {
-  final _servicio = PartidaServicio();
+  final _api = PartidaApi();
   late final UmbralJuego _juego;
   bool _menu = false;
   bool _enOtraPantalla = false;
@@ -46,7 +46,7 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
         UmbralJuego(
             partida: widget.partida,
             recompensas: widget.recompensas,
-            alGuardar: _servicio.registrarProgreso,
+            alGuardar: _api.registrarProgreso,
           )
           ..alPedirMenu = _abrirMenu
           ..alAbrirPantalla = _abrirPantalla;
@@ -104,12 +104,12 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
             PantallaJuego.estadisticas => EstadisticasPantalla(
               partida: partida,
               alSubir: (incrementos) =>
-                  _aplicar(_servicio.subirAtributos(id, incrementos)),
+                  _aplicar(_api.subirAtributos(id, incrementos)),
             ),
             PantallaJuego.herreria => HerreriaPantalla(
               partida: partida,
               alMejorar: (pieza) =>
-                  _aplicar(_servicio.mejorarEquipo(id, pieza)),
+                  _aplicar(_api.mejorarEquipo(id, pieza)),
             ),
           },
         ),

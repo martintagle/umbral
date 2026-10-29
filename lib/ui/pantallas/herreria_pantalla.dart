@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../servicio/clase_servicio.dart';
-import '../../servicio/modelos/combate.dart';
-import '../../servicio/modelos/partida_jugable.dart';
-import '../../servicio/servicio_excepcion.dart';
+import '../../api/clase_api.dart';
+import '../../contrato/combate.dart';
+import '../../contrato/partida_jugable.dart';
+import '../../api/api_excepcion.dart';
 import '../clases_ui.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
@@ -55,7 +55,7 @@ class _HerreriaPantallaState extends State<HerreriaPantalla> {
         _partida = nueva;
         _hecho = 'Saltan chispas del yunque. Ahora es nivel $nivel.';
       });
-    } on ServicioExcepcion catch (e) {
+    } on ApiExcepcion catch (e) {
       if (mounted) setState(() => _error = e.mensaje);
     } finally {
       if (mounted) setState(() => _cargando = false);
@@ -66,7 +66,7 @@ class _HerreriaPantallaState extends State<HerreriaPantalla> {
   Widget build(BuildContext context) {
     final personaje = _partida.partida.personaje;
     final clase = claseUi(personaje.claseCodigo);
-    final arma = ClaseServicio.clase(personaje.claseCodigo)?.arma ?? 'Arma';
+    final arma = ClaseApi.clase(personaje.claseCodigo)?.arma ?? 'Arma';
     final combate = _partida.combate;
     final esArma = _pieza == 'arma';
     final nivel = esArma

@@ -2,10 +2,10 @@
 
 ## Qué debe hacer
 
-Muestra las pantallas, recoge lo que escribe el usuario y **solo se comunica con la capa de servicio**.
+Muestra las pantallas, recoge lo que escribe el usuario y **solo se comunica con el cliente de la API** ([`api/`](../api/README.md)).
 
-- Llama a los métodos de `servicio` para leer o guardar datos.
-- Hace las **validaciones locales** antes de llamar al servicio: campos obligatorios, formato de correo, longitud mínima, solo números, rangos, fechas válidas, etc.
+- Llama a los métodos de `api/` para leer o guardar datos.
+- Hace las **validaciones locales** antes de llamar a la API: campos obligatorios, formato de correo, longitud mínima, solo números, rangos, fechas válidas, etc.
 - Muestra los resultados, los mensajes de error y los estados de carga.
 
 ## Qué debe contener
@@ -16,9 +16,9 @@ Muestra las pantallas, recoge lo que escribe el usuario y **solo se comunica con
 | `widgets/` | Componentes visuales reutilizables entre pantallas, según `docs/diseno/interfaz/componentes.md`: `BotonUmbral` (variantes principal, secundario, acento y peligro, con icono y costo), `BotonIcono`, `SelectorUmbral`, `confirmar` (ventana de confirmación), `IconoUmbral` (set de `assets/iconos/`, cargado en `main`), paneles, campos y sprites. `pieza_hud.dart` dibuja las piezas de `assets/hud/` a 3x (cuadros en fila, barras recortadas y botones que actúan al tocar). |
 | `validaciones/validaciones.dart` | Funciones de validación locales reutilizables, pensadas para usarlas como `validator` en `TextFormField`. Devuelven `null` si el valor es válido o el texto del error si no lo es. |
 | `tema/` | Tokens del sistema de diseño (`docs/diseno/tokens.json`): colores, tipografías, espaciado, radios y sombra dura. |
-| `juego/` | El juego en tiempo real, hecho con Flame. Cada lugar es un `Escenario`: el mundo (`zona_tierras.dart`, el mapa de `assets/mapas/mundo.json`, de noche, con la luz del jugador y las antorchas en `iluminacion.dart`) o una sala interior (`sala_interior.dart`, de `assets/interiores/interiores.json`). Se entra por la puerta de las chozas, la capilla, la torre y la cripta; la cripta baja por una escalera a la sala del trono del Rey Hueco. También están el jugador, los enemigos, los proyectiles y los efectos. Personajes y criaturas se dibujan a la mitad de su tamaño de arte (`escalaSprites`) con un zoom de cámara par, y se animan por código al atacar, recibir daño y morir. Los ataques gastan estamina, que se recupera sola. Juega con los valores de combate que da el servidor y anota en `registro_progreso.dart` lo que pasa (exp, oro, enemigos, muertes, tiempo). Al descansar, revivir o salir, la pantalla envía ese registro con `PartidaServicio` y el servidor aplica la subida de nivel. |
+| `juego/` | El juego en tiempo real, hecho con Flame. Cada lugar es un `Escenario`: el mundo (`zona_tierras.dart`, el mapa de `assets/mapas/mundo.json`, de noche, con la luz del jugador y las antorchas en `iluminacion.dart`) o una sala interior (`sala_interior.dart`, de `assets/interiores/interiores.json`). Se entra por la puerta de las chozas, la capilla, la torre y la cripta; la cripta baja por una escalera a la sala del trono del Rey Hueco. También están el jugador, los enemigos, los proyectiles y los efectos. Personajes y criaturas se dibujan a la mitad de su tamaño de arte (`escalaSprites`) con un zoom de cámara par, y se animan por código al atacar, recibir daño y morir. Los ataques gastan estamina, que se recupera sola. Juega con los valores de combate que da el servidor y anota en `registro_progreso.dart` lo que pasa (exp, oro, enemigos, muertes, tiempo). Al descansar, revivir o salir, la pantalla envía ese registro con `PartidaApi` y el servidor aplica la subida de nivel. |
 | `sonido.dart` | Música y efectos (`flame_audio`, archivos de `assets/audios/`) con el volumen de los ajustes. Hasta que `main` lo inicia no suena nada, y un fallo del audio nunca detiene el juego. |
-| `clases_ui.dart` | Sprite, icono del arma, armadura y atributo del arma de cada clase. El nombre, el arma y la descripción vienen de la colección `clases` (`ClaseServicio`); las estadísticas, del servidor. |
+| `clases_ui.dart` | Sprite, icono del arma, armadura y atributo del arma de cada clase. El nombre, el arma y la descripción vienen de la colección `clases` (`ClaseApi`); las estadísticas, del servidor. |
 
 ## Pantallas
 
@@ -43,14 +43,14 @@ Economía: cada enemigo da experiencia y oro. La experiencia se gasta en el alta
 
 ## Qué NO debe hacer
 
-- No hace peticiones HTTP por su cuenta: siempre pasa por `servicio`.
+- No hace peticiones HTTP por su cuenta: siempre pasa por `api/`.
 - No ejecuta operaciones de MongoDB.
-- No aplica reglas de negocio que dependan de la base de datos (por ejemplo, "este correo ya existe"): eso lo resuelve la capa de negocio y llega como respuesta del servicio.
+- No aplica reglas de negocio que dependan de la base de datos (por ejemplo, "este correo ya existe"): eso lo resuelve la capa de negocio y llega como respuesta de la API.
 
 ## Dependencias
 
 ```
-ui  ──►  servicio
+ui  ──►  api
  │
- └──►  dto
+ └──►  contrato
 ```

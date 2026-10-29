@@ -1,6 +1,6 @@
-import '../../dto/ubicacion_dto.dart';
-import '../../servicio/modelos/progreso.dart';
-import '../../servicio/modelos/recompensa.dart';
+import '../../contrato/ubicacion.dart';
+import '../../contrato/progreso.dart';
+import '../../contrato/recompensa.dart';
 
 /// Lo que ha pasado en la partida desde el último guardado. Al guardar se
 /// envía como [Progreso] y, si el servidor lo acepta, se descuenta lo
@@ -33,7 +33,7 @@ class RegistroProgreso {
 
   Progreso aProgreso({
     required int vidaActual,
-    required UbicacionDto ubicacion,
+    required Ubicacion ubicacion,
   }) {
     return Progreso(
       enemigosDerrotados: Map.of(enemigos),

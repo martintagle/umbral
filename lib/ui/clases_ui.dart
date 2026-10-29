@@ -1,9 +1,9 @@
-import '../dto/apariencia.dart';
-import '../dto/clase_codigo.dart';
-import '../servicio/clase_servicio.dart';
+import '../contrato/apariencia.dart';
+import '../contrato/clase_codigo.dart';
+import '../api/clase_api.dart';
 
 /// Sprites e iconos de cada clase. El nombre, el arma y la descripción están
-/// en la colección `clases` (`ClaseServicio`) y las estadísticas las calcula el
+/// en la colección `clases` (`ClaseApi`) y las estadísticas las calcula el
 /// servidor; aquí solo está lo que es de la interfaz.
 class ClaseUi {
   final ClaseCodigo id;
@@ -65,4 +65,4 @@ ClaseUi claseUi(ClaseCodigo id) => clasesUi[id]!;
 /// Nombre de la clase según la colección `clases`. Mientras no ha llegado el
 /// catálogo (o en las pruebas) se muestra el código.
 String nombreClase(ClaseCodigo codigo) =>
-    ClaseServicio.clase(codigo)?.nombre ?? codigo.name;
+    ClaseApi.clase(codigo)?.nombre ?? codigo.name;

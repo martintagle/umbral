@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
-import '../../dto/clase_codigo.dart';
+import '../../contrato/clase_codigo.dart';
 import '../tema/tema_umbral.dart';
 
 /// Cómo se siente el arma de cada clase. El daño no está aquí: lo calcula el
