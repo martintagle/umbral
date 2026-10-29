@@ -18,7 +18,7 @@ Cada método entrega su resultado **listo para que la capa servicio lo exponga**
 | `partida.negocio.ts` | Partidas embebidas en el usuario: listar, crear, registrar progreso, subir atributos, mejorar equipo, borrar y elegir la activa. Entrega `PartidaJugable`. |
 | `clase.negocio.ts` | Colección `clases`: la lee una vez al arrancar (`cargar`, desde `index.ts`) y después la sirve desde memoria (`catalogo`, `obtener`). |
 | `personaje.negocio.ts` | Reglas del personaje: oro, armadura y atributo del arma de cada clase, valores de combate (con el costo y efecto de la siguiente mejora de equipo), personaje inicial, aplicación del progreso, subida de atributos con experiencia (curva de Elden Ring) y mejora de equipo. |
-| `enemigo.negocio.ts` | Recompensa (exp y oro) de cada enemigo, incluido el jefe Rey Hueco, y suma de lo ganado en un progreso. |
+| `enemigo.negocio.ts` | Categoría de cada enemigo (incluido el jefe Rey Hueco), rangos de exp y oro que da según ella, y rango total de lo que pueden dar los derrotados en un progreso. |
 | `coleccion-clases.ts` | Acceso a la colección `clases` y preparación de su validador y de las clases iniciales (`bd/clases.json`) que usan los scripts de `dev/`. |
 | `coleccion-usuarios.ts` | Acceso a la colección `usuarios`, conversión entre el DTO y el documento guardado (los `double` del esquema) y preparación del validador e índices que usan los scripts de `dev/`. |
 | `negocio-error.ts` | `NegocioError` con su tipo, conversión de ids y `conErroresMongo`, que traduce los errores de Mongo (11000 duplicado, 121 esquema). |
@@ -37,7 +37,16 @@ Cada método entrega su resultado **listo para que la capa servicio lo exponga**
   | Prisionero | 1 | 1 | 1 | 1 | 1 |
 
 - **Combate:** PV máximos = 80 + 12·vigor. Daño = 6 + 2·(atributo del arma) + 3·(nivel del arma); el nivel por sí solo no da daño. Defensa = 2·(nivel de la armadura). Crítico = 5 % + 0,8 % por punto de destreza.
-- **Progreso:** la app envía los hechos (cuántos enemigos de cada tipo derrotó, muertes, segundos, vida y posición) y aquí se calculan la experiencia y el oro con la tabla de recompensas, y se sube de nivel. Se rechaza un progreso con más segundos que el tiempo real desde el último guardado, o con más de un enemigo derrotado por segundo. La experiencia y el oro solo se acumulan: guardar no sube de nivel.
+- **Enemigos y recompensas:** cada criatura tiene una categoría. Cuanto más difícil, menos aparece en el mapa y más da. Cada derrota da una cantidad al azar dentro del rango de su categoría:
+
+  | Categoría | Criaturas | EXP | Oro |
+  | --- | --- | --- | --- |
+  | Débil | Ojo errante, Polilla osaria | 6–10 | 2–4 |
+  | Media | Manojo, Ahorcado fúngico | 14–22 | 5–9 |
+  | Fuerte | Fauce, Larva cirio | 28–40 | 10–16 |
+  | Jefe | El Rey Hueco | 360–440 | 130–170 |
+
+- **Progreso:** la app envía los hechos (cuántos enemigos de cada tipo derrotó, la experiencia y el oro que le dieron, muertes, segundos, vida y posición). La app tira el valor de cada derrota para mostrarlo en el acto; aquí se comprueba que el total de experiencia y de oro quepa en lo que pueden dar esos enemigos, y se suma. Se rechaza un progreso con más segundos que el tiempo real desde el último guardado, o con más de un enemigo derrotado por segundo. La experiencia y el oro solo se acumulan: guardar no sube de nivel.
 - **Subir de nivel (como las runas de Elden Ring):** en un altar de brasas se gasta experiencia para subir atributos. Cada punto sube un nivel y cuesta lo que el nivel actual: la fórmula de Elden Ring (`(x + 0,1)·(nivel + 81)² + 1`, con `x = max((nivel − 11)·0,02, 0)`) dividida por 10. Va de 67 en el nivel 1 a 592 en el 30 y siempre crece. Ningún atributo pasa de 50 y, si sube el vigor, la vida actual sube lo mismo que la máxima. `combate.costoNiveles` trae el costo de los 30 niveles siguientes para que la app muestre el total. Los `puntosLibres` que dejó la regla anterior se gastan primero, sin costo y sin subir el nivel.
 - **Herrería:** el personaje solo porta su arma y su armadura, y las dos suben de nivel con oro, hasta el nivel 10. Cada mejora cuesta más que la anterior: llevar una pieza al nivel n cuesta 150·n de oro hasta el 6, 200·n del 7 al 9 y 2.500 el 10. Cada nivel de arma suma 3 de daño y cada nivel de armadura, 2 de defensa. No hay materiales.
 - **Máximo de 10 partidas** por usuario.

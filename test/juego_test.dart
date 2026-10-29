@@ -80,7 +80,14 @@ void main() {
       partida: partida,
       recompensas: {
         for (final e in [...Enemigos.todos, Enemigos.reyHueco])
-          e.id: Recompensa(id: e.id, exp: 1, oro: 1),
+          e.id: Recompensa(
+            id: e.id,
+            categoria: Categoria.debil,
+            expMin: 1,
+            expMax: 1,
+            oroMin: 1,
+            oroMax: 1,
+          ),
       },
       alGuardar: (_, _) async => partida,
     );
@@ -278,8 +285,13 @@ void main() {
 
       // Al caer, lo ganado queda en el suelo y se recupera al pisarlo.
       final expGanada = juego.exp.value;
+      // Un golpe previo (un proyectil aún en vuelo, por ejemplo) puede dejarlo
+      // invulnerable unas décimas: se insiste hasta que cae.
+      for (var t = 0.0; t < 2 && !juego.muerto.value; t += 0.1) {
+        juego.jugador.recibirGolpe(100000);
+        if (!juego.muerto.value) await correr(0.1);
+      }
       final dondeCae = juego.jugador.position.clone();
-      juego.jugador.recibirGolpe(100000);
       expect(juego.exp.value, lessThan(expGanada));
       expect(juego.brasasPerdidas.value, contains('quedaron'));
       await juego.revivir();

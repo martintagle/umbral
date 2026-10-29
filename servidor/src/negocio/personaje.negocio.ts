@@ -50,11 +50,18 @@ export interface CatalogoClases {
 
 /**
  * Lo que ha pasado en la partida desde el último guardado. La app envía los
- * hechos y aquí se calculan la experiencia y el oro ganados.
+ * hechos y aquí se comprueba que cuadren con las reglas.
  */
 export interface Progreso {
   /** Enemigos derrotados de cada tipo: `{ id: cantidad }`. */
   enemigosDerrotados: Record<string, number>;
+  /**
+   * Experiencia y oro que dieron esos enemigos. Cada derrota da una cantidad
+   * al azar dentro del rango de su categoría; la app la tira al derrotarlo
+   * (para mostrarla en el acto) y aquí se comprueba que el total quepa.
+   */
+  exp: number;
+  oro: number;
   muertes: number;
   segundosJugados: number;
   vidaActual: number;
@@ -269,15 +276,23 @@ export const personajeNegocio = {
     if (progreso.segundosJugados > segundosDesdeGuardado + MARGEN_SEGUNDOS) {
       throw new NegocioError('El tiempo jugado no puede superar el tiempo desde el último guardado.');
     }
-    const ganado = enemigoNegocio.recompensaTotal(progreso.enemigosDerrotados);
-    if (ganado.enemigos > progreso.segundosJugados * MAXIMO_ENEMIGOS_POR_SEGUNDO) {
+    const posible = enemigoNegocio.rangoTotal(progreso.enemigosDerrotados);
+    if (posible.enemigos > progreso.segundosJugados * MAXIMO_ENEMIGOS_POR_SEGUNDO) {
       throw new NegocioError('Demasiados enemigos derrotados para el tiempo jugado.');
+    }
+    if (
+      progreso.exp < posible.expMin ||
+      progreso.exp > posible.expMax ||
+      progreso.oro < posible.oroMin ||
+      progreso.oro > posible.oroMax
+    ) {
+      throw new NegocioError('La experiencia o el oro no corresponden a los enemigos derrotados.');
     }
     const e = p.estadisticas;
     return {
       ...p,
-      exp: p.exp + ganado.exp,
-      oro: p.oro + ganado.oro,
+      exp: p.exp + progreso.exp,
+      oro: p.oro + progreso.oro,
       vidaActual: progreso.vidaActual,
       ubicacion: progreso.ubicacion,
       mundo: {
@@ -287,7 +302,7 @@ export const personajeNegocio = {
         ],
       },
       estadisticas: {
-        enemigosDerrotados: e.enemigosDerrotados + ganado.enemigos,
+        enemigosDerrotados: e.enemigosDerrotados + posible.enemigos,
         muertes: e.muertes + progreso.muertes,
         tiempoJugadoSeg: e.tiempoJugadoSeg + progreso.segundosJugados,
       },

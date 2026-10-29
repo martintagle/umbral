@@ -16,8 +16,15 @@ class TipoEnemigo {
   final String nombre;
   final int vida;
   final int dano;
+
+  /// Ninguna criatura corre más que el personaje más lento (el guerrero, 52):
+  /// siempre se puede huir.
   final double velocidad;
+
+  /// Distancia a la que ve al jugador y empieza a perseguirlo.
   final double deteccion;
+
+  /// Distancia desde la que ataca. Los proyectiles recorren algo más.
   final double alcance;
 
   /// Tiempo de aviso antes de golpear: el jugador lo ve parpadear y puede
@@ -97,8 +104,8 @@ abstract final class Enemigos {
     nombre: 'Ojo errante',
     vida: 34,
     dano: 15,
-    velocidad: 60,
-    deteccion: 120,
+    velocidad: 46,
+    deteccion: 95,
     alcance: 10,
     preparacion: 0.32,
     recarga: 0.9,
@@ -113,8 +120,8 @@ abstract final class Enemigos {
     nombre: 'Fauce',
     vida: 80,
     dano: 34,
-    velocidad: 44,
-    deteccion: 125,
+    velocidad: 40,
+    deteccion: 100,
     alcance: 34,
     preparacion: 0.55,
     recarga: 1.3,
@@ -127,9 +134,9 @@ abstract final class Enemigos {
     nombre: 'Polilla osaria',
     vida: 40,
     dano: 18,
-    velocidad: 52,
-    deteccion: 150,
-    alcance: 95,
+    velocidad: 42,
+    deteccion: 110,
+    alcance: 75,
     preparacion: 0.5,
     recarga: 1.7,
     ataque: Ataque.distancia,
@@ -147,8 +154,8 @@ abstract final class Enemigos {
     vida: 150,
     dano: 30,
     velocidad: 18,
-    deteccion: 110,
-    alcance: 105,
+    deteccion: 95,
+    alcance: 85,
     preparacion: 0.8,
     recarga: 2.0,
     ataque: Ataque.distancia,
@@ -164,8 +171,8 @@ abstract final class Enemigos {
     nombre: 'Manojo',
     vida: 90,
     dano: 12,
-    velocidad: 36,
-    deteccion: 105,
+    velocidad: 32,
+    deteccion: 85,
     alcance: 12,
     preparacion: 0.24,
     recarga: 0.7,
@@ -179,8 +186,8 @@ abstract final class Enemigos {
     nombre: 'Ahorcado fúngico',
     vida: 85,
     dano: 24,
-    velocidad: 34,
-    deteccion: 110,
+    velocidad: 30,
+    deteccion: 85,
     alcance: 13,
     preparacion: 0.42,
     recarga: 1.1,

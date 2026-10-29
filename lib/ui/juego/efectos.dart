@@ -5,6 +5,7 @@ import 'package:flutter/painting.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../tema/tema_umbral.dart';
+import 'registro_progreso.dart';
 import 'umbral_juego.dart';
 
 /// Capa por encima de todo el mundo (los objetos se ordenan por su `y`).
@@ -297,11 +298,11 @@ class Proyectil extends PositionComponent with HasGameReference<UmbralJuego> {
 /// Lo que el jugador soltó al caer: un montón de brasas que laten en el
 /// suelo, visibles aun en la oscuridad. Al pisarlo se recupera.
 class ManchaBrasas extends PositionComponent {
-  ManchaBrasas(this.enemigos, Vector2 pies)
+  ManchaBrasas(this.botin, Vector2 pies)
     : super(position: pies, priority: prioridadEfectos - 50);
 
-  /// Los enemigos derrotados que valen esas brasas.
-  final Map<String, int> enemigos;
+  /// Lo ganado que valen esas brasas.
+  final Botin botin;
 
   final _azar = Random();
   final List<Vector2> _chispas = [];

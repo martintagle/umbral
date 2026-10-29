@@ -1,42 +1,63 @@
-import '../../contrato/ubicacion.dart';
+import 'dart:math';
+
 import '../../contrato/progreso.dart';
 import '../../contrato/recompensa.dart';
+import '../../contrato/ubicacion.dart';
+
+/// Lo ganado desde el último guardado que queda en el suelo al caer.
+typedef Botin = ({Map<String, int> enemigos, int exp, int oro});
 
 /// Lo que ha pasado en la partida desde el último guardado. Al guardar se
 /// envía como [Progreso] y, si el servidor lo acepta, se descuenta lo
 /// enviado: lo ocurrido mientras la petición viajaba no se pierde.
 class RegistroProgreso {
-  RegistroProgreso(this._recompensas);
+  RegistroProgreso(this._recompensas, [Random? azar])
+    : _azar = azar ?? Random();
 
   final Map<String, Recompensa> _recompensas;
+  final Random _azar;
 
   /// Enemigos derrotados de cada tipo, por id.
   final Map<String, int> enemigos = {};
+
+  /// Experiencia y oro que dieron esos enemigos.
+  int exp = 0;
+  int oro = 0;
   int muertes = 0;
   double segundos = 0;
 
-  void enemigoDerrotado(String tipo) =>
-      enemigos.update(tipo, (n) => n + 1, ifAbsent: () => 1);
+  /// Anota la derrota y tira lo que da, dentro de los rangos del servidor.
+  ({int exp, int oro}) enemigoDerrotado(String tipo) {
+    enemigos.update(tipo, (n) => n + 1, ifAbsent: () => 1);
+    final r = recompensa(tipo);
+    final ganado = (
+      exp: _entre(r.expMin, r.expMax),
+      oro: _entre(r.oroMin, r.oroMax),
+    );
+    exp += ganado.exp;
+    oro += ganado.oro;
+    return ganado;
+  }
+
+  int _entre(int min, int max) => min + _azar.nextInt(max - min + 1);
 
   /// Si el servidor no conoce el tipo, rechazará el guardado y lo avisará.
   Recompensa recompensa(String tipo) =>
-      _recompensas[tipo] ?? Recompensa(id: tipo, exp: 0, oro: 0);
+      _recompensas[tipo] ??
+      Recompensa(
+        id: tipo,
+        categoria: Categoria.media,
+        expMin: 0,
+        expMax: 0,
+        oroMin: 0,
+        oroMax: 0,
+      );
 
-  /// Experiencia y oro que el servidor sumará al guardar; solo para el HUD.
-  int get exp => _suma((r) => r.exp);
-  int get oro => _suma((r) => r.oro);
-
-  int _suma(int Function(Recompensa) valor) => enemigos.entries.fold(
-    0,
-    (total, e) => total + e.value * valor(recompensa(e.key)),
-  );
-
-  Progreso aProgreso({
-    required int vidaActual,
-    required Ubicacion ubicacion,
-  }) {
+  Progreso aProgreso({required int vidaActual, required Ubicacion ubicacion}) {
     return Progreso(
       enemigosDerrotados: Map.of(enemigos),
+      exp: exp,
+      oro: oro,
       muertes: muertes,
       segundosJugados: segundos.floor(),
       vidaActual: vidaActual,
@@ -45,16 +66,21 @@ class RegistroProgreso {
   }
 
   /// Al caer: se quita lo ganado para dejarlo en el suelo.
-  Map<String, int> soltarEnemigos() {
-    final soltado = Map.of(enemigos);
+  Botin soltar() {
+    final botin = (enemigos: Map.of(enemigos), exp: exp, oro: oro);
     enemigos.clear();
-    return soltado;
+    exp = 0;
+    oro = 0;
+    return botin;
   }
 
   /// Al recoger lo que se soltó.
-  void recuperar(Map<String, int> soltado) {
-    soltado.forEach((tipo, n) => enemigos.update(tipo, (m) => m + n,
-        ifAbsent: () => n));
+  void recuperar(Botin botin) {
+    botin.enemigos.forEach(
+      (tipo, n) => enemigos.update(tipo, (m) => m + n, ifAbsent: () => n),
+    );
+    exp += botin.exp;
+    oro += botin.oro;
   }
 
   void descontar(Progreso enviado) {
@@ -67,6 +93,8 @@ class RegistroProgreso {
         enemigos[tipo] = quedan;
       }
     });
+    exp = max(0, exp - enviado.exp);
+    oro = max(0, oro - enviado.oro);
     muertes -= enviado.muertes;
     segundos -= enviado.segundosJugados;
   }

@@ -152,14 +152,19 @@ class ZonaTierras extends Escenario {
     for (final c in children.whereType<Proyectil>().toList()) {
       c.removeFromParent();
     }
-    // Cada punto del mapa es un grupo que crece con el nivel del jugador.
-    final n = game.criaturasPorGrupo;
+    // Cada punto del mapa es un grupo, mayor cuanto más débil es su criatura,
+    // que crece con el nivel del jugador.
     for (final e in mapa.enemigos) {
+      final n = game.criaturasPorGrupo(e.tipo);
       for (var i = 0; i < n; i++) {
         _aparecer(e, cerca: i > 0);
       }
     }
-    _maximoVivos = (mapa.enemigos.length * n * 1.5).round();
+    final esperadas = mapa.enemigos.fold(
+      0.0,
+      (total, e) => total + game.criaturasEsperadas(e.tipo),
+    );
+    _maximoVivos = (esperadas * 1.25).round();
     _esperaRefuerzo = game.intervaloRefuerzos;
   }
 
@@ -192,7 +197,8 @@ class ZonaTierras extends Escenario {
   }
 
   /// Mientras el jugador está en el mundo llegan criaturas nuevas a puntos
-  /// alejados de él, cada vez más seguido según su nivel.
+  /// alejados de él, cada vez más seguido según su nivel. El punto se elige
+  /// al azar según [UmbralJuego.pesoRefuerzo]: casi siempre llegan débiles.
   void _refuerzos(double dt) {
     _esperaRefuerzo -= dt;
     if (_esperaRefuerzo > 0) return;
@@ -202,7 +208,17 @@ class ZonaTierras extends Escenario {
     final lejanos = mapa.enemigos
         .where((e) => MapaMundo.piesEnCelda(e.x, e.y).distanceTo(pies) > 180)
         .toList();
-    if (lejanos.isNotEmpty) _aparecer(lejanos[_azar.nextInt(lejanos.length)]);
+    final pesos = [for (final e in lejanos) game.pesoRefuerzo(e.tipo)];
+    final total = pesos.fold(0, (a, b) => a + b);
+    if (total == 0) return;
+    var tirada = _azar.nextInt(total);
+    for (var i = 0; i < lejanos.length; i++) {
+      tirada -= pesos[i];
+      if (tirada < 0) {
+        _aparecer(lejanos[i]);
+        return;
+      }
+    }
   }
 
   @override

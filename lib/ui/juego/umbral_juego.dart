@@ -188,21 +188,55 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     return pedido;
   }
 
+  /// Niveles por encima del 10, con el que empiezan las clases. La dificultad
+  /// crece a partir de ahí.
+  int get _nivelesGanados => max(0, personaje.nivel - 10);
+
   /// Las criaturas aguantan más y pegan más fuerte a medida que el jugador
-  /// sube: un 25 % de base y un 3 % por nivel, hasta el triple.
-  double get fuerzaEnemigos =>
-      (1.25 + 0.03 * (personaje.nivel - 1)).clamp(1.25, 3.0);
+  /// sube: un 1,5 % por nivel ganado, hasta el doble.
+  double get fuerzaEnemigos => (1 + 0.015 * _nivelesGanados).clamp(1.0, 2.0);
 
-  /// Criaturas en cada punto de aparición del mundo: dos de base y una más
-  /// cada diez niveles, hasta cinco.
-  int get criaturasPorGrupo => (2 + personaje.nivel ~/ 10).clamp(2, 5);
+  /// Cuántas criaturas trae de media cada punto del mundo y cuánto pesa al
+  /// elegir dónde llega un refuerzo: las débiles abundan y las fuertes
+  /// escasean.
+  ({double grupo, int refuerzo}) _aparicion(String tipo) =>
+      switch (_registro.recompensa(tipo).categoria) {
+        Categoria.debil => (grupo: 2.0, refuerzo: 6),
+        Categoria.media => (grupo: 1.2, refuerzo: 3),
+        Categoria.fuerte => (grupo: 0.6, refuerzo: 1),
+        Categoria.jefe => (grupo: 0.0, refuerzo: 0),
+      };
 
-  /// En las salas, que son estrechas: una más cada doce niveles, hasta tres.
-  int get criaturasPorPuntoDeSala => (1 + personaje.nivel ~/ 12).clamp(1, 3);
+  /// Media de criaturas en un punto del mundo: la de su categoría, un 2 % más
+  /// por nivel ganado, hasta un 60 % más.
+  double criaturasEsperadas(String tipo) =>
+      _aparicion(tipo).grupo * (1 + 0.02 * _nivelesGanados).clamp(1.0, 1.6);
+
+  /// [criaturasEsperadas] redondeada al azar: con 1,2 salen 1 o, una de cada
+  /// cinco veces, 2.
+  int criaturasPorGrupo(String tipo) {
+    final media = criaturasEsperadas(tipo);
+    final entera = media.floor();
+    return entera + (_azar.nextDouble() < media - entera ? 1 : 0);
+  }
+
+  int pesoRefuerzo(String tipo) => _aparicion(tipo).refuerzo;
+
+  /// En las salas, que son estrechas y tienen cada criatura puesta a mano:
+  /// una por punto; las débiles traen una más cada doce niveles ganados
+  /// (hasta tres) y las medias, cada veinticuatro (hasta dos).
+  int criaturasPorPuntoDeSala(String tipo) {
+    final extra = _nivelesGanados ~/ 12;
+    return switch (_registro.recompensa(tipo).categoria) {
+      Categoria.debil => (1 + extra).clamp(1, 3),
+      Categoria.media => (1 + extra ~/ 2).clamp(1, 2),
+      _ => 1,
+    };
+  }
 
   /// Segundos entre refuerzos en el mundo: más seguidos con el nivel.
   double get intervaloRefuerzos =>
-      (20.0 - personaje.nivel * 0.5).clamp(6.0, 20.0);
+      (30.0 - _nivelesGanados * 0.5).clamp(15.0, 30.0);
 
   /// Si la experiencia alcanza para al menos un nivel (o quedan puntos de la
   /// regla anterior sin repartir).
@@ -537,11 +571,10 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
       max(max(1, (danoEnemigo * 0.2).round()), danoEnemigo - combate.defensa);
 
   void enemigoDerrotado(Enemigo enemigo) {
-    _registro.enemigoDerrotado(enemigo.tipo.id);
-    final recompensa = _registro.recompensa(enemigo.tipo.id);
+    final ganado = _registro.enemigoDerrotado(enemigo.tipo.id);
     zona.add(
       TextoFlotante(
-        '+${recompensa.exp} EXP  +${recompensa.oro} ORO',
+        '+${ganado.exp} EXP  +${ganado.oro} ORO',
         enemigo.centro - Vector2(0, 14),
         color: Colores.brasa,
         grande: false,
@@ -594,20 +627,16 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     final anterior = _mancha;
     _mancha = null;
     anterior?.removeFromParent();
-    final soltado = _registro.soltarEnemigos();
-    final exp = soltado.entries.fold<int>(
-      0,
-      (t, e) => t + e.value * _registro.recompensa(e.key).exp,
-    );
-    if (soltado.isNotEmpty) {
+    final soltado = _registro.soltar();
+    if (soltado.enemigos.isNotEmpty) {
       final mancha = ManchaBrasas(soltado, jugador.position.clone());
       _mancha = mancha;
       zona.add(mancha);
     }
     brasasPerdidas.value = [
       if (anterior != null) 'Las brasas que dejaste antes se apagaron.',
-      if (soltado.isNotEmpty)
-        'Tus brasas ($exp EXP) quedaron donde caíste. Recógelas sin volver a caer.',
+      if (soltado.enemigos.isNotEmpty)
+        'Tus brasas (${soltado.exp} EXP) quedaron donde caíste. Recógelas sin volver a caer.',
     ].join('\n');
     _mostrarProgreso();
   }
@@ -615,7 +644,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   void _recogerBrasas(ManchaBrasas mancha) {
     _mancha = null;
     mancha.removeFromParent();
-    _registro.recuperar(mancha.enemigos);
+    _registro.recuperar(mancha.botin);
     _mostrarProgreso();
     Sonido.efecto(Audios.exp);
     mostrarAviso('Recuperas tus brasas.');

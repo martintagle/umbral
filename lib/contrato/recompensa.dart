@@ -1,17 +1,36 @@
-/// Lo que da un enemigo al ser derrotado, según el servidor. No replica
-/// ninguna colección: es la respuesta de `GET /api/enemigos`.
+/// Las criaturas débiles abundan en el mapa y dan poco; las fuertes escasean y
+/// dan más.
+enum Categoria { debil, media, fuerte, jefe }
+
+/// Lo que puede dar un enemigo al ser derrotado, según el servidor: cada
+/// derrota da una cantidad al azar dentro de estos rangos, con los extremos
+/// incluidos. No replica ninguna colección: es la respuesta de
+/// `GET /api/enemigos`.
 class Recompensa {
   final String id;
-  final int exp;
-  final int oro;
+  final Categoria categoria;
+  final int expMin;
+  final int expMax;
+  final int oroMin;
+  final int oroMax;
 
-  const Recompensa({required this.id, required this.exp, required this.oro});
+  const Recompensa({
+    required this.id,
+    required this.categoria,
+    required this.expMin,
+    required this.expMax,
+    required this.oroMin,
+    required this.oroMax,
+  });
 
   factory Recompensa.fromMap(Map<String, dynamic> map) {
     return Recompensa(
       id: map['id'] as String,
-      exp: map['exp'] as int,
-      oro: map['oro'] as int,
+      categoria: Categoria.values.byName(map['categoria'] as String),
+      expMin: map['expMin'] as int,
+      expMax: map['expMax'] as int,
+      oroMin: map['oroMin'] as int,
+      oroMax: map['oroMax'] as int,
     );
   }
 }

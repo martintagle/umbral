@@ -32,6 +32,8 @@ export const mejora = z.object({ pieza: z.enum(['arma', 'armadura']) });
 
 export const progreso = z.object({
   enemigosDerrotados: z.record(z.string().max(64), entero(0)),
+  exp: entero(0),
+  oro: entero(0),
   muertes: entero(0),
   segundosJugados: entero(0),
   vidaActual: entero(0),

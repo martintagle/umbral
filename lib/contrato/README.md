@@ -22,7 +22,7 @@ Lo que llega de cada servicio:
 | `/api/usuarios` | `Usuario`, con `EstadoUsuario`, `Ajustes` y sus `Partida` | `usuario.dart`, `estado_usuario.dart`, `ajustes.dart`, `partida.dart` |
 | `/api/partidas` | `PartidaJugable`: la `Partida` y su `Combate` (con la `Mejora` de arma y armadura) | `partida_jugable.dart`, `combate.dart` |
 | `/api/clases` | `CatalogoClases`: las `Apariencia` y cada `ClaseInicial` (una `Clase` con su nivel, oro y combate iniciales) | `catalogo_clases.dart`, `clase.dart`, `atributos_base.dart`, `clase_codigo.dart`, `apariencia.dart` |
-| `/api/enemigos` | `Recompensa` de cada enemigo | `recompensa.dart` |
+| `/api/enemigos` | `Recompensa` de cada enemigo: su `Categoria` y los rangos de exp y oro que da | `recompensa.dart` |
 
 Partes de la partida: `Personaje` (`personaje.dart`), con `Atributos`, `Equipo`, `Ubicacion`, `Mundo` y `Estadisticas`.
 

@@ -249,7 +249,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
     _haciaAtaque.setFrom(hacia.normalized());
     switch (_golpeElegido) {
       case _Golpe.disparo:
-        _abanico(tipo.proyectiles, 0.32, tipo.alcance * 1.4);
+        _abanico(tipo.proyectiles, 0.32, tipo.alcance * 1.15);
         _disparo = _duracionDisparo;
         _recuperar();
       case _Golpe.lluvia:

@@ -130,11 +130,12 @@ class SalaInterior extends Escenario {
     for (final c in children.whereType<Proyectil>().toList()) {
       c.removeFromParent();
     }
-    // Con el nivel, cada punto trae compañía en las celdas libres de al lado.
+    // Con el nivel, los puntos de criaturas débiles y medias traen compañía en
+    // las celdas libres de al lado.
     final fuerza = game.fuerzaEnemigos;
-    final n = game.criaturasPorPuntoDeSala;
     for (final p in sala.puntos.where((p) => p.tipo == 'enemigo')) {
       if (Enemigos.porId(p.texto) case final tipo?) {
+        final n = game.criaturasPorPuntoDeSala(tipo.id);
         final celdas = [
           for (final (dx, dy) in const [(0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)])
             if (_cabe(piesEn(p.x + dx, p.y + dy))) piesEn(p.x + dx, p.y + dy),
