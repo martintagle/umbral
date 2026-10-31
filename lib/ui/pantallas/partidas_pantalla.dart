@@ -8,10 +8,12 @@ import '../../contrato/recompensa.dart';
 import '../../api/partida_api.dart';
 import '../../api/api_excepcion.dart';
 import '../../api/sesion.dart';
+import '../../api/sincronizacion.dart';
 import '../../api/usuario_api.dart';
 import '../clases_ui.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
+import '../widgets/aviso_actualizacion.dart';
 import '../widgets/boton_umbral.dart';
 import '../widgets/panel_umbral.dart';
 import '../widgets/sprite_umbral.dart';
@@ -48,10 +50,14 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
     setState(() => _error = null);
     try {
       // Con la sesión recordada se refresca el usuario (y se comprueba que el
-      // token sigue valiendo).
+      // token sigue valiendo). Sin conexión se sigue con el del teléfono.
       if (!_usuarioAlDia) {
-        await UsuarioApi().obtenerYo();
-        _usuarioAlDia = true;
+        try {
+          await UsuarioApi().obtenerYo();
+          _usuarioAlDia = true;
+        } on ApiExcepcion catch (e) {
+          if (!e.sinConexion) rethrow;
+        }
       }
       // Las tarjetas muestran el nombre de la clase de cada personaje. Suele
       // estar ya en caché: se pide al abrir la app.
@@ -217,6 +223,8 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
                 ],
               ),
               const SizedBox(height: Espacios.paso4),
+              const _EstadoConexion(),
+              const Center(child: AvisoActualizacion()),
               if (_error != null) ...[
                 Row(
                   children: [
@@ -272,6 +280,54 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Sin conexión se juega con lo guardado en el teléfono; el progreso se envía
+/// solo al volver. Con todo enviado no ocupa nada.
+class _EstadoConexion extends StatelessWidget {
+  const _EstadoConexion();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        Sincronizacion.enLinea,
+        Sincronizacion.pendientes,
+      ]),
+      builder: (_, _) {
+        final enLinea = Sincronizacion.enLinea.value;
+        final pendientes = Sincronizacion.pendientes.value;
+        if (enLinea && pendientes == 0) return const SizedBox.shrink();
+        final partidas = pendientes == 1 ? '1 partida' : '$pendientes partidas';
+        return Padding(
+          padding: const EdgeInsets.only(bottom: Espacios.paso4),
+          child: Semantics(
+            liveRegion: true,
+            child: Row(
+              children: [
+                Icon(
+                  enLinea ? Icons.cloud_upload_outlined : Icons.cloud_off,
+                  color: Colores.ceniza,
+                  size: 20,
+                ),
+                const SizedBox(width: Espacios.paso2),
+                Expanded(
+                  child: Text(
+                    enLinea
+                        ? 'Enviando el progreso de $partidas jugado sin conexión.'
+                        : 'Sin conexión: juegas con lo guardado en el teléfono. '
+                              '${pendientes > 0 ? 'El progreso de $partidas' : 'Tu progreso'} '
+                              'se enviará al volver la conexión.',
+                    style: Textos.etiqueta(color: Colores.ceniza),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

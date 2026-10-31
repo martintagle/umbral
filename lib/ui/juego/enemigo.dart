@@ -18,6 +18,7 @@ enum _Estado {
   recuperar,
   volver,
   aturdido,
+  enfurecerse,
 }
 
 /// Qué golpe se está preparando. Las criaturas comunes tienen uno; el Rey
@@ -43,7 +44,12 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
   static const _duracionAturdido = 0.35;
   static final _azar = Random();
 
+  late final Hoja _hoja = Hojas.de(tipo.hoja);
   late final ModeloAnimado _modelo;
+
+  /// Animación al desplazarse: las voladoras vuelan o aletean.
+  late final String _animacionMover = ['volar', 'aletear', 'caminar']
+      .firstWhere(_hoja.tiene, orElse: () => 'quieto');
   late double vida = vidaMaxima;
   _Estado _estado = _Estado.deambular;
   _Golpe _golpeElegido = _Golpe.cuerpo;
@@ -56,7 +62,19 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
   final Vector2 _direccionEmbestida = Vector2.zero();
   final Vector2 _antes = Vector2.zero();
   bool _embestidaAcerto = false;
+  double _embestidaTotal = 1;
   int _comboRestante = 0;
+
+  /// Qué golpe del combo se avisa ahora y cuál acaba de impactar (1, 2...),
+  /// para mostrar su tramo de la animación.
+  int _numeroGolpe = 1;
+  int _numeroImpacto = 1;
+
+  /// Se aparta del jugador (los que atacan de lejos).
+  bool _huyendo = false;
+
+  /// El jefe ya hizo su transición a media vida.
+  bool _enfurecido = false;
 
   /// Retrocesos recientes: tras varios seguidos la criatura deja de
   /// inmutarse un momento, para que no se la pueda encadenar sin fin.
@@ -72,7 +90,9 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
   double _golpe = 0;
   double _disparo = 0;
   double _herido = 0;
-  final Vector2 _empuje = Vector2.zero();
+
+  /// El final del salto del rey: se levanta tras aplastar.
+  double _aterrizaje = 0;
 
   bool get vivo => vida > 0;
   double get radio => tipo.radio;
@@ -92,15 +112,22 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
   /// Las criaturas voladoras flotan más arriba que las que caminan.
   Vector2 get centro => position + Vector2(0, -tipo.alturaCentro);
 
+  bool get _regenerando =>
+      tipo.regeneracion > 0 && _sinDano > 2 && vida < vidaMaxima;
+
+  /// El salto del rey trae en una sola fila el aviso, el vuelo y la caída
+  /// (eventos `despega` y `aterriza`); la fauce tiene filas separadas.
+  bool get _saltoCompleto =>
+      _hoja.tiene('salto') && _hoja['salto'].eventos.containsKey('despega');
+
+  /// Fila con el golpe o el disparo que se está usando.
+  String get _animacionAtaque =>
+      _golpeElegido == _Golpe.lluvia ? 'lluvia' : tipo.animacionAtaque;
+
   @override
   Future<void> onLoad() async {
-    _modelo = ModeloAnimado(
-      sprite: Sprite(game.images.fromCache(tipo.sprite)),
-      esqueleto: Esqueletos.de(tipo.sprite),
-      paint: Paint()
-        ..filterQuality = FilterQuality.none
-        ..isAntiAlias = false,
-    )..scale = Vector2.all(escalaSprites);
+    _modelo = ModeloAnimado(_hoja, paint: pinturaSprites())
+      ..scale = Vector2.all(escalaSprites);
     add(_modelo);
     _nuevoDestino();
   }
@@ -116,15 +143,27 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
     _golpe = max(0, _golpe - dt);
     _disparo = max(0, _disparo - dt);
     _herido = max(0, _herido - dt);
+    _aterrizaje = max(0, _aterrizaje - dt);
     _retrocesos = max(0, _retrocesos - dt * 0.8);
+    _huyendo = false;
 
-    if (tipo.regeneracion > 0 && _sinDano > 2 && vida < vidaMaxima) {
+    if (_regenerando) {
       vida = min(vidaMaxima, vida + tipo.regeneracion * dt);
     }
 
     final jugador = game.jugador;
     final hacia = jugador.centro - centro;
     final distancia = hacia.length;
+
+    // A media vida el jefe se detiene a enfurecerse antes de seguir.
+    if (furioso &&
+        !_enfurecido &&
+        _hoja.tiene('enfurecerse') &&
+        (_estado == _Estado.perseguir || _estado == _Estado.recuperar)) {
+      _enfurecido = true;
+      _estado = _Estado.enfurecerse;
+      _temporizador = _hoja['enfurecerse'].duracion;
+    }
 
     switch (_estado) {
       case _Estado.deambular:
@@ -158,12 +197,25 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
           _embestidaAcerto = true;
           _morder();
           jugador.recibirGolpe(dano, desde: centro);
+          // La fauce muerde en pleno salto; el rey aplasta con el salto.
+          if (!_saltoCompleto) {
+            _golpe = _duracionGolpe;
+            _numeroImpacto = 1;
+          }
         }
         if (_temporizador <= 0) {
           if (furioso) _ondaExpansiva();
+          if (_saltoCompleto) {
+            final salto = _hoja['salto'];
+            _aterrizaje = salto.duracionTramo(
+                salto.eventos['aterriza']!, salto.cuadros);
+          }
           _recuperar();
         }
       case _Estado.recuperar:
+        _temporizador -= dt;
+        if (_temporizador <= 0) _estado = _Estado.perseguir;
+      case _Estado.enfurecerse:
         _temporizador -= dt;
         if (_temporizador <= 0) _estado = _Estado.perseguir;
       case _Estado.aturdido:
@@ -212,6 +264,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
     if (tipo.ataque == Ataque.distancia && distancia < tipo.alcance * 0.45) {
       // Los que atacan de lejos se apartan si los acorralas.
       _moverHacia(position - hacia, _velocidad, dt);
+      _huyendo = true;
     } else if (distancia <= alcanceReal) {
       _comboRestante = tipo.combo;
       _prepararGolpe(
@@ -228,6 +281,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
 
   void _prepararGolpe(_Golpe golpe, Vector2 hacia, {double factor = 1}) {
     _golpeElegido = golpe;
+    _numeroGolpe = 1;
     _estado = _Estado.preparar;
     _preparacionTotal = _preparacion *
         factor *
@@ -262,8 +316,10 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
         _estado = _Estado.embestir;
         final largo = tipo.jefe ? hacia.length + 10 : tipo.alcance + 6;
         _temporizador = largo / tipo.embestida;
+        _embestidaTotal = _temporizador;
       case _Golpe.barrido:
         _golpe = _duracionGolpe;
+        _numeroImpacto = _numeroGolpe;
         final angulo = atan2(hacia.y, hacia.x);
         game.zona.add(Tajo(centro.clone(),
             direccion: angulo, arco: pi * 1.1, radio: tipo.alcance + 6));
@@ -274,6 +330,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
         _siguienteDelCombo(hacia, furioso ? 2 : 1);
       case _Golpe.cuerpo:
         _golpe = _duracionGolpe;
+        _numeroImpacto = _numeroGolpe;
         // Si el jugador se apartó durante el aviso, el golpe falla.
         if (hacia.length <= tipo.alcance + jugador.radio + 3) {
           _morder();
@@ -288,7 +345,9 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
   void _siguienteDelCombo(Vector2 hacia, int quedan) {
     if (quedan > 1 && game.jugador.vivo) {
       _comboRestante = quedan - 1;
+      final siguiente = _numeroGolpe + 1;
       _prepararGolpe(_golpeElegido, hacia, factor: 0.55);
+      _numeroGolpe = siguiente;
     } else {
       _comboRestante = 0;
       _recuperar();
@@ -310,6 +369,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
         delJugador: false,
         tamano: tipo.tamanoProyectil,
         color: tipo.colorProyectil,
+        efecto: tipo.efectoProyectil,
       ));
     }
   }
@@ -327,13 +387,10 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
         delJugador: false,
         tamano: 3,
         color: Colores.alma,
+        efecto: tipo.efectoProyectil,
       ));
     }
-    game.zona.add(Estallido(position.clone(), const [
-      Colores.alma,
-      Colores.hueso,
-      Colores.ceniza,
-    ]));
+    game.zona.add(Efecto(Hojas.ondaExpansiva, 'onda', position.clone()));
   }
 
   /// Marca de garras o dientes sobre el jugador.
@@ -396,86 +453,115 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
     }
   }
 
-  /// Postura según el estado: se agazapa y tiembla antes de atacar, se
-  /// estira al embestir, se lanza al golpear, retrocede al disparar y se
-  /// aplasta al recibir daño. Las piezas del modelo (alas, patas,
-  /// mandíbulas...) se mueven por su cuenta con [ModeloAnimado].
+  /// Elige el cuadro de la hoja según el estado. El aviso, el golpe y el
+  /// disparo duran lo que dice [tipo], no la hoja: sus cuadros se reparten
+  /// para que el impacto se vea justo cuando el juego lo cuenta.
   void _animar(double dt) {
-    var dx = 0.0, dy = 0.0, sx = 1.0, sy = 1.0, giro = 0.0;
-    if (tipo.vuela) dy = (sin(_t * 4) * 1.5).roundToDouble() - 2;
-    final d = _haciaAtaque;
-    var preparar = 0.0;
+    final andando = dt > 0 && position.distanceTo(_antes) > _velocidad * dt * 0.2;
+    // Entre dos golpes de un combo, el aviso del siguiente espera a que se vea
+    // el impacto del anterior.
+    final golpeando = _golpe > 0 &&
+        (_estado != _Estado.preparar || _duracionGolpe - _golpe < 0.1);
 
-    switch (_estado) {
-      case _Estado.preparar:
-        final k = (1 - _temporizador / _preparacionTotal).clamp(0.0, 1.0);
-        preparar = k;
-        sx = 1 + 0.12 * k;
-        sy = 1 - 0.14 * k;
-        dx = -_lado * 1.5 * k + ((_t * 30).floor().isEven ? 0.5 : -0.5) * k;
-        giro = -_lado * 0.1 * k;
-      case _Estado.embestir:
-        sx = 1.25;
-        sy = 0.85;
-        giro = _lado * 0.18;
-      case _Estado.aturdido:
-        giro = _lado * -0.15;
-      default:
-        break;
+    if (_estado == _Estado.enfurecerse) {
+      _modelo.tramo('enfurecerse',
+          1 - _temporizador / _hoja['enfurecerse'].duracion);
+    } else if (golpeando) {
+      final c = _tramoCombo(_numeroImpacto);
+      _modelo.tramo(_animacionAtaque, 1 - _golpe / _duracionGolpe,
+          desde: c.impacto, hasta: c.fin);
+    } else if (_disparo > 0) {
+      _modelo.tramo(_animacionAtaque, 1 - _disparo / _duracionDisparo,
+          desde: _hoja[_animacionAtaque].eventos['disparo']!);
+    } else if (_aterrizaje > 0) {
+      final salto = _hoja['salto'];
+      final desde = salto.eventos['aterriza']!;
+      _modelo.tramo(
+          'salto', 1 - _aterrizaje / salto.duracionTramo(desde, salto.cuadros),
+          desde: desde);
+    } else if (_estado == _Estado.preparar) {
+      _animarAviso((1 - _temporizador / _preparacionTotal).clamp(0.0, 1.0));
+    } else if (_estado == _Estado.embestir) {
+      final p = 1 - _temporizador / _embestidaTotal;
+      if (_saltoCompleto) {
+        final salto = _hoja['salto'];
+        _modelo.tramo('salto', p,
+            desde: salto.eventos['despega']!,
+            hasta: salto.eventos['aterriza']!);
+      } else {
+        _modelo.tramo('salto', p);
+      }
+    } else if (_herido > 0 && _hoja.tiene('herido')) {
+      // El rey no tiene `herido`: le basta el destello.
+      _modelo.tramo('herido', 1 - _herido / _duracionHerido);
+    } else if (_estado == _Estado.aturdido && _hoja.tiene('aturdido')) {
+      _modelo.reproducir('aturdido');
+    } else if (_huyendo && _hoja.tiene('retroceder')) {
+      _modelo.reproducir('retroceder');
+    } else if (andando) {
+      _modelo.reproducir(_variante(_animacionMover));
+    } else if (_regenerando && _hoja.tiene('curarse')) {
+      _modelo.reproducir('curarse');
+    } else {
+      _modelo.reproducir(_variante('quieto'));
     }
 
-    var golpe = 0.0;
-    if (_golpe > 0) {
-      final p = 1 - _golpe / _duracionGolpe;
-      golpe = p < 0.3 ? p / 0.3 : 1 - (p - 0.3) / 0.7;
-      dx += d.x * 4 * golpe;
-      dy += d.y * 3 * golpe;
-      sx += 0.12 * golpe;
-      giro += _lado * 0.15 * golpe;
-    }
-    if (_disparo > 0) {
-      final k = _disparo / _duracionDisparo;
-      dx -= d.x * 2 * k;
-      dy -= d.y * 2 * k;
-      sx += 0.12 * k;
-      sy += 0.12 * k;
-    }
-    if (_herido > 0) {
-      final k = _herido / _duracionHerido;
-      dx += _empuje.x * 2 * k;
-      sx += 0.15 * k;
-      sy -= 0.15 * k;
-    }
-
-    final movido = position.distanceTo(_antes);
     _modelo
-      ..andar = dt > 0 ? (movido / (_velocidad * dt)).clamp(0.0, 1.0) : 0
-      ..preparar = preparar
-      ..golpe = golpe
       ..visible = game.camera.visibleWorldRect
           .inflate(64)
           .contains(Offset(position.x, position.y))
-      ..position.setValues(dx, dy)
-      ..scale.setValues(_lado * escalaSprites * sx, escalaSprites * sy)
-      ..angle = giro;
+      ..scale.setValues(_lado * escalaSprites, escalaSprites);
 
+    // Destello al recibir daño y parpadeo de brasa mientras avisa del golpe.
     final avisando = _estado == _Estado.preparar && (_t * 16).floor().isEven;
     _modelo.paint.colorFilter = _destello > 0
         ? const ColorFilter.mode(Colores.hueso, BlendMode.srcATop)
         : avisando
             ? const ColorFilter.mode(Color(0xAAE08A2C), BlendMode.srcATop)
-            : furioso
-                ? const ColorFilter.mode(Color(0x44A3242A), BlendMode.srcATop)
-                : null;
+            : null;
   }
+
+  /// El aviso, de 0 a 1, del golpe que se prepara.
+  void _animarAviso(double k) {
+    switch (_golpeElegido) {
+      case _Golpe.cuerpo || _Golpe.barrido:
+        final c = _tramoCombo(_numeroGolpe);
+        _modelo.tramo(_animacionAtaque, k, desde: c.aviso, hasta: c.impacto);
+      case _Golpe.disparo || _Golpe.lluvia:
+        _modelo.tramo(_animacionAtaque, k,
+            hasta: _hoja[_animacionAtaque].eventos['disparo']!);
+      case _Golpe.embestida when _saltoCompleto:
+        _modelo.tramo('salto', k, hasta: _hoja['salto'].eventos['despega']!);
+      case _Golpe.embestida:
+        _modelo.tramo('agazaparse', k);
+    }
+  }
+
+  /// Cuadros del golpe [numero] del combo en la animación de ataque: el aviso
+  /// va de [aviso] a [impacto] y el golpe de [impacto] a [fin]. Si el combo
+  /// tiene más golpes que la animación, se repite el último.
+  ({int aviso, int impacto, int fin}) _tramoCombo(int numero) {
+    final a = _hoja[_animacionAtaque];
+    final golpes = a.golpes;
+    final i = (numero - 1).clamp(0, golpes.length - 1);
+    return (
+      aviso: i == 0 ? 0 : golpes[i - 1] + 1,
+      impacto: golpes[i],
+      fin: i == golpes.length - 1 ? a.cuadros : golpes[i] + 1,
+    );
+  }
+
+  /// El rey furioso tiene su propio `quieto` y `caminar`.
+  String _variante(String nombre) =>
+      furioso && _hoja.tiene('$nombre-furioso') ? '$nombre-furioso' : nombre;
 
   @override
   void render(Canvas canvas) {
-    // Barra de vida sobre las criaturas heridas (el jefe la tiene en el HUD).
+    // Barra de vida sobre la cabeza de las criaturas heridas (el jefe la
+    // tiene en el HUD).
     if (!vivo || tipo.jefe || _sinDano > 4 || !_modelo.visible) return;
-    final alto = _modelo.size.y * escalaSprites;
     const ancho = 14.0;
-    final y = -alto - 3;
+    final y = -tipo.alturaCentro - 15;
     canvas.drawRect(Rect.fromLTWH(-ancho / 2 - 0.5, y - 0.5, ancho + 1, 2),
         _fondoBarra);
     canvas.drawRect(
@@ -492,10 +578,11 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
     _sinDano = 0;
     _destello = 0.08;
     _herido = _duracionHerido;
-    _empuje.setFrom(empuje);
-    game.zona.add(TextoFlotante(
-        critico ? '$dano!' : '$dano', centro - Vector2(0, 7),
-        color: critico ? Colores.brasa : Colores.hueso));
+    game.zona
+      ..add(Efecto(Hojas.efectos, 'impacto', centro))
+      ..add(TextoFlotante(
+          critico ? '$dano!' : '$dano', centro - Vector2(0, 7),
+          color: critico ? Colores.brasa : Colores.hueso));
     if (_estado == _Estado.deambular || _estado == _Estado.volver) {
       _despertar();
     }
@@ -514,7 +601,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
       Sonido.efecto(Audios.muerteEnemigo, volumen: tipo.jefe ? 1 : 0.7);
       game.enemigoDerrotado(this);
       game.zona
-        ..add(Desvanecer(_modelo.sprite, position.clone(), _lado))
+        ..add(Desvanecer(_hoja, position.clone(), _lado))
         ..add(Estallido(centro, const [
           Colores.sangre,
           Colores.hueso,

@@ -67,6 +67,13 @@ class TipoEnemigo {
   /// Altura del centro del cuerpo sobre los pies.
   final double alturaCentro;
 
+  /// Fila de su hoja con el golpe o el disparo. Sus eventos `golpe1`,
+  /// `golpe2`... (o `disparo`) marcan cada impacto del combo.
+  final String animacionAtaque;
+
+  /// Animación de `efectos.png` de sus proyectiles.
+  final String? efectoProyectil;
+
   const TipoEnemigo({
     required this.id,
     required this.nombre,
@@ -92,9 +99,12 @@ class TipoEnemigo {
     this.jefe = false,
     this.radio = 6,
     double? alturaCentro,
+    required this.animacionAtaque,
+    this.efectoProyectil,
   }) : alturaCentro = alturaCentro ?? (vuela ? 10 : 6);
 
-  String get sprite => 'sprites/enemigos/$id.png';
+  /// Su hoja en `assets/sprites/animaciones/hojas.json`.
+  String get hoja => 'enemigos/$id';
 }
 
 abstract final class Enemigos {
@@ -112,6 +122,7 @@ abstract final class Enemigos {
     vuela: true,
     erratico: 1,
     combo: 2,
+    animacionAtaque: 'morder',
   );
 
   /// Mordida brutal: se agazapa y salta sobre el jugador desde lejos.
@@ -126,6 +137,7 @@ abstract final class Enemigos {
     preparacion: 0.55,
     recarga: 1.3,
     embestida: 210,
+    animacionAtaque: 'morder',
   );
 
   /// Vuela y escupe polvo de hueso en abanico; huye si te acercas.
@@ -144,6 +156,8 @@ abstract final class Enemigos {
     colorProyectil: Colores.ceniza,
     velocidadProyectil: 125,
     proyectiles: 3,
+    animacionAtaque: 'escupir',
+    efectoProyectil: 'polvo',
   );
 
   /// Lenta y resistente; lanza fuego de sus velas y no se inmuta al recibir
@@ -163,6 +177,8 @@ abstract final class Enemigos {
     velocidadProyectil: 95,
     tamanoProyectil: 3,
     firme: true,
+    animacionAtaque: 'fuego',
+    efectoProyectil: 'fuego',
   );
 
   /// Muchos golpes rápidos que te agarran y te frenan.
@@ -178,6 +194,7 @@ abstract final class Enemigos {
     recarga: 0.7,
     ralentiza: 1.4,
     combo: 3,
+    animacionAtaque: 'agarrar',
   );
 
   /// Se cura si no lo matas rápido, y golpea dos veces con su farol.
@@ -193,6 +210,7 @@ abstract final class Enemigos {
     recarga: 1.1,
     regeneracion: 9,
     combo: 2,
+    animacionAtaque: 'farol',
   );
 
   /// Jefe de la sala del trono de la cripta. Alterna barridos, saltos que
@@ -215,6 +233,8 @@ abstract final class Enemigos {
     jefe: true,
     radio: 11,
     alturaCentro: 14,
+    animacionAtaque: 'barrido',
+    efectoProyectil: 'ojo',
   );
 
   /// Las criaturas que aparecen en el mundo y en las salas (el jefe va

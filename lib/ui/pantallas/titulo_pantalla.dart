@@ -6,6 +6,7 @@ import '../../api/sesion.dart';
 import '../../api/usuario_api.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
+import '../widgets/aviso_actualizacion.dart';
 import '../widgets/boton_umbral.dart';
 import '../widgets/sprite_umbral.dart';
 import 'ajustes_pantalla.dart';
@@ -119,6 +120,15 @@ class _TituloPantallaState extends State<TituloPantalla> {
                     ),
                   ),
                 ),
+              ),
+            ),
+          ),
+          const SafeArea(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: EdgeInsets.all(Espacios.paso4),
+                child: AvisoActualizacion(),
               ),
             ),
           ),

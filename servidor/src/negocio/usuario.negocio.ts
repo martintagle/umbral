@@ -5,6 +5,8 @@ import type { AjustesDto } from '../dto/ajustes.dto.js';
 import type { UsuarioDto } from '../dto/usuario.dto.js';
 import { ajustesDocumento, documentoUsuario, usuarioDto, usuarios } from './coleccion-usuarios.js';
 import { conErroresMongo, idMongo, NegocioError } from './negocio-error.js';
+import { respaldoLocal } from './sqlite/respaldo-local.js';
+import { sincronizacion } from './sqlite/sincronizacion.js';
 
 export const VERSION_ESQUEMA = 1;
 const AJUSTES_POR_DEFECTO: AjustesDto = { idioma: 'es', musica: 1, efectos: 1 };
@@ -50,6 +52,32 @@ function validarRegistro(username: string, email: string, password: string): voi
   }
 }
 
+/** Comprueba la contraseña y el estado de la cuenta. */
+async function comprobarAcceso(usuario: UsuarioDto | null, password: string): Promise<UsuarioDto> {
+  const valida = usuario !== null && (await bcrypt.compare(password, usuario.passwordHash));
+  // Mismo mensaje en ambos casos para no revelar qué cuentas existen.
+  if (!usuario || !valida) {
+    throw new NegocioError('Usuario o contraseña incorrectos.', 'autenticacion');
+  }
+  if (usuario.estado === 'baneado') {
+    throw new NegocioError('La cuenta está baneada.', 'prohibido');
+  }
+  if (usuario.estado === 'eliminado') {
+    throw new NegocioError('La cuenta está eliminada.', 'prohibido');
+  }
+  return usuario;
+}
+
+const noExiste = () => new NegocioError('El usuario no existe.', 'no-encontrado');
+
+/** Usuario de la copia local; sin Atlas, es la única fuente. */
+function usuarioLocal(id: string): UsuarioDto {
+  idMongo(id);
+  const usuario = respaldoLocal.usuario(id);
+  if (!usuario) throw noExiste();
+  return usuario;
+}
+
 function validarAjustes(a: AjustesDto): void {
   if (a.idioma.length < 2 || a.idioma.length > 10) {
     throw new NegocioError('El idioma no es válido.');
@@ -79,9 +107,18 @@ export const usuarioNegocio = {
       partidaActiva: null,
       partidas: [],
     };
-    const coleccion = await usuarios();
-    await conErroresMongo(() => coleccion.insertOne(documentoUsuario(usuario)));
-    return publico(usuario);
+    return sincronizacion.conRespaldo(
+      async () => {
+        const coleccion = await usuarios();
+        await conErroresMongo(() => coleccion.insertOne(documentoUsuario(usuario)));
+        return publico(usuario);
+      },
+      () => {
+        respaldoLocal.guardarCambio(usuario);
+        return publico(usuario);
+      },
+      usuario._id.toHexString(),
+    );
   },
 
   /** `identificador` puede ser el email o el username. */
@@ -90,55 +127,75 @@ export const usuarioNegocio = {
     if (!valor || !password) {
       throw new NegocioError('Escribe tu correo o usuario y tu contraseña.');
     }
-    const coleccion = await usuarios();
-    const documento = await coleccion.findOne({
-      $or: [{ email: valor.toLowerCase() }, { username: valor }],
-    });
-    const valida = documento !== null && (await bcrypt.compare(password, documento.passwordHash));
-    // Mismo mensaje en ambos casos para no revelar qué cuentas existen.
-    if (!documento || !valida) {
-      throw new NegocioError('Usuario o contraseña incorrectos.', 'autenticacion');
-    }
-    if (documento.estado === 'baneado') {
-      throw new NegocioError('La cuenta está baneada.', 'prohibido');
-    }
-    if (documento.estado === 'eliminado') {
-      throw new NegocioError('La cuenta está eliminada.', 'prohibido');
-    }
-
     const ahora = new Date();
-    await coleccion.updateOne(
-      { _id: documento._id },
-      { $set: { ultimoLogin: ahora, actualizadoEn: ahora } },
+    return sincronizacion.conRespaldo(
+      async () => {
+        const coleccion = await usuarios();
+        const documento = await coleccion.findOne({
+          $or: [{ email: valor.toLowerCase() }, { username: valor }],
+        });
+        const usuario = await comprobarAcceso(documento && usuarioDto(documento), password);
+        await coleccion.updateOne(
+          { _id: usuario._id },
+          { $set: { ultimoLogin: ahora, actualizadoEn: ahora } },
+        );
+        const actualizado = { ...usuario, ultimoLogin: ahora, actualizadoEn: ahora };
+        respaldoLocal.guardarDeMongo(actualizado);
+        return publico(actualizado);
+      },
+      async () => {
+        const usuario = await comprobarAcceso(respaldoLocal.usuarioPorIdentificador(valor), password);
+        const actualizado = { ...usuario, ultimoLogin: ahora, actualizadoEn: ahora };
+        respaldoLocal.guardarCambio(actualizado);
+        return publico(actualizado);
+      },
     );
-    return publico(usuarioDto({ ...documento, ultimoLogin: ahora, actualizadoEn: ahora }));
   },
 
-  async obtenerPorId(id: string): Promise<UsuarioPublico> {
-    const documento = await (await usuarios()).findOne({ _id: idMongo(id) });
-    if (!documento) throw new NegocioError('El usuario no existe.', 'no-encontrado');
-    return publico(usuarioDto(documento));
+  obtenerPorId(id: string): Promise<UsuarioPublico> {
+    return sincronizacion.conRespaldo(
+      async () => {
+        const documento = await (await usuarios()).findOne({ _id: idMongo(id) });
+        if (!documento) throw noExiste();
+        const usuario = usuarioDto(documento);
+        respaldoLocal.guardarDeMongo(usuario);
+        return publico(usuario);
+      },
+      () => publico(usuarioLocal(id)),
+    );
   },
 
   async actualizarAjustes(id: string, ajustes: AjustesDto): Promise<void> {
     validarAjustes(ajustes);
-    const coleccion = await usuarios();
-    const resultado = await conErroresMongo(() =>
-      coleccion.updateOne(
-        { _id: idMongo(id) },
-        { $set: { ajustes: ajustesDocumento(ajustes), actualizadoEn: new Date() } },
-      ),
+    const ahora = new Date();
+    await sincronizacion.conRespaldo(
+      async () => {
+        const coleccion = await usuarios();
+        const resultado = await conErroresMongo(() =>
+          coleccion.updateOne(
+            { _id: idMongo(id) },
+            { $set: { ajustes: ajustesDocumento(ajustes), actualizadoEn: ahora } },
+          ),
+        );
+        if (resultado.matchedCount === 0) throw noExiste();
+      },
+      () => respaldoLocal.guardarCambio({ ...usuarioLocal(id), ajustes, actualizadoEn: ahora }),
+      id,
     );
-    if (resultado.matchedCount === 0) {
-      throw new NegocioError('El usuario no existe.', 'no-encontrado');
-    }
   },
 
   /** Borra el documento del usuario, con todas sus partidas. */
   async eliminar(id: string): Promise<void> {
-    const resultado = await (await usuarios()).deleteOne({ _id: idMongo(id) });
-    if (resultado.deletedCount === 0) {
-      throw new NegocioError('El usuario no existe.', 'no-encontrado');
-    }
+    await sincronizacion.conRespaldo(
+      async () => {
+        const resultado = await (await usuarios()).deleteOne({ _id: idMongo(id) });
+        if (resultado.deletedCount === 0) throw noExiste();
+        respaldoLocal.eliminarUsuario(id, false);
+      },
+      () => {
+        usuarioLocal(id);
+        respaldoLocal.eliminarUsuario(id, true);
+      },
+    );
   },
 };

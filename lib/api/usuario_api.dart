@@ -1,5 +1,6 @@
 import '../contrato/ajustes.dart';
 import '../contrato/usuario.dart';
+import 'almacen_local.dart';
 import 'api_cliente.dart';
 import 'sesion.dart';
 
@@ -46,6 +47,9 @@ class UsuarioApi {
 
   Future<void> eliminarCuenta() async {
     await ApiCliente.delete('/usuarios/yo');
+    if (Sesion.usuario?.id case final id?) {
+      await AlmacenLocal.olvidarUsuario(id, 'partidas:$id');
+    }
     Sesion.cerrar();
   }
 

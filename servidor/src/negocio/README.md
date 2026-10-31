@@ -2,7 +2,7 @@
 
 ## Qué debe hacer
 
-Contiene **todas las operaciones sobre la base de datos** y **todas las reglas** del juego y de las cuentas. Es la única capa que habla con MongoDB, siempre **a través de la capa de conexión** y usando los **DTO**.
+Contiene **todas las operaciones sobre la base de datos** y **todas las reglas** del juego y de las cuentas. Es la única capa que habla con MongoDB, siempre **a través de la capa de conexión** y usando los **DTO**. También mantiene una **copia en SQLite** para seguir funcionando cuando Atlas no responde (ver [Sin conexión con Atlas](#sin-conexión-con-atlas)).
 
 Cada método entrega su resultado **listo para que la capa servicio lo exponga** sin tocarlo:
 
@@ -21,7 +21,8 @@ Cada método entrega su resultado **listo para que la capa servicio lo exponga**
 | `enemigo.negocio.ts` | Categoría de cada enemigo (incluido el jefe Rey Hueco), rangos de exp y oro que da según ella, y rango total de lo que pueden dar los derrotados en un progreso. |
 | `coleccion-clases.ts` | Acceso a la colección `clases` y preparación de su validador y de las clases iniciales (`bd/clases.json`) que usan los scripts de `dev/`. |
 | `coleccion-usuarios.ts` | Acceso a la colección `usuarios`, conversión entre el DTO y el documento guardado (los `double` del esquema) y preparación del validador e índices que usan los scripts de `dev/`. |
-| `negocio-error.ts` | `NegocioError` con su tipo, conversión de ids y `conErroresMongo`, que traduce los errores de Mongo (11000 duplicado, 121 esquema). |
+| `negocio-error.ts` | `NegocioError` con su tipo, conversión de ids, `conErroresMongo`, que traduce los errores de Mongo (11000 duplicado, 121 esquema), y `esSinConexion`, que reconoce cuándo Atlas no responde. |
+| `sqlite/` | Todo el SQLite: la copia local de la base y su sincronización con Mongo. Ver [sqlite/README.md](sqlite/README.md). |
 
 ## Reglas que aplica
 
@@ -57,12 +58,17 @@ Cada método entrega su resultado **listo para que la capa servicio lo exponga**
 - **Registrar progreso, repartir puntos y mejorar equipo:** solo escriben si la partida sigue como se leyó (mismo `ultimaVezJugada`, que cada escritura renueva); si otra petición la cambió, vuelven a leer y a aplicar, hasta 3 veces.
 - **Borrar partida:** quita la partida y limpia `partidaActiva` en una sola actualización con pipeline.
 
+## Sin conexión con Atlas
+
+Todo el SQLite está en [`sqlite/`](sqlite/README.md). Negocio guarda allí una copia de `usuarios` y `clases`. Cada operación de usuarios y partidas pasa por `sincronizacion.conRespaldo`: con Atlas va a Mongo y copia el resultado en SQLite; sin Atlas aplica las mismas reglas sobre la copia y deja el cambio pendiente; al volver Atlas, lo pendiente se envía a Mongo.
+
 ## Qué NO debe hacer
 
 - No crea conexiones directas: siempre usa `conexionBD`.
 - No sabe nada de HTTP (rutas, códigos, JSON): eso es de la capa **servicio**.
 
 ```
-servicio  ──►  negocio  ──►  conexion
-                  └──►  dto
+servicio  ──►  negocio  ──►  conexion  ──►  MongoDB Atlas
+                  ├──►  dto
+                  └──►  sqlite/  ──►  SQLite (copia local)
 ```

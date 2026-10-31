@@ -1,4 +1,13 @@
-import { MongoServerError, ObjectId } from 'mongodb';
+import {
+  MongoNetworkError,
+  MongoNotConnectedError,
+  MongoServerError,
+  MongoServerSelectionError,
+  MongoTopologyClosedError,
+  ObjectId,
+} from 'mongodb';
+
+import { SinConexionBD } from '../conexion/conexion-bd.js';
 
 export type TipoError =
   | 'validacion'
@@ -36,6 +45,17 @@ export async function conErroresMongo<T>(operacion: () => Promise<T>): Promise<T
   } catch (e) {
     throw traducir(e);
   }
+}
+
+/** El error dice que Atlas no responde: hay que seguir con la copia local. */
+export function esSinConexion(e: unknown): boolean {
+  return (
+    e instanceof SinConexionBD ||
+    e instanceof MongoNetworkError ||
+    e instanceof MongoServerSelectionError ||
+    e instanceof MongoNotConnectedError ||
+    e instanceof MongoTopologyClosedError
+  );
 }
 
 function traducir(e: unknown): unknown {

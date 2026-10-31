@@ -1,7 +1,9 @@
 import 'dotenv/config';
 
-import { conexionBD } from './conexion/conexion-bd.js';
+import { conexionBD, SinConexionBD } from './conexion/conexion-bd.js';
 import { claseNegocio } from './negocio/clase.negocio.js';
+import { respaldoLocal } from './negocio/sqlite/respaldo-local.js';
+import { sincronizacion } from './negocio/sqlite/sincronizacion.js';
 import { crearApp } from './servicio/app.js';
 
 const puerto = Number(process.env.PUERTO ?? process.env.PORT ?? 3000);
@@ -18,10 +20,20 @@ if (process.env.JWT_SECRETO!.length < 32) {
   process.exit(1);
 }
 
-// Conecta al arrancar para detectar enseguida una cadena o credenciales mal puestas.
-await conexionBD.abrir();
+// La copia SQLite con la que negocio sigue funcionando si Atlas no responde.
+respaldoLocal.abrir();
+// Conecta al arrancar para detectar enseguida una cadena mal puesta. Si Atlas
+// no responde, se arranca igual con la copia local.
+try {
+  await conexionBD.abrir();
+} catch (e) {
+  if (!(e instanceof SinConexionBD)) throw e;
+  console.warn(e.message);
+}
 // Las clases no cambian: se leen una vez y se sirven desde memoria.
 await claseNegocio.cargar();
+// Envía a Mongo lo hecho sin conexión y copia la base en SQLite.
+await sincronizacion.iniciar();
 
 const servidor = crearApp().listen(puerto, '0.0.0.0', () => {
   console.log(`API de Umbral escuchando en http://localhost:${puerto}`);
@@ -30,6 +42,8 @@ const servidor = crearApp().listen(puerto, '0.0.0.0', () => {
 // El hosting manda SIGTERM al redesplegar: termina las peticiones y cierra Atlas.
 process.on('SIGTERM', () => {
   servidor.close(() => {
+    sincronizacion.detener();
+    respaldoLocal.cerrar();
     void conexionBD.cerrar().finally(() => process.exit(0));
   });
 });

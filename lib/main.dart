@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'api/almacen_local.dart';
 import 'api/clase_api.dart';
 import 'api/preferencias.dart';
+import 'api/sincronizacion.dart';
 import 'ui/pantallas/titulo_pantalla.dart';
 import 'ui/sonido.dart';
 import 'ui/tema/tema_umbral.dart';
@@ -17,11 +19,15 @@ Future<void> main() async {
   ]);
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   await Preferencias.cargar();
+  // Lo guardado en el teléfono para jugar sin conexión.
+  await AlmacenLocal.abrir();
   await Iconos.cargar();
   await Sonido.iniciar();
   // Las clases no cambian: se piden una vez, sin esperar, y quedan en caché.
   // Si falla (sin conexión), se reintenta al llegar a la lista de partidas.
   ClaseApi().catalogo().ignore();
+  // Envía el progreso jugado sin conexión en cuanto vuelve la red.
+  Sincronizacion.iniciar();
   runApp(const UmbralApp());
 }
 

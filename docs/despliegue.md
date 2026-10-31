@@ -35,6 +35,8 @@ La app nunca habla con Atlas: solo con la API. Cualquiera puede descompilar un A
 
 En el plan gratis, la API se duerme tras 15 minutos sin uso y la primera petición tarda unos 30-50 s. La app espera hasta 60 s para cubrir ese arranque.
 
+La copia SQLite de negocio (para cuando Atlas no responde) se guarda en el disco del servicio. En el plan gratis ese disco se borra al dormirse o redesplegarse, así que lo hecho sin Atlas se pierde si no se envió antes. Para conservarla, usa un plan con disco persistente y apunta `SQLITE_RUTA` a él. Render pide Node 22.13 o superior por el campo `engines` de `servidor/package.json`.
+
 ## 3. APK de la beta
 
 1. Crea la clave de firma (una sola vez; guárdala, porque sin ella no podrás publicar actualizaciones):
@@ -71,6 +73,8 @@ En el plan gratis, la API se duerme tras 15 minutos sin uso y la primera petici�
 3. `git tag v0.1.1-beta` y `git push origin v0.1.1-beta`.
 
 El APK queda en `https://github.com/martintagle/umbral/releases/latest/download/umbral.apk`.
+
+**Aviso de actualización en la app.** Al abrirse, la app consulta la última Release (`api.github.com/repos/martintagle/umbral/releases/latest`) y compara su tag con la `version` instalada, número a número (`v0.1.7-beta` → `0.1.7`). Si la Release es más nueva, muestra un diálogo y una franja con **Descargar**, que abre el APK en el navegador. Por eso el número antes del `+` en `pubspec.yaml` debe coincidir con el del tag. Si solo sube el número tras el `+`, la app no avisa. La Release no puede marcarse como *pre-release*: `releases/latest` las ignora. Para otro repositorio, compila con `--dart-define=REPO_RELEASES=dueño/repo`.
 
 ## Protecciones de la API
 

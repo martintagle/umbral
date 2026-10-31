@@ -11,6 +11,8 @@ import { prepararColeccion } from '../negocio/coleccion-usuarios.js';
 const servidor = await MongoMemoryServer.create();
 process.env.MONGO_URI = `${servidor.getUri()}rpg`;
 process.env.JWT_SECRETO ??= 'solo-para-pruebas-locales-nunca-en-produccion';
+// La copia SQLite también es temporal: no se mezcla con la de Atlas.
+process.env.SQLITE_RUTA ??= ':memory:';
 
 // Usa la misma conexión que la API: index.ts la encuentra ya abierta.
 await prepararColeccion();

@@ -7,13 +7,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import '../../api/sincronizacion.dart';
 import '../../contrato/personaje.dart';
 import '../../contrato/ubicacion.dart';
 import '../../contrato/combate.dart';
 import '../../contrato/partida_jugable.dart';
 import '../../contrato/progreso.dart';
 import '../../contrato/recompensa.dart';
-import '../clases_ui.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
 import 'animacion.dart';
@@ -270,23 +270,21 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   Future<void> onLoad() async {
     final mapa = await MapaMundo.cargar();
     _interiores = await MapaInteriores.cargar();
-    final rutaJugador = claseUi(
-      personaje.claseCodigo,
-    ).sprite(personaje.apariencia).replaceFirst('assets/', '');
+    final hojaJugador =
+        'personajes/${personaje.claseCodigo.name}-${personaje.apariencia.name}';
     await images.loadAll([
       'tiles/tileset.png',
       'interiores/${_interiores.tileset}',
-      rutaJugador,
-      for (final e in [...Enemigos.todos, Enemigos.reyHueco]) e.sprite,
       for (final s in {for (final e in mapa.estructuras) e.sprite})
         'sprites/estructuras/$s.png',
     ]);
-    // Las piezas que se animan por separado (brazos, piernas, alas...).
-    await Esqueletos.preparar(images, {
-      rutaJugador: 'personajes/${personaje.claseCodigo.name}',
-      for (final e in [...Enemigos.todos, Enemigos.reyHueco])
-        e.sprite: 'enemigos/${e.id}',
-    });
+    // Las animaciones cuadro a cuadro de quien sale en pantalla.
+    await Hojas.preparar(images, [
+      hojaJugador,
+      for (final e in [...Enemigos.todos, Enemigos.reyHueco]) e.hoja,
+      Hojas.efectos,
+      Hojas.ondaExpansiva,
+    ]);
     tierras.preparar(mapa, _interiores, images);
 
     _mostrarProgreso();
@@ -314,7 +312,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
           : tierras.inicio.clone();
     }
     jugador = Jugador(
-      rutaSprite: rutaJugador,
+      hoja: Hojas.de(hojaJugador),
       estilo: estiloDe(personaje.claseCodigo),
       pies: pies,
     );
@@ -698,8 +696,18 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
         ? ZonaTierras.puntoDeGuardado
         : 'sala:${enSala.sala.slug}';
     final ok = await guardar(silencioso: true);
-    if (ok) mostrarAviso('Descansas junto a las brasas. Partida guardada.');
+    if (ok) {
+      mostrarAviso(
+        _guardadaEn('Descansas junto a las brasas. Partida guardada.'),
+      );
+    }
   }
+
+  /// Sin conexión, la partida queda en el teléfono hasta poder enviarla.
+  String _guardadaEn(String mensaje) => Sincronizacion.enLinea.value
+      ? mensaje
+      : 'Sin conexión: guardada en el teléfono. Se enviará al volver la '
+            'conexión.';
 
   void _reiniciarTodo() {
     jefe.value = null;
@@ -731,7 +739,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
       _guardada = await alGuardar(_guardada.partida.partidaId, enviado);
       _registro.descontar(enviado);
       _mostrarProgreso();
-      if (!silencioso) mostrarAviso('Partida guardada.');
+      if (!silencioso) mostrarAviso(_guardadaEn('Partida guardada.'));
       return true;
     } catch (e) {
       mostrarAviso('No se pudo guardar. $e');

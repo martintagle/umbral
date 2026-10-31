@@ -23,6 +23,9 @@ class EstiloCombate {
   final double tamanoProyectil;
   final Color colorProyectil;
 
+  /// Animación de `efectos.png` del proyectil en vuelo.
+  final String? efectoProyectil;
+
   const EstiloCombate({
     required this.velocidad,
     required this.recarga,
@@ -33,6 +36,7 @@ class EstiloCombate {
     this.velocidadProyectil = 0,
     this.tamanoProyectil = 2,
     this.colorProyectil = Colores.hueso,
+    this.efectoProyectil,
   });
 
   bool get dispara => distanciaProyectil > 0;
@@ -63,6 +67,7 @@ const Map<ClaseCodigo, EstiloCombate> estilosCombate = {
     distanciaProyectil: 170,
     velocidadProyectil: 230,
     colorProyectil: Colores.hueso,
+    efectoProyectil: 'flecha',
   ),
   ClaseCodigo.mago: EstiloCombate(
     velocidad: 56,
@@ -72,6 +77,7 @@ const Map<ClaseCodigo, EstiloCombate> estilosCombate = {
     velocidadProyectil: 130,
     tamanoProyectil: 4,
     colorProyectil: Colores.alma,
+    efectoProyectil: 'hechizo',
   ),
   ClaseCodigo.prisionero: EstiloCombate(
     velocidad: 68,

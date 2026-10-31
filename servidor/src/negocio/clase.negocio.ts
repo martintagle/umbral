@@ -1,7 +1,8 @@
 import { CLASES_CODIGO, type ClaseCodigo } from '../dto/clase-codigo.js';
 import type { ClaseDto } from '../dto/clase.dto.js';
-import { clases } from './coleccion-clases.js';
-import { NegocioError } from './negocio-error.js';
+import { clases, clasesIniciales } from './coleccion-clases.js';
+import { esSinConexion, NegocioError } from './negocio-error.js';
+import { respaldoLocal } from './sqlite/respaldo-local.js';
 import { personajeNegocio, type CatalogoClases, type ClaseInicial } from './personaje.negocio.js';
 
 /** Clase tal como la entrega negocio: `_id` (el código) sale como `id`. */
@@ -34,8 +35,20 @@ function enCache(): ReadonlyMap<ClaseCodigo, ClaseDto> {
  * se leen una vez al arrancar y después se sirven desde memoria.
  */
 export const claseNegocio = {
+  /**
+   * Lee las clases de Mongo y las copia en SQLite. Sin Atlas, usa esa copia
+   * y, si aún no la hay (primer arranque sin conexión), `bd/clases.json`.
+   */
   async cargar(): Promise<void> {
-    const documentos = await (await clases()).find().toArray();
+    let documentos: ClaseDto[];
+    try {
+      documentos = await (await clases()).find().toArray();
+      respaldoLocal.guardarClases(documentos);
+    } catch (e) {
+      if (!esSinConexion(e)) throw e;
+      const copia = respaldoLocal.clases();
+      documentos = copia.length > 0 ? copia : await clasesIniciales();
+    }
     const porCodigo = new Map(documentos.map((c) => [c._id, c]));
     const faltan = CLASES_CODIGO.filter((codigo) => !porCodigo.has(codigo));
     if (faltan.length > 0) {

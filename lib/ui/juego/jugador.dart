@@ -12,16 +12,16 @@ import 'estilo_combate.dart';
 import 'umbral_juego.dart';
 
 /// El personaje del jugador. Su `position` son los pies; el modelo animado
-/// se dibuja encima con el ancla abajo al centro, a [escalaSprites].
+/// se dibuja encima con el ancla de su [hoja] en los pies, a [escalaSprites].
 ///
 /// Además de atacar puede rodar (unas décimas invulnerable, a cambio de
 /// estamina) y beber de los frascos de brasa, que curan pero lo dejan
 /// expuesto mientras bebe.
 class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
-  final String rutaSprite;
+  final Hoja hoja;
   final EstiloCombate estilo;
 
-  Jugador({required this.rutaSprite, required this.estilo, required Vector2 pies})
+  Jugador({required this.hoja, required this.estilo, required Vector2 pies})
       : super(position: pies, anchor: Anchor.bottomCenter);
 
   double get radio => 5;
@@ -30,7 +30,6 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
   static const _invulnerabilidad = 0.45;
   static const _duracionGolpeado = 0.2;
   static const _duracionAturdido = 0.2;
-  static const _duracionCaida = 0.35;
 
   static const costoRodar = 22.0;
   static const _duracionRodar = 0.45;
@@ -81,7 +80,6 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
   Vector2 get centro => position + Vector2(0, -8);
 
   bool get _dispara => estilo.dispara;
-  bool get _hechizo => estilo.colorProyectil == Colores.alma;
 
   /// El arma pesada tarda más en caer: la animación dura según la recarga.
   double get _duracionAtaque => min(0.42, max(0.24, estilo.recarga * 0.9));
@@ -91,13 +89,8 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
 
   @override
   Future<void> onLoad() async {
-    _modelo = ModeloAnimado(
-      sprite: Sprite(game.images.fromCache(rutaSprite)),
-      esqueleto: Esqueletos.de(rutaSprite),
-      paint: Paint()
-        ..filterQuality = FilterQuality.none
-        ..isAntiAlias = false,
-    )..scale = Vector2.all(escalaSprites);
+    _modelo = ModeloAnimado(hoja, paint: pinturaSprites())
+      ..scale = Vector2.all(escalaSprites);
     add(_modelo);
   }
 
@@ -105,7 +98,7 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
   void update(double dt) {
     priority = position.y.round();
     if (!vivo) {
-      _caida = min(_duracionCaida, _caida + dt);
+      _caida += dt;
       _sonarPasos(false, dt);
       _animar();
       return;
@@ -231,98 +224,65 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
     }
   }
 
-  /// Postura de todo el cuerpo en este cuadro (desplazamiento, estiramiento e
-  /// inclinación). Brazos, piernas y arma se mueven aparte, en el modelo.
+  /// Elige el cuadro de la hoja según lo que hace. Las acciones duran lo que
+  /// dice el juego, no la hoja: sus cuadros se reparten para que el golpe, el
+  /// disparo o la cura se vean justo cuando ocurren.
   void _animar() {
-    var dx = 0.0, dy = 0.0, sx = 1.0, sy = 1.0, giro = 0.0;
-
     if (!vivo) {
-      // Cae de lado hacia atrás.
-      final k = _caida / _duracionCaida;
-      giro = -_lado * k * pi / 2;
-      dy = k * 2;
+      _modelo.tramo('morir', _caida / hoja['morir'].duracion);
     } else if (rodando) {
-      // Voltereta hacia delante, hecho un ovillo.
-      final k = (_rodar / _duracionRodar).clamp(0.0, 1.0);
-      giro = _lado * 2 * pi * _suavizar(k);
-      final ovillo = sin(k * pi);
-      sx = 1 - 0.15 * ovillo;
-      sy = 1 - 0.3 * ovillo;
-      // El modelo gira sobre los pies: se compensa para que gire sobre el
-      // centro del cuerpo.
-      final medio = _modelo.size.y * escalaSprites * sy / 2;
-      dx = -medio * sin(giro);
-      dy = -medio + medio * cos(giro);
+      _modelo.tramo('rodar', _rodar / _duracionRodar);
     } else if (_ataque >= 0) {
-      final p = _ataque / _duracionAtaque;
-      final m = _momentoImpacto;
-      final d = mirando;
-      if (p < m) {
-        // Anticipación: se echa hacia atrás y se encoge.
-        final k = p / m;
-        dx = -d.x * 1 * k;
-        dy = -d.y * 1 * k;
-        sx = 1 + 0.06 * k;
-        sy = 1 - 0.06 * k;
-        if (_hechizo) dy -= 2 * k;
+      final p = _ataque / _duracionAtaque, m = _momentoImpacto;
+      if (!_dispara) {
+        _tramoConEvento('atacar', p, 'impacto', m);
+      } else if (p < m) {
+        // Tensa el arco o junta el hechizo; al soltar, sigue el disparo.
+        _modelo.tramo('atacar', p / m);
       } else {
-        // Golpe y recuperación: se lanza hacia delante y vuelve.
-        final k = (p - m) / (1 - m);
-        final empuje = k < 0.35 ? k / 0.35 : 1 - (k - 0.35) / 0.65;
-        final alcance = _dispara ? -1.0 : 2.5; // el arco y el libro retroceden
-        dx = d.x * alcance * empuje;
-        dy = d.y * alcance * empuje;
-        sx = 1 - 0.05 * empuje;
-        sy = 1 + 0.05 * empuje;
-        giro = _lado * (_dispara ? -0.04 : 0.12) * empuje;
-        if (_hechizo) dy -= 2 * (1 - k);
+        _modelo.tramo('disparo', (p - m) / (1 - m));
       }
+    } else if (_golpeado > 0) {
+      _modelo.tramo('golpe', 1 - _golpeado / _duracionGolpeado);
+    } else if (bebiendo) {
+      _tramoConEvento('beber', _beber / _duracionBeber, 'cura', _momentoCura);
+    } else if (_paso > 0) {
+      _modelo.reproducir('caminar', velocidad: _lento > 0 ? 0.5 : 1);
+    } else {
+      _modelo.reproducir('quieto');
     }
-
-    if (_golpeado > 0) {
-      final k = _golpeado / _duracionGolpeado;
-      dx += ((_golpeado * 60).floor().isEven ? 0.5 : -0.5) * k;
-      sx += 0.1 * k;
-      sy -= 0.1 * k;
-    }
-
-    _modelo
-      ..paso = _paso
-      ..andar = _paso > 0 ? (bebiendo ? 0.4 : 1) : 0
-      ..ataque = _ataque >= 0 ? _ataque / _duracionAtaque : -1
-      ..impacto = _momentoImpacto
-      ..bebiendo = bebiendo ? _beber / _duracionBeber : -1
-      ..position.setValues(dx, dy)
-      ..scale.setValues(_lado * escalaSprites * sx, escalaSprites * sy)
-      ..angle = giro;
+    _modelo.scale.setValues(_lado * escalaSprites, escalaSprites);
     _pintar();
   }
 
-  static double _suavizar(double k) => k * k * (3 - 2 * k);
+  /// Muestra [nombre] al [progreso] de la acción, con el cuadro de su
+  /// [evento] justo en [momento] (la fracción de la acción en que ocurre).
+  void _tramoConEvento(
+      String nombre, double progreso, String evento, double momento) {
+    final cuadro = hoja[nombre].eventos[evento]!;
+    if (progreso < momento) {
+      _modelo.tramo(nombre, progreso / momento, hasta: cuadro);
+    } else {
+      _modelo.tramo(nombre, (progreso - momento) / (1 - momento),
+          desde: cuadro);
+    }
+  }
 
   void _pintar() {
-    // Parpadeo mientras es invulnerable; tono podredumbre si está agarrado;
-    // destello blanco al recibir el golpe, brillo de alma al conjurar y de
-    // brasa al beber.
+    // Parpadeo mientras es invulnerable y tono podredumbre si está agarrado.
+    // Un golpe recibido en mitad de un ataque no cambia la animación: lo
+    // marca un destello blanco.
     final visible = !vivo ||
         _invulnerable == 0 ||
         (_invulnerable * 20).floor().isEven;
-    _modelo.paint.color = visible
-        ? Color.fromRGBO(255, 255, 255, vivo ? 1 : 1 - _caida * 1.2)
-        : const Color(0x55FFFFFF);
-    final conjurando = _hechizo &&
-        _ataque >= 0 &&
-        _ataque < _duracionAtaque * _momentoImpacto;
-    _modelo.paint.colorFilter = _golpeado > _duracionGolpeado - 0.06
-        ? const ColorFilter.mode(Colores.hueso, BlendMode.srcATop)
-        : conjurando
-            ? const ColorFilter.mode(Color(0x885AA0B8), BlendMode.srcATop)
-            : bebiendo && !_curaPendiente
-                ? const ColorFilter.mode(Color(0x66E08A2C), BlendMode.srcATop)
-                : _lento > 0
-                    ? const ColorFilter.mode(
-                        Color(0x557F9E45), BlendMode.srcATop)
-                    : null;
+    _modelo.paint.color =
+        visible ? const Color(0xFFFFFFFF) : const Color(0x55FFFFFF);
+    _modelo.paint.colorFilter =
+        _ataque >= 0 && _golpeado > _duracionGolpeado - 0.06
+            ? const ColorFilter.mode(Colores.hueso, BlendMode.srcATop)
+            : _lento > 0
+                ? const ColorFilter.mode(Color(0x557F9E45), BlendMode.srcATop)
+                : null;
   }
 
   /// Orienta el ataque hacia el enemigo más cercano dentro del alcance.
@@ -364,6 +324,7 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
         delJugador: true,
         tamano: estilo.tamanoProyectil,
         color: estilo.colorProyectil,
+        efecto: estilo.efectoProyectil,
       ));
       return;
     }

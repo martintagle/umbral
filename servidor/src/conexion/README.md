@@ -8,6 +8,7 @@ Su única responsabilidad es **abrir, entregar y cerrar la conexión con MongoDB
 - Abrir un único `MongoClient` para todo el servidor y entregar colecciones con `conexionBD.coleccion('usuarios')`.
 - Cerrar la conexión al terminar.
 - Dar un error claro si falta la cadena, si no apunta a `rpg` o si Atlas rechaza la conexión.
+- Si Atlas no responde, fallar pronto con `SinConexionBD`: a los 5 segundos, y durante los 10 siguientes sin reintentar. Con ese error, negocio sigue con su copia en SQLite.
 
 ## Qué NO debe hacer
 

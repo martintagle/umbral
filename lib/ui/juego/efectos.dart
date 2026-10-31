@@ -5,6 +5,7 @@ import 'package:flutter/painting.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../tema/tema_umbral.dart';
+import 'animacion.dart';
 import 'registro_progreso.dart';
 import 'umbral_juego.dart';
 
@@ -18,6 +19,11 @@ const prioridadEfectos = 1 << 20;
 const escalaSprites = 0.5;
 
 final Paint _pintura = Paint()..isAntiAlias = false;
+
+/// Pintura para dibujar sprites sin suavizar sus píxeles.
+Paint pinturaSprites() => Paint()
+  ..filterQuality = FilterQuality.none
+  ..isAntiAlias = false;
 
 /// Pinta un cuadrado de [tamano] píxeles de arte alineado a la cuadrícula.
 void pixel(
@@ -148,42 +154,56 @@ class Zarpazo extends PositionComponent {
   }
 }
 
-/// El cuerpo de una criatura derrotada: se aplasta contra el suelo y se
-/// apaga antes de que salten los restos.
-class Desvanecer extends SpriteComponent {
-  final double _lado;
-  double _t = 0;
-  static const _duracion = 0.3;
+/// El cuerpo de una criatura derrotada: hace su animación `morir`, queda un
+/// momento en el suelo y se apaga.
+class Desvanecer extends PositionComponent {
+  /// [lado] es 1 si la criatura miraba a la derecha y -1 si a la izquierda.
+  Desvanecer(Hoja hoja, Vector2 pies, double lado)
+    : _modelo = ModeloAnimado(hoja, paint: pinturaSprites())
+        ..scale = Vector2(lado * escalaSprites, escalaSprites)
+        ..tramo('morir', 0),
+      _morir = hoja['morir'],
+      super(position: pies, priority: pies.y.round()) {
+    add(_modelo);
+  }
 
-  /// [_lado] es 1 si la criatura miraba a la derecha y -1 si a la izquierda.
-  Desvanecer(Sprite sprite, Vector2 pies, this._lado)
-    : super(
-        sprite: sprite,
-        position: pies,
-        anchor: Anchor.bottomCenter,
-        priority: pies.y.round(),
-        paint: Paint()
-          ..filterQuality = FilterQuality.none
-          ..isAntiAlias = false
-          ..colorFilter = const ColorFilter.mode(
-            Colores.hueso,
-            BlendMode.srcATop,
-          ),
-      );
+  final ModeloAnimado _modelo;
+  final Animacion _morir;
+  double _t = 0;
+  static const _apagado = 0.4;
 
   @override
   void update(double dt) {
     _t += dt;
-    final p = (_t / _duracion).clamp(0.0, 1.0);
-    scale.setValues(
-      _lado * escalaSprites * (1 + p * 0.4),
-      escalaSprites * (1 - p * 0.85),
-    );
-    if (p > 0.25) {
-      paint.colorFilter = null;
-      paint.color = Color.fromRGBO(255, 255, 255, 1 - p);
-    }
-    if (_t >= _duracion) removeFromParent();
+    _modelo.tramo('morir', _t / _morir.duracion);
+    final p = ((_t - _morir.duracion) / _apagado).clamp(0.0, 1.0);
+    _modelo.paint.color = Color.fromRGBO(255, 255, 255, 1 - p);
+    if (p >= 1) removeFromParent();
+  }
+}
+
+/// Un efecto que se ve una vez y desaparece: la chispa de un golpe o la onda
+/// expansiva del rey.
+class Efecto extends PositionComponent {
+  /// [hoja] es la clave en [Hojas] y [nombre] la animación.
+  Efecto(String hoja, this._nombre, Vector2 centro)
+    : _modelo = ModeloAnimado(Hojas.de(hoja), paint: pinturaSprites())
+        ..scale = Vector2.all(escalaSprites)
+        ..tramo(_nombre, 0),
+      super(position: centro, priority: prioridadEfectos - 1) {
+    add(_modelo);
+  }
+
+  final String _nombre;
+  final ModeloAnimado _modelo;
+  double _t = 0;
+
+  @override
+  void update(double dt) {
+    _t += dt;
+    final duracion = _modelo.hoja[_nombre].duracion;
+    _modelo.tramo(_nombre, _t / duracion);
+    if (_t >= duracion) removeFromParent();
   }
 }
 
@@ -235,6 +255,10 @@ class Proyectil extends PositionComponent with HasGameReference<UmbralJuego> {
   final bool delJugador;
   final double tamano;
   final Color color;
+
+  /// Animación de `efectos.png` que lo dibuja, apuntando hacia donde vuela;
+  /// sin ella es una línea o un cuadrado de [color].
+  final String? efecto;
   double _recorrido = 0;
 
   Proyectil({
@@ -247,8 +271,18 @@ class Proyectil extends PositionComponent with HasGameReference<UmbralJuego> {
     required this.color,
     this.tamano = 2,
     this.critico = false,
+    this.efecto,
   }) : velocidad = direccion.normalized() * rapidez,
-       super(position: origen, priority: prioridadEfectos - 2);
+       super(position: origen, priority: prioridadEfectos - 2) {
+    if (efecto case final nombre?) {
+      add(
+        ModeloAnimado(Hojas.de(Hojas.efectos), paint: pinturaSprites())
+          ..scale = Vector2.all(escalaSprites)
+          ..angle = atan2(velocidad.y, velocidad.x)
+          ..reproducir(nombre),
+      );
+    }
+  }
 
   @override
   void update(double dt) {
@@ -282,6 +316,7 @@ class Proyectil extends PositionComponent with HasGameReference<UmbralJuego> {
 
   @override
   void render(Canvas canvas) {
+    if (efecto != null) return;
     if (tamano <= 2) {
       // Flecha o polvo: una línea corta en la dirección de vuelo.
       final d = velocidad.normalized();

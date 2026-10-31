@@ -10,6 +10,9 @@ export const clases = () => conexionBD.coleccion<ClaseDto>(COLECCION);
 const leerJson = async (ruta: string) =>
   JSON.parse(await readFile(new URL(ruta, import.meta.url), 'utf8'));
 
+/** Las cinco clases de `bd/clases.json`, con las que se crea la colección. */
+export const clasesIniciales = (): Promise<ClaseDto[]> => leerJson('../../bd/clases.json');
+
 /**
  * Aplica `bd/esquema-clases.json` como validador de la colección (la crea si no
  * existe) e inserta las clases que falten. Lo usan los scripts de `dev/`; en
@@ -32,7 +35,7 @@ export async function prepararColeccionClases(): Promise<void> {
  * códigos insertados.
  */
 export async function insertarClasesFaltantes(): Promise<string[]> {
-  const iniciales: ClaseDto[] = await leerJson('../../bd/clases.json');
+  const iniciales = await clasesIniciales();
   const resultado = await (await clases()).bulkWrite(
     iniciales.map(({ _id, ...clase }) => ({
       updateOne: { filter: { _id }, update: { $setOnInsert: clase }, upsert: true },

@@ -28,6 +28,8 @@ Partes de la partida: `Personaje` (`personaje.dart`), con `Atributos`, `Equipo`,
 
 Lo que la app envía: `Progreso` (`progreso.dart`) al guardar; `Atributos` al subir de nivel; `Ajustes` al cambiar el volumen.
 
+Fuera de la API de Umbral: `Actualizacion` (`actualizacion.dart`), la versión y la descarga de la última Release de GitHub.
+
 ## Cómo es cada clase
 
 - Constructor con todos los campos.

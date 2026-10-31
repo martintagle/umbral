@@ -1,0 +1,2243 @@
+{
+ "descripcion": "Hojas de animación cuadro a cuadro. Cada fila es una animación y cada columna un cuadro, de izquierda a derecha. Las celdas vacías al final de una fila son transparentes. ms = duración de cada cuadro en milisegundos. ancla = punto de la celda que va en la posición del personaje (los pies; en efectos, el centro). eventos = índice del cuadro (desde 0) en que ocurre algo: impacto del golpe, soltar el proyectil, cura del frasco, etc.",
+ "escalaRecomendada": 3,
+ "filtrado": "vecino-mas-cercano",
+ "personajes": {
+  "vagabundo-hombre": {
+   "archivo": "personajes/vagabundo-hombre.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      160,
+      160,
+      160,
+      160,
+      220,
+      220,
+      160,
+      160
+     ],
+     "bucle": true,
+     "nota": "Respira (sube y baja 1 px) y baja la cabeza en los cuadros 4-5."
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65
+     ],
+     "bucle": true,
+     "nota": "Ciclo completo de dos pasos (0,52 s), igual que el paso del código actual."
+    },
+    "atacar": {
+     "fila": 2,
+     "cuadros": 7,
+     "ms": [
+      40,
+      50,
+      30,
+      40,
+      50,
+      60,
+      60
+     ],
+     "bucle": false,
+     "eventos": {
+      "impacto": 2
+     },
+     "nota": "Sube el filo sobre el hombro y lo baja en un tajo horizontal. Golpea en el cuadro 2."
+    },
+    "rodar": {
+     "fila": 3,
+     "cuadros": 7,
+     "ms": [
+      50,
+      60,
+      60,
+      60,
+      60,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "inmuneDesde": 1,
+      "inmuneHasta": 5
+     },
+     "nota": "Se agacha, rueda hecho un ovillo hacia la derecha (4 giros) y se levanta. El desplazamiento lo sigue haciendo el código."
+    },
+    "beber": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      120,
+      150,
+      180,
+      180,
+      180,
+      190
+     ],
+     "bucle": false,
+     "eventos": {
+      "cura": 3
+     },
+     "nota": "Lleva el frasco a la boca con el brazo libre; la cura ocurre al empezar el cuadro 3 (0,6 s)."
+    },
+    "golpe": {
+     "fila": 5,
+     "cuadros": 3,
+     "ms": [
+      60,
+      70,
+      70
+     ],
+     "bucle": false,
+     "nota": "Destello blanco y sacudida. Reemplaza el temblor y el tinte que hoy hace el código."
+    },
+    "morir": {
+     "fila": 6,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      70,
+      70,
+      90,
+      600
+     ],
+     "bucle": false,
+     "nota": "Retrocede, se dobla y cae de lado hacia atrás; suelta el arma. El último cuadro queda fijo."
+    }
+   },
+   "ataque": "tajo"
+  },
+  "vagabundo-mujer": {
+   "archivo": "personajes/vagabundo-mujer.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      160,
+      160,
+      160,
+      160,
+      220,
+      220,
+      160,
+      160
+     ],
+     "bucle": true,
+     "nota": "Respira (sube y baja 1 px) y baja la cabeza en los cuadros 4-5."
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65
+     ],
+     "bucle": true,
+     "nota": "Ciclo completo de dos pasos (0,52 s), igual que el paso del código actual."
+    },
+    "atacar": {
+     "fila": 2,
+     "cuadros": 7,
+     "ms": [
+      40,
+      50,
+      30,
+      40,
+      50,
+      60,
+      60
+     ],
+     "bucle": false,
+     "eventos": {
+      "impacto": 2
+     },
+     "nota": "Sube el filo sobre el hombro y lo baja en un tajo horizontal. Golpea en el cuadro 2."
+    },
+    "rodar": {
+     "fila": 3,
+     "cuadros": 7,
+     "ms": [
+      50,
+      60,
+      60,
+      60,
+      60,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "inmuneDesde": 1,
+      "inmuneHasta": 5
+     },
+     "nota": "Se agacha, rueda hecho un ovillo hacia la derecha (4 giros) y se levanta. El desplazamiento lo sigue haciendo el código."
+    },
+    "beber": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      120,
+      150,
+      180,
+      180,
+      180,
+      190
+     ],
+     "bucle": false,
+     "eventos": {
+      "cura": 3
+     },
+     "nota": "Lleva el frasco a la boca con el brazo libre; la cura ocurre al empezar el cuadro 3 (0,6 s)."
+    },
+    "golpe": {
+     "fila": 5,
+     "cuadros": 3,
+     "ms": [
+      60,
+      70,
+      70
+     ],
+     "bucle": false,
+     "nota": "Destello blanco y sacudida. Reemplaza el temblor y el tinte que hoy hace el código."
+    },
+    "morir": {
+     "fila": 6,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      70,
+      70,
+      90,
+      600
+     ],
+     "bucle": false,
+     "nota": "Retrocede, se dobla y cae de lado hacia atrás; suelta el arma. El último cuadro queda fijo."
+    }
+   },
+   "ataque": "tajo"
+  },
+  "guerrero-hombre": {
+   "archivo": "personajes/guerrero-hombre.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      160,
+      160,
+      160,
+      160,
+      220,
+      220,
+      160,
+      160
+     ],
+     "bucle": true,
+     "nota": "Respira (sube y baja 1 px) y baja la cabeza en los cuadros 4-5."
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65
+     ],
+     "bucle": true,
+     "nota": "Ciclo completo de dos pasos (0,52 s), igual que el paso del código actual."
+    },
+    "atacar": {
+     "fila": 2,
+     "cuadros": 9,
+     "ms": [
+      50,
+      50,
+      60,
+      40,
+      40,
+      40,
+      50,
+      60,
+      60
+     ],
+     "bucle": false,
+     "eventos": {
+      "impacto": 3
+     },
+     "nota": "Echa el espadón atrás y por encima y lo deja caer delante. El ataque más lento. Golpea en el cuadro 3."
+    },
+    "rodar": {
+     "fila": 3,
+     "cuadros": 7,
+     "ms": [
+      50,
+      60,
+      60,
+      60,
+      60,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "inmuneDesde": 1,
+      "inmuneHasta": 5
+     },
+     "nota": "Se agacha, rueda hecho un ovillo hacia la derecha (4 giros) y se levanta. El desplazamiento lo sigue haciendo el código."
+    },
+    "beber": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      120,
+      150,
+      180,
+      180,
+      180,
+      190
+     ],
+     "bucle": false,
+     "eventos": {
+      "cura": 3
+     },
+     "nota": "Lleva el frasco a la boca con el brazo libre; la cura ocurre al empezar el cuadro 3 (0,6 s)."
+    },
+    "golpe": {
+     "fila": 5,
+     "cuadros": 3,
+     "ms": [
+      60,
+      70,
+      70
+     ],
+     "bucle": false,
+     "nota": "Destello blanco y sacudida. Reemplaza el temblor y el tinte que hoy hace el código."
+    },
+    "morir": {
+     "fila": 6,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      70,
+      70,
+      90,
+      600
+     ],
+     "bucle": false,
+     "nota": "Retrocede, se dobla y cae de lado hacia atrás; suelta el arma. El último cuadro queda fijo."
+    }
+   },
+   "ataque": "mandoble"
+  },
+  "guerrero-mujer": {
+   "archivo": "personajes/guerrero-mujer.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      160,
+      160,
+      160,
+      160,
+      220,
+      220,
+      160,
+      160
+     ],
+     "bucle": true,
+     "nota": "Respira (sube y baja 1 px) y baja la cabeza en los cuadros 4-5."
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65
+     ],
+     "bucle": true,
+     "nota": "Ciclo completo de dos pasos (0,52 s), igual que el paso del código actual."
+    },
+    "atacar": {
+     "fila": 2,
+     "cuadros": 9,
+     "ms": [
+      50,
+      50,
+      60,
+      40,
+      40,
+      40,
+      50,
+      60,
+      60
+     ],
+     "bucle": false,
+     "eventos": {
+      "impacto": 3
+     },
+     "nota": "Echa el espadón atrás y por encima y lo deja caer delante. El ataque más lento. Golpea en el cuadro 3."
+    },
+    "rodar": {
+     "fila": 3,
+     "cuadros": 7,
+     "ms": [
+      50,
+      60,
+      60,
+      60,
+      60,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "inmuneDesde": 1,
+      "inmuneHasta": 5
+     },
+     "nota": "Se agacha, rueda hecho un ovillo hacia la derecha (4 giros) y se levanta. El desplazamiento lo sigue haciendo el código."
+    },
+    "beber": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      120,
+      150,
+      180,
+      180,
+      180,
+      190
+     ],
+     "bucle": false,
+     "eventos": {
+      "cura": 3
+     },
+     "nota": "Lleva el frasco a la boca con el brazo libre; la cura ocurre al empezar el cuadro 3 (0,6 s)."
+    },
+    "golpe": {
+     "fila": 5,
+     "cuadros": 3,
+     "ms": [
+      60,
+      70,
+      70
+     ],
+     "bucle": false,
+     "nota": "Destello blanco y sacudida. Reemplaza el temblor y el tinte que hoy hace el código."
+    },
+    "morir": {
+     "fila": 6,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      70,
+      70,
+      90,
+      600
+     ],
+     "bucle": false,
+     "nota": "Retrocede, se dobla y cae de lado hacia atrás; suelta el arma. El último cuadro queda fijo."
+    }
+   },
+   "ataque": "mandoble"
+  },
+  "arquero-hombre": {
+   "archivo": "personajes/arquero-hombre.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      160,
+      160,
+      160,
+      160,
+      220,
+      220,
+      160,
+      160
+     ],
+     "bucle": true,
+     "nota": "Respira (sube y baja 1 px) y baja la cabeza en los cuadros 4-5."
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65
+     ],
+     "bucle": true,
+     "nota": "Ciclo completo de dos pasos (0,52 s), igual que el paso del código actual."
+    },
+    "atacar": {
+     "fila": 2,
+     "cuadros": 5,
+     "ms": [
+      60,
+      70,
+      80,
+      110,
+      60
+     ],
+     "bucle": false,
+     "eventos": {
+      "impacto": 4
+     },
+     "nota": "Lleva el arco al frente y tensa la cuerda con la flecha. Al terminar sigue «disparo»."
+    },
+    "disparo": {
+     "fila": 3,
+     "cuadros": 3,
+     "ms": [
+      60,
+      80,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "soltar": 0
+     },
+     "nota": "Suelta la flecha y el arco retrocede. La flecha en vuelo está en efectos.png («flecha»)."
+    },
+    "rodar": {
+     "fila": 4,
+     "cuadros": 7,
+     "ms": [
+      50,
+      60,
+      60,
+      60,
+      60,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "inmuneDesde": 1,
+      "inmuneHasta": 5
+     },
+     "nota": "Se agacha, rueda hecho un ovillo hacia la derecha (4 giros) y se levanta. El desplazamiento lo sigue haciendo el código."
+    },
+    "beber": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      120,
+      150,
+      180,
+      180,
+      180,
+      190
+     ],
+     "bucle": false,
+     "eventos": {
+      "cura": 3
+     },
+     "nota": "Lleva el frasco a la boca con el brazo libre; la cura ocurre al empezar el cuadro 3 (0,6 s)."
+    },
+    "golpe": {
+     "fila": 6,
+     "cuadros": 3,
+     "ms": [
+      60,
+      70,
+      70
+     ],
+     "bucle": false,
+     "nota": "Destello blanco y sacudida. Reemplaza el temblor y el tinte que hoy hace el código."
+    },
+    "morir": {
+     "fila": 7,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      70,
+      70,
+      90,
+      600
+     ],
+     "bucle": false,
+     "nota": "Retrocede, se dobla y cae de lado hacia atrás; suelta el arma. El último cuadro queda fijo."
+    }
+   },
+   "ataque": "arco"
+  },
+  "arquero-mujer": {
+   "archivo": "personajes/arquero-mujer.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      160,
+      160,
+      160,
+      160,
+      220,
+      220,
+      160,
+      160
+     ],
+     "bucle": true,
+     "nota": "Respira (sube y baja 1 px) y baja la cabeza en los cuadros 4-5."
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65
+     ],
+     "bucle": true,
+     "nota": "Ciclo completo de dos pasos (0,52 s), igual que el paso del código actual."
+    },
+    "atacar": {
+     "fila": 2,
+     "cuadros": 5,
+     "ms": [
+      60,
+      70,
+      80,
+      110,
+      60
+     ],
+     "bucle": false,
+     "eventos": {
+      "impacto": 4
+     },
+     "nota": "Lleva el arco al frente y tensa la cuerda con la flecha. Al terminar sigue «disparo»."
+    },
+    "disparo": {
+     "fila": 3,
+     "cuadros": 3,
+     "ms": [
+      60,
+      80,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "soltar": 0
+     },
+     "nota": "Suelta la flecha y el arco retrocede. La flecha en vuelo está en efectos.png («flecha»)."
+    },
+    "rodar": {
+     "fila": 4,
+     "cuadros": 7,
+     "ms": [
+      50,
+      60,
+      60,
+      60,
+      60,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "inmuneDesde": 1,
+      "inmuneHasta": 5
+     },
+     "nota": "Se agacha, rueda hecho un ovillo hacia la derecha (4 giros) y se levanta. El desplazamiento lo sigue haciendo el código."
+    },
+    "beber": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      120,
+      150,
+      180,
+      180,
+      180,
+      190
+     ],
+     "bucle": false,
+     "eventos": {
+      "cura": 3
+     },
+     "nota": "Lleva el frasco a la boca con el brazo libre; la cura ocurre al empezar el cuadro 3 (0,6 s)."
+    },
+    "golpe": {
+     "fila": 6,
+     "cuadros": 3,
+     "ms": [
+      60,
+      70,
+      70
+     ],
+     "bucle": false,
+     "nota": "Destello blanco y sacudida. Reemplaza el temblor y el tinte que hoy hace el código."
+    },
+    "morir": {
+     "fila": 7,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      70,
+      70,
+      90,
+      600
+     ],
+     "bucle": false,
+     "nota": "Retrocede, se dobla y cae de lado hacia atrás; suelta el arma. El último cuadro queda fijo."
+    }
+   },
+   "ataque": "arco"
+  },
+  "mago-hombre": {
+   "archivo": "personajes/mago-hombre.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      160,
+      160,
+      160,
+      160,
+      220,
+      220,
+      160,
+      160
+     ],
+     "bucle": true,
+     "nota": "Respira (sube y baja 1 px) y baja la cabeza en los cuadros 4-5."
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65
+     ],
+     "bucle": true,
+     "nota": "Ciclo completo de dos pasos (0,52 s), igual que el paso del código actual."
+    },
+    "atacar": {
+     "fila": 2,
+     "cuadros": 5,
+     "ms": [
+      60,
+      70,
+      80,
+      70,
+      70
+     ],
+     "bucle": false,
+     "eventos": {
+      "impacto": 4
+     },
+     "nota": "Alza el libro abierto y tiembla mientras junta brillo de alma. Al terminar sigue «disparo»."
+    },
+    "disparo": {
+     "fila": 3,
+     "cuadros": 3,
+     "ms": [
+      60,
+      80,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "soltar": 0
+     },
+     "nota": "Suelta el hechizo con un destello de alma. El hechizo en vuelo está en efectos.png («hechizo»)."
+    },
+    "rodar": {
+     "fila": 4,
+     "cuadros": 7,
+     "ms": [
+      50,
+      60,
+      60,
+      60,
+      60,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "inmuneDesde": 1,
+      "inmuneHasta": 5
+     },
+     "nota": "Se agacha, rueda hecho un ovillo hacia la derecha (4 giros) y se levanta. El desplazamiento lo sigue haciendo el código."
+    },
+    "beber": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      120,
+      150,
+      180,
+      180,
+      180,
+      190
+     ],
+     "bucle": false,
+     "eventos": {
+      "cura": 3
+     },
+     "nota": "Lleva el frasco a la boca con el brazo libre; la cura ocurre al empezar el cuadro 3 (0,6 s)."
+    },
+    "golpe": {
+     "fila": 6,
+     "cuadros": 3,
+     "ms": [
+      60,
+      70,
+      70
+     ],
+     "bucle": false,
+     "nota": "Destello blanco y sacudida. Reemplaza el temblor y el tinte que hoy hace el código."
+    },
+    "morir": {
+     "fila": 7,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      70,
+      70,
+      90,
+      600
+     ],
+     "bucle": false,
+     "nota": "Retrocede, se dobla y cae de lado hacia atrás; suelta el arma. El último cuadro queda fijo."
+    }
+   },
+   "ataque": "libro"
+  },
+  "mago-mujer": {
+   "archivo": "personajes/mago-mujer.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      160,
+      160,
+      160,
+      160,
+      220,
+      220,
+      160,
+      160
+     ],
+     "bucle": true,
+     "nota": "Respira (sube y baja 1 px) y baja la cabeza en los cuadros 4-5."
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65
+     ],
+     "bucle": true,
+     "nota": "Ciclo completo de dos pasos (0,52 s), igual que el paso del código actual."
+    },
+    "atacar": {
+     "fila": 2,
+     "cuadros": 5,
+     "ms": [
+      60,
+      70,
+      80,
+      70,
+      70
+     ],
+     "bucle": false,
+     "eventos": {
+      "impacto": 4
+     },
+     "nota": "Alza el libro abierto y tiembla mientras junta brillo de alma. Al terminar sigue «disparo»."
+    },
+    "disparo": {
+     "fila": 3,
+     "cuadros": 3,
+     "ms": [
+      60,
+      80,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "soltar": 0
+     },
+     "nota": "Suelta el hechizo con un destello de alma. El hechizo en vuelo está en efectos.png («hechizo»)."
+    },
+    "rodar": {
+     "fila": 4,
+     "cuadros": 7,
+     "ms": [
+      50,
+      60,
+      60,
+      60,
+      60,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "inmuneDesde": 1,
+      "inmuneHasta": 5
+     },
+     "nota": "Se agacha, rueda hecho un ovillo hacia la derecha (4 giros) y se levanta. El desplazamiento lo sigue haciendo el código."
+    },
+    "beber": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      120,
+      150,
+      180,
+      180,
+      180,
+      190
+     ],
+     "bucle": false,
+     "eventos": {
+      "cura": 3
+     },
+     "nota": "Lleva el frasco a la boca con el brazo libre; la cura ocurre al empezar el cuadro 3 (0,6 s)."
+    },
+    "golpe": {
+     "fila": 6,
+     "cuadros": 3,
+     "ms": [
+      60,
+      70,
+      70
+     ],
+     "bucle": false,
+     "nota": "Destello blanco y sacudida. Reemplaza el temblor y el tinte que hoy hace el código."
+    },
+    "morir": {
+     "fila": 7,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      70,
+      70,
+      90,
+      600
+     ],
+     "bucle": false,
+     "nota": "Retrocede, se dobla y cae de lado hacia atrás; suelta el arma. El último cuadro queda fijo."
+    }
+   },
+   "ataque": "libro"
+  },
+  "prisionero-hombre": {
+   "archivo": "personajes/prisionero-hombre.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      160,
+      160,
+      160,
+      160,
+      220,
+      220,
+      160,
+      160
+     ],
+     "bucle": true,
+     "nota": "Respira (sube y baja 1 px) y baja la cabeza en los cuadros 4-5."
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65
+     ],
+     "bucle": true,
+     "nota": "Ciclo completo de dos pasos (0,52 s), igual que el paso del código actual."
+    },
+    "atacar": {
+     "fila": 2,
+     "cuadros": 7,
+     "ms": [
+      40,
+      40,
+      30,
+      40,
+      40,
+      40,
+      50
+     ],
+     "bucle": false,
+     "eventos": {
+      "impacto": 2
+     },
+     "nota": "Apunta la daga al frente, la recoge y la clava. Golpea en el cuadro 2."
+    },
+    "rodar": {
+     "fila": 3,
+     "cuadros": 7,
+     "ms": [
+      50,
+      60,
+      60,
+      60,
+      60,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "inmuneDesde": 1,
+      "inmuneHasta": 5
+     },
+     "nota": "Se agacha, rueda hecho un ovillo hacia la derecha (4 giros) y se levanta. El desplazamiento lo sigue haciendo el código."
+    },
+    "beber": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      120,
+      150,
+      180,
+      180,
+      180,
+      190
+     ],
+     "bucle": false,
+     "eventos": {
+      "cura": 3
+     },
+     "nota": "Lleva el frasco a la boca con el brazo libre; la cura ocurre al empezar el cuadro 3 (0,6 s)."
+    },
+    "golpe": {
+     "fila": 5,
+     "cuadros": 3,
+     "ms": [
+      60,
+      70,
+      70
+     ],
+     "bucle": false,
+     "nota": "Destello blanco y sacudida. Reemplaza el temblor y el tinte que hoy hace el código."
+    },
+    "morir": {
+     "fila": 6,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      70,
+      70,
+      90,
+      600
+     ],
+     "bucle": false,
+     "nota": "Retrocede, se dobla y cae de lado hacia atrás; suelta el arma. El último cuadro queda fijo."
+    }
+   },
+   "ataque": "estocada"
+  },
+  "prisionero-mujer": {
+   "archivo": "personajes/prisionero-mujer.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      160,
+      160,
+      160,
+      160,
+      220,
+      220,
+      160,
+      160
+     ],
+     "bucle": true,
+     "nota": "Respira (sube y baja 1 px) y baja la cabeza en los cuadros 4-5."
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65,
+      65
+     ],
+     "bucle": true,
+     "nota": "Ciclo completo de dos pasos (0,52 s), igual que el paso del código actual."
+    },
+    "atacar": {
+     "fila": 2,
+     "cuadros": 7,
+     "ms": [
+      40,
+      40,
+      30,
+      40,
+      40,
+      40,
+      50
+     ],
+     "bucle": false,
+     "eventos": {
+      "impacto": 2
+     },
+     "nota": "Apunta la daga al frente, la recoge y la clava. Golpea en el cuadro 2."
+    },
+    "rodar": {
+     "fila": 3,
+     "cuadros": 7,
+     "ms": [
+      50,
+      60,
+      60,
+      60,
+      60,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "inmuneDesde": 1,
+      "inmuneHasta": 5
+     },
+     "nota": "Se agacha, rueda hecho un ovillo hacia la derecha (4 giros) y se levanta. El desplazamiento lo sigue haciendo el código."
+    },
+    "beber": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      120,
+      150,
+      180,
+      180,
+      180,
+      190
+     ],
+     "bucle": false,
+     "eventos": {
+      "cura": 3
+     },
+     "nota": "Lleva el frasco a la boca con el brazo libre; la cura ocurre al empezar el cuadro 3 (0,6 s)."
+    },
+    "golpe": {
+     "fila": 5,
+     "cuadros": 3,
+     "ms": [
+      60,
+      70,
+      70
+     ],
+     "bucle": false,
+     "nota": "Destello blanco y sacudida. Reemplaza el temblor y el tinte que hoy hace el código."
+    },
+    "morir": {
+     "fila": 6,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      70,
+      70,
+      90,
+      600
+     ],
+     "bucle": false,
+     "nota": "Retrocede, se dobla y cae de lado hacia atrás; suelta el arma. El último cuadro queda fijo."
+    }
+   },
+   "ataque": "estocada"
+  }
+ },
+ "enemigos": {
+  "ojo-errante": {
+   "archivo": "enemigos/ojo-errante.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 39
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130
+     ],
+     "bucle": true,
+     "nota": "Flota en el sitio; los tentáculos ondulan."
+    },
+    "volar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80
+     ],
+     "bucle": true,
+     "nota": "Vuela en zigzag con los tentáculos colgando. No tiene patas: úsala también como «caminar»."
+    },
+    "morder": {
+     "fila": 2,
+     "cuadros": 8,
+     "ms": [
+      60,
+      70,
+      40,
+      60,
+      60,
+      40,
+      60,
+      70
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe1": 3,
+      "golpe2": 5
+     },
+     "nota": "Combo de dos mordiscos: se lanza y el párpado se cierra de golpe como una boca."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe (0,16 s)."
+    },
+    "aturdido": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza (0,35 s, en bucle)."
+    },
+    "morir": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      80,
+      80,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se le apaga el blanco del ojo, cae y revienta."
+    }
+   }
+  },
+  "fauce": {
+   "archivo": "enemigos/fauce.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80
+     ],
+     "bucle": true
+    },
+    "agazaparse": {
+     "fila": 2,
+     "cuadros": 4,
+     "ms": [
+      80,
+      80,
+      90,
+      120
+     ],
+     "bucle": false,
+     "nota": "Se aplasta contra el suelo y abre las mandíbulas antes de saltar."
+    },
+    "salto": {
+     "fila": 3,
+     "cuadros": 4,
+     "ms": [
+      60,
+      70,
+      70,
+      80
+     ],
+     "bucle": false,
+     "nota": "Salta con el cuerpo estirado y las patas recogidas hacia atrás."
+    },
+    "morder": {
+     "fila": 4,
+     "cuadros": 5,
+     "ms": [
+      50,
+      50,
+      60,
+      70,
+      80
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe": 2
+     },
+     "nota": "Abre las mandíbulas de par en par y las cierra de golpe."
+    },
+    "herido": {
+     "fila": 5,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe (0,16 s)."
+    },
+    "aturdido": {
+     "fila": 6,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza (0,35 s, en bucle)."
+    },
+    "morir": {
+     "fila": 7,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Las patas ceden y el cuerpo se aplasta."
+    }
+   }
+  },
+  "polilla-osaria": {
+   "archivo": "enemigos/polilla-osaria.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 39
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50
+     ],
+     "bucle": true,
+     "nota": "Aletea en el aire. Úsala también como «caminar»."
+    },
+    "aletear": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      45,
+      45,
+      45,
+      45,
+      45,
+      45,
+      45,
+      45
+     ],
+     "bucle": true,
+     "nota": "Vuelo de desplazamiento, con un leve balanceo."
+    },
+    "escupir": {
+     "fila": 2,
+     "cuadros": 5,
+     "ms": [
+      60,
+      70,
+      50,
+      60,
+      70
+     ],
+     "bucle": false,
+     "eventos": {
+      "disparo": 2
+     },
+     "nota": "Se echa atrás y escupe polvo de hueso en abanico: tres proyectiles (ver efectos «polvo»)."
+    },
+    "retroceder": {
+     "fila": 3,
+     "cuadros": 6,
+     "ms": [
+      50,
+      50,
+      50,
+      50,
+      50,
+      50
+     ],
+     "bucle": true,
+     "nota": "Huye hacia atrás inclinada, batiendo más rápido."
+    },
+    "herido": {
+     "fila": 4,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe (0,16 s)."
+    },
+    "aturdido": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza (0,35 s, en bucle)."
+    },
+    "morir": {
+     "fila": 6,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Pliega las alas y cae girando."
+    }
+   }
+  },
+  "larva-cirio": {
+   "archivo": "enemigos/larva-cirio.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120
+     ],
+     "bucle": true,
+     "nota": "Ondula despacio; las velas parpadean."
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90
+     ],
+     "bucle": true,
+     "nota": "Ondulación vertical de todo el cuerpo, sin patas."
+    },
+    "fuego": {
+     "fila": 2,
+     "cuadros": 6,
+     "ms": [
+      70,
+      80,
+      60,
+      70,
+      80,
+      80
+     ],
+     "bucle": false,
+     "eventos": {
+      "disparo": 2
+     },
+     "nota": "Las velas se avivan, alza la cabeza y lanza fuego (ver efectos «fuego»)."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello sin aturdirse: la larva no se inmuta con los golpes."
+    },
+    "morir": {
+     "fila": 4,
+     "cuadros": 7,
+     "ms": [
+      80,
+      80,
+      80,
+      90,
+      100,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Las velas se apagan echando humo y la cera se derrite."
+    }
+   }
+  },
+  "manojo": {
+   "archivo": "enemigos/manojo.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80
+     ],
+     "bucle": true
+    },
+    "agarrar": {
+     "fila": 2,
+     "cuadros": 9,
+     "ms": [
+      45,
+      45,
+      45,
+      45,
+      45,
+      45,
+      45,
+      45,
+      45
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe1": 2,
+      "golpe2": 4,
+      "golpe3": 6
+     },
+     "nota": "Combo de tres manotazos que agarran y frenan. Cada golpe cierra las siete piezas hacia delante."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe (0,16 s)."
+    },
+    "aturdido": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza (0,35 s, en bucle)."
+    },
+    "morir": {
+     "fila": 5,
+     "cuadros": 7,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      100,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Las manos quedan lacias y el bulto se desploma."
+    }
+   }
+  },
+  "ahorcado-fungico": {
+   "archivo": "enemigos/ahorcado-fungico.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80
+     ],
+     "bucle": true
+    },
+    "farol": {
+     "fila": 2,
+     "cuadros": 7,
+     "ms": [
+      60,
+      70,
+      50,
+      70,
+      70,
+      50,
+      80
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe1": 2,
+      "golpe2": 5
+     },
+     "nota": "Dos golpes con el farol de esporas."
+    },
+    "curarse": {
+     "fila": 3,
+     "cuadros": 6,
+     "ms": [
+      110,
+      110,
+      110,
+      110,
+      110,
+      110
+     ],
+     "bucle": true,
+     "nota": "Opcional: esporas verdes que suben mientras se regenera."
+    },
+    "herido": {
+     "fila": 4,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe (0,16 s)."
+    },
+    "aturdido": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza (0,35 s, en bucle)."
+    },
+    "morir": {
+     "fila": 6,
+     "cuadros": 6,
+     "ms": [
+      70,
+      80,
+      90,
+      100,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se le doblan las piernas y cae de lado."
+    }
+   }
+  },
+  "jefe-rey-hueco": {
+   "archivo": "enemigos/jefe-rey-hueco.png",
+   "celda": {
+    "ancho": 96,
+    "alto": 96
+   },
+   "ancla": {
+    "x": 48,
+    "y": 91
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140
+     ],
+     "bucle": true,
+     "nota": "Brazos, cabeza y capa en onda."
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90
+     ],
+     "bucle": true
+    },
+    "barrido": {
+     "fila": 2,
+     "cuadros": 8,
+     "ms": [
+      80,
+      90,
+      110,
+      50,
+      60,
+      80,
+      90,
+      100
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe": 3
+     },
+     "nota": "Echa los brazos atrás y barre por delante con un golpe amplio, inclinando el cuerpo."
+    },
+    "salto": {
+     "fila": 3,
+     "cuadros": 9,
+     "ms": [
+      90,
+      110,
+      60,
+      60,
+      80,
+      50,
+      60,
+      120,
+      120
+     ],
+     "bucle": false,
+     "eventos": {
+      "despega": 2,
+      "aterriza": 6
+     },
+     "nota": "Se agazapa, salta y aplasta al caer. Furioso, al aterrizar suelta la onda expansiva (onda-expansiva.png)."
+    },
+    "lluvia": {
+     "fila": 4,
+     "cuadros": 7,
+     "ms": [
+      100,
+      100,
+      90,
+      80,
+      70,
+      90,
+      100
+     ],
+     "bucle": false,
+     "eventos": {
+      "disparo": 4
+     },
+     "nota": "Alza los brazos, los ojos del pecho se encienden y lanza 7 ojos en abanico (9 si está furioso)."
+    },
+    "enfurecerse": {
+     "fila": 5,
+     "cuadros": 10,
+     "ms": [
+      80,
+      70,
+      70,
+      70,
+      90,
+      70,
+      70,
+      90,
+      110,
+      160
+     ],
+     "bucle": false,
+     "eventos": {
+      "cambio": 4
+     },
+     "nota": "Al bajar de media vida: tiembla, se hincha, los ojos pasan a brasa y la corona se enciende."
+    },
+    "quieto-furioso": {
+     "fila": 6,
+     "cuadros": 8,
+     "ms": [
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110
+     ],
+     "bucle": true
+    },
+    "caminar-furioso": {
+     "fila": 7,
+     "cuadros": 8,
+     "ms": [
+      75,
+      75,
+      75,
+      75,
+      75,
+      75,
+      75,
+      75
+     ],
+     "bucle": true
+    },
+    "morir": {
+     "fila": 8,
+     "cuadros": 12,
+     "ms": [
+      90,
+      90,
+      90,
+      100,
+      90,
+      90,
+      100,
+      100,
+      110,
+      120,
+      140,
+      900
+     ],
+     "bucle": false,
+     "nota": "Se tambalea, la corona cae, los ojos se cierran y el cuerpo se desploma en un montón de tela."
+    }
+   }
+  }
+ },
+ "efectos": {
+  "efectos": {
+   "archivo": "enemigos/efectos.png",
+   "celda": {
+    "ancho": 32,
+    "alto": 32
+   },
+   "ancla": {
+    "x": 16,
+    "y": 16
+   },
+   "animaciones": {
+    "flecha": {
+     "fila": 0,
+     "cuadros": 2,
+     "ms": [
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Flecha del arquero en vuelo, apunta a la derecha."
+    },
+    "hechizo": {
+     "fila": 1,
+     "cuadros": 4,
+     "ms": [
+      70,
+      70,
+      70,
+      70
+     ],
+     "bucle": true,
+     "nota": "Hechizo del mago: orbe de alma con chispas."
+    },
+    "polvo": {
+     "fila": 2,
+     "cuadros": 4,
+     "ms": [
+      80,
+      80,
+      80,
+      80
+     ],
+     "bucle": true,
+     "nota": "Polvo de hueso de la polilla (cada uno de los tres del abanico)."
+    },
+    "fuego": {
+     "fila": 3,
+     "cuadros": 4,
+     "ms": [
+      70,
+      70,
+      70,
+      70
+     ],
+     "bucle": true,
+     "nota": "Bola de fuego de la larva cirio."
+    },
+    "ojo": {
+     "fila": 4,
+     "cuadros": 4,
+     "ms": [
+      80,
+      80,
+      80,
+      80
+     ],
+     "bucle": true,
+     "nota": "Ojo que lanza el Rey Hueco en la lluvia y en la onda expansiva."
+    },
+    "impacto": {
+     "fila": 5,
+     "cuadros": 4,
+     "ms": [
+      50,
+      50,
+      50,
+      50
+     ],
+     "bucle": false,
+     "nota": "Chispa de impacto al acertar un golpe."
+    }
+   }
+  },
+  "onda-expansiva": {
+   "archivo": "enemigos/onda-expansiva.png",
+   "celda": {
+    "ancho": 128,
+    "alto": 128
+   },
+   "ancla": {
+    "x": 64,
+    "y": 64
+   },
+   "animaciones": {
+    "onda": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      50,
+      50,
+      50,
+      60,
+      60,
+      70,
+      80,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "danio": 2
+     },
+     "nota": "Onda expansiva del Rey furioso al aterrizar: un anillo de brasa con 9 ojos que se abre hasta 60 px de radio. Centro en (64, 64)."
+    }
+   }
+  }
+ }
+}

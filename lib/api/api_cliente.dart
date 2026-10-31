@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'api_excepcion.dart';
 import 'sesion.dart';
+import 'sincronizacion.dart';
 
 /// Habla con la API de Umbral (carpeta `servidor/`).
 ///
@@ -47,14 +48,18 @@ abstract final class ApiCliente {
         await _cliente.send(peticion).timeout(_espera),
       );
     } on TimeoutException {
+      // No cuenta como sin conexión: la petición pudo llegar y aplicarse.
       throw const ApiExcepcion(
         'El servidor tarda demasiado en responder. Inténtalo de nuevo.',
       );
     } on http.ClientException {
+      Sincronizacion.enLinea.value = false;
       throw const ApiExcepcion(
         'No se pudo contactar con el servidor. Revisa tu conexión.',
+        sinConexion: true,
       );
     }
+    Sincronizacion.enLinea.value = true;
 
     final texto = utf8.decode(respuesta.bodyBytes);
     final datos = texto.isEmpty ? null : _json(texto);

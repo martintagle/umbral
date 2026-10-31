@@ -5,7 +5,11 @@ class ApiExcepcion implements Exception {
   /// Código HTTP de la respuesta, o `null` si no hubo respuesta del servidor.
   final int? estado;
 
-  const ApiExcepcion(this.mensaje, {this.estado});
+  /// La petición no llegó al servidor (sin internet): no se aplicó nada, así
+  /// que se puede seguir con los datos del teléfono.
+  final bool sinConexion;
+
+  const ApiExcepcion(this.mensaje, {this.estado, this.sinConexion = false});
 
   bool get sesionCaducada => estado == 401;
 
