@@ -43,4 +43,5 @@ export const progreso = z.object({
     y: entero(-100_000),
     ultimoPuntoGuardado: z.string().max(64).nullable(),
   }),
+  cofresAbiertos: z.array(z.string().max(64)).max(100).optional(),
 });

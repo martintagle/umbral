@@ -65,11 +65,20 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   late String? _puntoDeGuardado = personaje.ubicacion.ultimoPuntoGuardado;
   late final Jugador jugador;
 
-  /// El mundo abierto. Mientras el jugador está en un interior, [world] es la
-  /// sala y este se conserva tal como quedó.
-  late final ZonaTierras tierras;
-  late final MapaInteriores _interiores;
+  /// La zona del mundo abierto en la que está el jugador. Mientras está en un
+  /// interior, [world] es la sala y la zona se conserva tal como quedó.
+  late ZonaTierras tierras;
+  late final Interiores _interiores;
   final Map<Sala, SalaInterior> _salas = {};
+
+  /// Zonas ya cargadas, de la más reciente a la más antigua: al volver a una,
+  /// sigue como se dejó (rejas abiertas, brasas en el suelo...). Se guardan
+  /// dos, porque cada una lleva su suelo dibujado en una imagen grande.
+  final Map<String, ZonaTierras> _zonas = {};
+  static const _zonasEnMemoria = 2;
+
+  /// Evita cruzar dos veces mientras carga la zona siguiente.
+  bool _cruzando = false;
 
   /// Delante de qué puerta del mundo se vuelve al salir de los interiores;
   /// `null` si el jugador está en el mundo.
@@ -129,6 +138,15 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
 
   /// Lo pone la pantalla: abre la pantalla de estadísticas o la herrería.
   void Function(PantallaJuego)? alAbrirPantalla;
+
+  /// Lo pone la pantalla: el jugador llegó al Altar Mayor tras vencer a El
+  /// Que Mira, y elige el final.
+  VoidCallback? alFinal;
+
+  /// Minimapa de la zona (`assets/minimapa/`) mientras se está en el mundo,
+  /// o `null` en un interior; y la celda del jugador.
+  final minimapa = ValueNotifier<({String ruta, int ancho, int alto})?>(null);
+  final celdaJugador = ValueNotifier<(int, int)>((0, 0));
 
   static const estaminaMaxima = 100.0;
   static const _recuperacionEstamina = 30.0;
@@ -200,7 +218,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   /// elegir dónde llega un refuerzo: las débiles abundan y las fuertes
   /// escasean.
   ({double grupo, int refuerzo}) _aparicion(String tipo) =>
-      switch (_registro.recompensa(tipo).categoria) {
+      switch (_categoria(tipo)) {
         Categoria.debil => (grupo: 2.0, refuerzo: 6),
         Categoria.media => (grupo: 1.2, refuerzo: 3),
         Categoria.fuerte => (grupo: 0.6, refuerzo: 1),
@@ -222,12 +240,17 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
 
   int pesoRefuerzo(String tipo) => _aparicion(tipo).refuerzo;
 
+  /// Las criaturas que vienen de la zona anterior cuentan aquí como débiles.
+  Categoria _categoria(String tipo) => tierras.esDebil(tipo)
+      ? Categoria.debil
+      : _registro.recompensa(tipo).categoria;
+
   /// En las salas, que son estrechas y tienen cada criatura puesta a mano:
   /// una por punto; las débiles traen una más cada doce niveles ganados
   /// (hasta tres) y las medias, cada veinticuatro (hasta dos).
   int criaturasPorPuntoDeSala(String tipo) {
     final extra = _nivelesGanados ~/ 12;
-    return switch (_registro.recompensa(tipo).categoria) {
+    return switch (_categoria(tipo)) {
       Categoria.debil => (1 + extra).clamp(1, 3),
       Categoria.media => (1 + extra ~/ 2).clamp(1, 2),
       _ => 1,
@@ -254,38 +277,75 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
 
   /// Dónde se despierta al caer, para el botón de la pantalla de muerte.
   String get lugarDeDescanso =>
-      _salaDeDescanso == null ? 'junto al altar' : 'junto a la hoguera';
+      _descanso.sala == null ? 'junto al altar' : 'junto a la hoguera';
 
-  Sala? get _salaDeDescanso {
-    final punto = _puntoDeGuardado;
-    if (punto == null || !punto.startsWith('sala:')) return null;
-    final slug = punto.substring(5);
-    return _interiores.salas.where((s) => s.slug == slug).firstOrNull;
+  /// El último lugar de descanso: `sala:<slug>` (una hoguera),
+  /// `altar:<zona>:<n>` (un altar del mundo) o el altar de la aldea.
+  ({String zona, Sala? sala, int altar}) get _descanso {
+    final punto = _puntoDeGuardado ?? '';
+    if (punto.startsWith('sala:')) {
+      if (_interiores.porSlug(punto.substring(5)) case final sala?) {
+        return (zona: sala.mapa.zona ?? ZonaTierras.id, sala: sala, altar: 0);
+      }
+    }
+    if (punto.split(':') case ['altar', final zona, final n]
+        when MapaMundo.existe(zona)) {
+      return (zona: zona, sala: null, altar: int.tryParse(n) ?? 0);
+    }
+    return (zona: ZonaTierras.id, sala: null, altar: 0);
   }
+
+  /// Zona y sala de una ubicación guardada. Las salas de `interiores.json`
+  /// sirven a varias zonas: fuera de la zona 1 se guardan como `zona/slug`.
+  (String, Sala?) _lugarDe(String lugar) {
+    if (lugar.split('/') case [final zona, final slug]
+        when MapaMundo.existe(zona)) {
+      return (zona, _interiores.porSlug(slug));
+    }
+    if (_interiores.porSlug(lugar) case final sala?) {
+      return (sala.mapa.zona ?? ZonaTierras.id, sala);
+    }
+    return (MapaMundo.existe(lugar) ? lugar : ZonaTierras.id, null);
+  }
+
+  /// La ubicación que se guarda: la zona o la sala en la que está el jugador.
+  String get _lugarActual {
+    final z = zona;
+    if (z is! SalaInterior) return tierras.zonaId;
+    final s = z.sala;
+    return s.mapa.zona != null || tierras.zonaId == ZonaTierras.id
+        ? s.slug
+        : '${tierras.zonaId}/${s.slug}';
+  }
+
+  /// Un cofre del mundo abierto, en el servidor o desde el último guardado.
+  bool cofreAbierto(String id) =>
+      personaje.mundo.cofresAbiertos.contains(id) ||
+      _registro.cofres.contains(id);
 
   @override
   Color backgroundColor() => Colores.abismo;
 
   @override
   Future<void> onLoad() async {
-    final mapa = await MapaMundo.cargar();
     _interiores = await MapaInteriores.cargar();
+    final u = personaje.ubicacion;
+    final (zonaGuardada, salaGuardada) = _lugarDe(u.zonaId);
+    final mapa = await MapaMundo.cargar(zonaGuardada);
     final hojaJugador =
         'personajes/${personaje.claseCodigo.name}-${personaje.apariencia.name}';
     await images.loadAll([
-      'tiles/tileset.png',
-      'interiores/${_interiores.tileset}',
-      for (final s in {for (final e in mapa.estructuras) e.sprite})
-        'sprites/estructuras/$s.png',
+      for (final m in _interiores.mapas) 'interiores/${m.tileset}',
     ]);
-    // Las animaciones cuadro a cuadro de quien sale en pantalla.
     await Hojas.preparar(images, [
       hojaJugador,
-      for (final e in [...Enemigos.todos, Enemigos.reyHueco]) e.hoja,
       Hojas.efectos,
+      Hojas.efectos2,
       Hojas.ondaExpansiva,
     ]);
+    await _cargarRecursos(mapa);
     tierras.preparar(mapa, _interiores, images);
+    _zonas[mapa.id] = tierras;
 
     _mostrarProgreso();
     vida.value = personaje.vidaActual > 0
@@ -294,10 +354,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
 
     // Se empieza donde se guardó: en el mundo o dentro de una sala (por
     // ejemplo, junto a la hoguera de la cripta).
-    final u = personaje.ubicacion;
     final guardada = Vector2(u.x.toDouble(), u.y.toDouble());
-    final salaGuardada =
-        _interiores.salas.where((s) => s.slug == u.zonaId).firstOrNull;
     final Vector2 pies;
     if (salaGuardada != null) {
       final sala = _sala(salaGuardada);
@@ -307,7 +364,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     } else {
       // Las partidas de antes de este mapa (y las nuevas, que el servidor
       // crea en otra zona) empiezan junto al altar.
-      pies = u.zonaId == ZonaTierras.id && _cabe(tierras, guardada)
+      pies = u.zonaId == mapa.id && _cabe(tierras, guardada)
           ? guardada
           : tierras.inicio.clone();
     }
@@ -322,6 +379,34 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
 
     camera.follow(jugador, snap: true);
     _limitarCamara();
+  }
+
+  /// El tileset, las estructuras y las hojas de las criaturas de la zona de
+  /// [mapa] y de sus interiores: la mazmorra de su jefe y, en la zona 1, la
+  /// cripta.
+  Future<void> _cargarRecursos(MapaMundo mapa) async {
+    await images.loadAll([
+      mapa.tileset,
+      for (final s in {for (final e in mapa.estructuras) e.sprite})
+        'sprites/estructuras/$s.png',
+    ]);
+    final salas = [
+      for (final m in _interiores.mapas)
+        if (m.zona == mapa.id || (m.zona == null && mapa.numero == 1))
+          ...m.salas,
+    ];
+    final tipos = {
+      for (final e in mapa.enemigos) e.tipo,
+      for (final s in salas)
+        for (final p in s.puntos)
+          if (p.tipo == 'enemigo') p.texto,
+      for (final s in salas)
+        if (s.punto('jefe') != null) s.mapa.jefe ?? Enemigos.reyHueco.id,
+    };
+    await Hojas.preparar(images, [
+      for (final id in tipos)
+        if (Enemigos.porId(id) case final t?) t.hoja,
+    ]);
   }
 
   bool _cabe(Escenario e, Vector2 p) => e.libre(
@@ -363,6 +448,20 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
 
     final pies = jugador.position;
     region.value = zona.regionEn(pies);
+    if (zona is ZonaTierras) {
+      final mapa = tierras.mapa;
+      minimapa.value = (
+        ruta: 'assets/minimapa/minimapa-zona-${mapa.numero}.png',
+        ancho: mapa.ancho,
+        alto: mapa.alto,
+      );
+      celdaJugador.value = (
+        pies.x ~/ MapaMundo.tile,
+        (pies.y - 1) ~/ MapaMundo.tile,
+      );
+    } else {
+      minimapa.value = null;
+    }
     _esperaCruce = max(0, _esperaCruce - dt);
     if (jugador.vivo && _esperaCruce == 0) zona.pisando(pies);
     _ponerAcciones(jugador.vivo ? zona.accionesEn(pies) : const []);
@@ -520,7 +619,80 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   }
 
   SalaInterior _sala(Sala sala) =>
-      _salas.putIfAbsent(sala, () => SalaInterior(_interiores, sala));
+      _salas.putIfAbsent(sala, () => SalaInterior(sala));
+
+  /// Hace de [id] la zona actual, sin mover al jugador: la toma de las ya
+  /// cargadas o la carga.
+  Future<void> _cargarZona(String id) async {
+    if (_zonas.remove(id) case final cargada?) {
+      _zonas[id] = cargada; // pasa a ser la más reciente
+      tierras = cargada..abrirCerrojos();
+      return;
+    }
+    final mapa = await MapaMundo.cargar(id);
+    await _cargarRecursos(mapa);
+    final nueva = ZonaTierras()..game = this;
+    nueva.preparar(mapa, _interiores, images);
+    _zonas[id] = nueva;
+    tierras = nueva;
+    while (_zonas.length > _zonasEnMemoria) {
+      final vieja = _zonas.remove(_zonas.keys.first)!;
+      // Las brasas que quedaban en esa zona se apagan con ella.
+      if (_mancha case final m? when identical(m.parent, vieja)) {
+        m.removeFromParent();
+        _mancha = null;
+      }
+    }
+  }
+
+  /// Pisar la salida de una zona lleva a la siguiente ([adelante]) y pisar su
+  /// entrada, a la anterior. De la ciénaga se vuelve por el pasadizo a la sala
+  /// del trono de la cripta. La salida de la última zona lleva al final.
+  Future<void> cruzarFrontera(String destino, {required bool adelante}) async {
+    if (_cruzando || !jugador.vivo) return;
+    if (destino == 'final') {
+      _cruzando = true;
+      await guardar(silencioso: true);
+      alFinal?.call();
+      return;
+    }
+    if (!MapaMundo.existe(destino)) return;
+    _cruzando = true;
+    try {
+      await _asentar();
+      await _cargarZona(destino);
+      final trono = _interiores.porSlug('cripta-sala-del-trono');
+      if (!adelante && destino == ZonaTierras.id && trono != null) {
+        final sala = _sala(trono);
+        _retorno = _puertaDe(trono);
+        _cambiarA(sala, sala.junto('jefe'));
+      } else {
+        _retorno = null;
+        final salida = tierras.mapa.salida;
+        _cambiarA(
+          tierras,
+          adelante || salida == null
+              ? tierras.inicio.clone()
+              : tierras.llegadaPor(salida),
+        );
+      }
+      await guardar(silencioso: true);
+    } finally {
+      _cruzando = false;
+    }
+  }
+
+  /// Monta lo que se añadió en este cuadro (un estallido, un proyectil...)
+  /// antes de quitar su escenario: si no, quedaría esperando a un padre que
+  /// ya no está.
+  Future<void> _asentar() => ready();
+
+  /// El pasadizo que se abre tras el trono del Rey Hueco baja a la ciénaga.
+  void bajarPorElPasadizo() => cruzarFrontera('cienaga', adelante: true);
+
+  /// Se puede volver a salir: lo pide la pantalla si el jugador no elige
+  /// final.
+  void seguirTrasElFinal() => _cruzando = false;
 
   /// Puerta del mundo por la que se entra a la estructura de [sala].
   Vector2 _puertaDe(Sala sala) {
@@ -591,9 +763,11 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     }
   }
 
-  /// El jefe no vuelve: se guarda en el acto para que no se pierda.
+  /// El jefe no vuelve: se guarda en el acto para que no se pierda. Dice sus
+  /// últimas palabras, deja su ascua y abre el paso a la zona siguiente.
   void _jefeVencido(Enemigo enemigo) {
-    _jefesVencidos.add(enemigo.tipo.id);
+    final tipo = enemigo.tipo;
+    _jefesVencidos.add(tipo.id);
     jefe.value = null;
     Sonido.pista(zona.pista, volumen: 0.6);
     Sonido.efecto(Audios.oro);
@@ -601,8 +775,43 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     Future.delayed(const Duration(milliseconds: 3200), () {
       titular.value = null;
     });
-    mostrarAviso('${enemigo.tipo.nombre} se deshace en ceniza.');
+    mostrarAviso(switch (tipo.ultimasPalabras) {
+      final palabras? => '«$palabras»',
+      null => '${tipo.nombre} se deshace en ceniza.',
+    });
+    final paso = tipo == Enemigos.reyHueco
+        ? 'Tras el trono se abre un pasadizo.'
+        : tipo == Enemigos.elQueMira
+        ? 'El Altar Mayor se abre. Sal a la arena y cruza el nicho.'
+        : 'Las rejas de la salida se abren.';
+    Future.delayed(const Duration(milliseconds: 3000), () {
+      mostrarAviso([
+        if (tipo.ascua case final ascua?) 'Recibes el $ascua.',
+        paso,
+      ].join(' '));
+    });
+    tierras.abrirCerrojos();
     guardar(silencioso: true);
+  }
+
+  /// Abre el cofre [id] del mundo: cuenta su oro (lo pone el servidor), cura
+  /// si trae una poción y se guarda en el acto, por si trae una llave.
+  void abrirCofre(String id, String texto, {int oro = 0, bool curar = false}) {
+    _registro.cofreAbierto(id, oro);
+    Sonido.efecto(oro > 0 ? Audios.oro : Audios.exp, volumen: 0.6);
+    if (curar) {
+      this.curar('$texto Tu vida se renueva.');
+    } else {
+      mostrarAviso(texto);
+    }
+    _mostrarProgreso();
+    guardar(silencioso: true);
+  }
+
+  /// Un tajo de la Hoz: hojas y espinas por el aire.
+  void cortarZarza(Vector2 donde) {
+    zona.add(Estallido(donde, const [Colores.podredumbre, Colores.ceniza]));
+    Sonido.efecto(Audios.ataque(personaje.claseCodigo), volumen: 0.5);
   }
 
   void jugadorMuerto() {
@@ -666,8 +875,10 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     vida.value = combate.vidaMaxima;
     estamina.value = estaminaMaxima;
     frascos.value = frascosMaximos;
-    final sala = _salaDeDescanso;
-    if (sala != null) {
+    final descanso = _descanso;
+    await _asentar();
+    if (descanso.zona != tierras.zonaId) await _cargarZona(descanso.zona);
+    if (descanso.sala case final sala?) {
       final destino = _sala(sala);
       _retorno = _puertaDe(sala);
       final pies = destino.junto('hoguera');
@@ -675,8 +886,9 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
       jugador.reaparecer(pies);
     } else {
       _retorno = null;
-      _cambiarA(tierras, tierras.inicio.clone());
-      jugador.reaparecer(tierras.inicio.clone());
+      final pies = tierras.junto(descanso.altar);
+      _cambiarA(tierras, pies);
+      jugador.reaparecer(pies.clone());
     }
     _reiniciarTodo();
     muerto.value = false;
@@ -686,15 +898,17 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
 
   /// Descanso en el altar del mundo o en la hoguera de una sala: vida y
   /// frascos llenos, enemigos de vuelta y partida guardada.
-  Future<void> descansar({SalaInterior? enSala}) async {
+  Future<void> descansar({SalaInterior? enSala, int altar = 0}) async {
     if (guardando.value) return;
     vida.value = combate.vidaMaxima;
     estamina.value = estaminaMaxima;
     frascos.value = frascosMaximos;
     _reiniciarTodo();
-    _puntoDeGuardado = enSala == null
+    _puntoDeGuardado = enSala != null
+        ? 'sala:${enSala.sala.slug}'
+        : tierras.zonaId == ZonaTierras.id && altar == 0
         ? ZonaTierras.puntoDeGuardado
-        : 'sala:${enSala.sala.slug}';
+        : 'altar:${tierras.zonaId}:$altar';
     final ok = await guardar(silencioso: true);
     if (ok) {
       mostrarAviso(
@@ -711,7 +925,9 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
 
   void _reiniciarTodo() {
     jefe.value = null;
-    tierras.reiniciarEnemigos();
+    for (final z in _zonas.values) {
+      z.reiniciarEnemigos();
+    }
     for (final s in _salas.values) {
       if (s.isLoaded) s.reiniciarEnemigos();
     }
@@ -724,12 +940,11 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     guardando.value = true;
     // Dentro de una sala se guarda la sala y el sitio: así se vuelve a la
     // hoguera de la cripta, por ejemplo.
-    final enSala = zona is SalaInterior ? zona as SalaInterior : null;
     final pies = jugador.position;
     final enviado = _registro.aProgreso(
       vidaActual: vida.value,
       ubicacion: Ubicacion(
-        zonaId: enSala?.sala.slug ?? ZonaTierras.id,
+        zonaId: _lugarActual,
         x: pies.x.round(),
         y: pies.y.round(),
         ultimoPuntoGuardado: _puntoDeGuardado,
@@ -778,6 +993,6 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     nivel.value = personaje.nivel;
     exp.value = personaje.exp + _registro.exp;
     expSiguiente.value = combate.expSiguiente;
-    oro.value = personaje.oro + _registro.oro;
+    oro.value = personaje.oro + _registro.oro + _registro.oroCofres;
   }
 }

@@ -16,6 +16,12 @@ class Progreso {
   final int vidaActual;
   final Ubicacion ubicacion;
 
+  /// Cofres del mundo abiertos, como `zonaId/cofreId`. Su oro lo pone el
+  /// servidor; [oroCofres] es lo que la app espera que dé, para mostrarlo
+  /// mientras no hay conexión (el servidor no lo lee).
+  final List<String> cofresAbiertos;
+  final int oroCofres;
+
   const Progreso({
     required this.enemigosDerrotados,
     required this.exp,
@@ -24,6 +30,8 @@ class Progreso {
     required this.segundosJugados,
     required this.vidaActual,
     required this.ubicacion,
+    this.cofresAbiertos = const [],
+    this.oroCofres = 0,
   });
 
   Map<String, dynamic> toMap() {
@@ -35,6 +43,8 @@ class Progreso {
       'segundosJugados': segundosJugados,
       'vidaActual': vidaActual,
       'ubicacion': ubicacion.toMap(),
+      'cofresAbiertos': cofresAbiertos,
+      'oroCofres': oroCofres,
     };
   }
 }

@@ -50,6 +50,10 @@ class PartidaApi {
     }
   }
 
+  /// Las partidas guardadas en el teléfono, sin esperar al servidor: sirven
+  /// para mostrar la lista mientras llega la del servidor. `null` si no hay.
+  Future<List<PartidaJugable>?> partidasGuardadas() => _locales();
+
   /// El servidor crea el personaje copiando los atributos base de su clase.
   Future<PartidaJugable> crearPartida({
     required String nombre,

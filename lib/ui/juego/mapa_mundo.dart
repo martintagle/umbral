@@ -15,11 +15,42 @@ typedef Estructura = ({
 typedef Letrero = ({int x, int y, String texto});
 typedef EnemigoMapa = ({String tipo, int x, int y, int radio});
 typedef Region = ({String nombre, int x, int y, int w, int h});
+typedef CofreMapa = ({String id, int x, int y, String contenido, String texto});
 
-/// `assets/mapas/mundo.json` (ver `docs/diseno/mundo.md`). Las posiciones del
-/// JSON están en tiles; las que devuelve esta clase, en píxeles de arte.
+/// Borde por el que se pasa a otra zona. [rejas] son las de la salida, que
+/// se abren al vencer al jefe de la zona.
+typedef Paso = ({int x, int y, String zona, List<(int, int)> rejas});
+
+/// La puerta de la mazmorra del jefe: [entrada] es el sprite de la
+/// estructura y [mazmorra] el id de su JSON en `assets/interiores/`.
+typedef JefeMapa = ({String tipo, String? mazmorra, String? entrada});
+
+/// Una zona del mundo: `assets/mapas/mundo.json` (zona 1, ver
+/// `docs/diseno/mundo.md`) o `zona-<n>-<id>.json` (zonas 2 a 6, ver
+/// `docs/zonas.md`). Las posiciones del JSON están en tiles; las que devuelve
+/// esta clase, en píxeles de arte.
 class MapaMundo {
   static const tile = 16.0;
+
+  /// Las zonas en el orden en que se recorren, con su archivo.
+  static const _archivos = {
+    'tierras-del-umbral': 'mundo.json',
+    'cienaga': 'zona-2-cienaga.json',
+    'minas': 'zona-3-minas.json',
+    'abadia': 'zona-4-abadia.json',
+    'paramo': 'zona-5-paramo.json',
+    'umbral': 'zona-6-umbral.json',
+  };
+  static const primera = 'tierras-del-umbral';
+
+  static bool existe(String zona) => _archivos.containsKey(zona);
+
+  final String id;
+  final int numero;
+  final String nombre;
+
+  /// Imagen del tileset, dentro de `assets/`.
+  final String tileset;
 
   final int ancho;
   final int alto;
@@ -31,12 +62,29 @@ class MapaMundo {
   final List<List<int>> suelo;
   final List<List<int>> objetos;
   final List<Estructura> estructuras;
-  final List<(int, int)> cofres;
+  final List<CofreMapa> cofres;
   final List<Letrero> letreros;
   final List<(int, int)> portales;
   final List<EnemigoMapa> enemigos;
   final List<Region> regiones;
   final Vector2 inicio;
+
+  /// Por dónde se llega desde la zona anterior y por dónde se sale a la
+  /// siguiente. La zona 1 no tiene ninguno: se sale por la cripta.
+  final Paso? entrada;
+  final Paso? salida;
+  final JefeMapa? jefe;
+
+  /// Las criaturas de la zona; las tres primeras vienen de la anterior y aquí
+  /// son las débiles.
+  final List<String> enemigosDeLaZona;
+
+  /// Cofres, letreros y estructuras: no cambian al abrir rejas o cortar
+  /// zarzas.
+  late final Uint8List _fijo;
+  late final Set<int> _sueloSolido;
+  late final int _agua;
+  late final int _portal;
 
   /// Celdas que no se pueden pisar a tamaño normal: el jugador aún no puede
   /// encogerse ni tiene la Hoz o la Llave, así que todo lo cerrado bloquea.
@@ -53,7 +101,11 @@ class MapaMundo {
   late final Set<int> objetosAltos;
 
   MapaMundo._(Map<String, dynamic> m)
-    : ancho = m['ancho'] as int,
+    : id = m['id'] as String? ?? primera,
+      numero = m['numero'] as int? ?? 1,
+      nombre = m['nombre'] as String,
+      tileset = (m['tileset'] as String).replaceFirst('../', ''),
+      ancho = m['ancho'] as int,
       alto = m['alto'] as int,
       columnasTileset = m['columnasTileset'] as int,
       indiceObjetos = m['tiles']['indiceObjetos'] as int,
@@ -76,7 +128,16 @@ class MapaMundo {
             ],
           ),
       ],
-      cofres = _celdas(m['cofres']),
+      cofres = [
+        for (final c in m['cofres'] as List)
+          (
+            id: c['id'] as String,
+            x: c['x'] as int,
+            y: c['y'] as int,
+            contenido: c['contenido'] as String,
+            texto: c['texto'] as String,
+          ),
+      ],
       letreros = [
         for (final l in m['letreros'] as List)
           (x: l['x'] as int, y: l['y'] as int, texto: l['texto'] as String),
@@ -104,17 +165,30 @@ class MapaMundo {
       inicio = Vector2(
         (m['inicio']['x'] as num) * tile,
         (m['inicio']['y'] as num) * tile + 12,
+      ),
+      entrada = _paso(m['entrada'], 'desde'),
+      salida = _paso(m['salida'], 'hacia'),
+      jefe = switch (m['jefe']) {
+        final Map<String, dynamic> j => (
+          tipo: j['tipo'] as String,
+          mazmorra: j['mazmorra'] as String?,
+          entrada: j['entrada'] as String?,
+        ),
+        _ => null,
+      },
+      enemigosDeLaZona = List<String>.from(
+        m['enemigosDeLaZona'] as List? ?? const [],
       ) {
     final nombresSuelo = List<String>.from(m['tiles']['suelo'] as List);
     final reglas = m['reglas'] as Map<String, dynamic>;
-    final sueloSolido = {
+    _sueloSolido = {
       for (final n in [
         ...reglas['sueloBloquea'] as List,
         ...reglas['sueloSoloDiminuto'] as List,
       ])
         nombresSuelo.indexOf(n as String),
     };
-    final agua = nombresSuelo.indexOf('agua');
+    _agua = nombresSuelo.indexOf('agua');
     objetosAltos = {
       for (final n in [
         ...reglas['objetosBloquean'] as List,
@@ -122,41 +196,75 @@ class MapaMundo {
       ])
         nombresObjetos.indexOf(n as String),
     };
-    final portal = nombresObjetos.indexOf('portal');
+    _portal = nombresObjetos.indexOf('portal');
 
     _solido = Uint8List(ancho * alto);
     _solidoEnemigo = Uint8List(ancho * alto);
     _bloqueaProyectil = Uint8List(ancho * alto);
-    void marcar(int x, int y, {bool proyectil = true}) {
-      _solido[y * ancho + x] = 1;
-      _solidoEnemigo[y * ancho + x] = 1;
-      if (proyectil) _bloqueaProyectil[y * ancho + x] = 1;
-    }
-
-    for (var y = 0; y < alto; y++) {
-      for (var x = 0; x < ancho; x++) {
-        final s = suelo[y][x], o = objetos[y][x];
-        if (sueloSolido.contains(s) || objetosAltos.contains(o)) marcar(x, y);
-        if (s == agua) marcar(x, y, proyectil: false);
-        if (o == portal) _solidoEnemigo[y * ancho + x] = 1;
-      }
-    }
+    _fijo = Uint8List(ancho * alto);
     for (final e in estructuras) {
       for (var y = e.y + e.h - e.huellaFilas; y < e.y + e.h; y++) {
         for (var x = e.x; x < e.x + e.w; x++) {
-          if (!e.puerta.contains((x, y))) marcar(x, y);
+          if (!e.puerta.contains((x, y))) _fijo[y * ancho + x] = 1;
         }
       }
     }
-    for (final (x, y) in [...cofres, for (final l in letreros) (l.x, l.y)]) {
-      marcar(x, y);
+    for (final (x, y) in [
+      for (final c in cofres) (c.x, c.y),
+      for (final l in letreros) (l.x, l.y),
+    ]) {
+      _fijo[y * ancho + x] = 1;
+    }
+    for (var y = 0; y < alto; y++) {
+      for (var x = 0; x < ancho; x++) {
+        _calcular(x, y);
+      }
     }
   }
 
-  static Future<MapaMundo> cargar() async => MapaMundo._(
-    jsonDecode(await rootBundle.loadString('assets/mapas/mundo.json'))
+  /// Qué bloquea la celda (x, y) según su suelo, su objeto y lo fijo.
+  void _calcular(int x, int y) {
+    final i = y * ancho + x;
+    final s = suelo[y][x], o = objetos[y][x];
+    final bloquea =
+        _fijo[i] == 1 || _sueloSolido.contains(s) || objetosAltos.contains(o);
+    _solido[i] = bloquea || s == _agua ? 1 : 0;
+    _solidoEnemigo[i] = _solido[i] == 1 || o == _portal ? 1 : 0;
+    // Los proyectiles vuelan sobre el agua.
+    _bloqueaProyectil[i] = bloquea ? 1 : 0;
+  }
+
+  /// Índice del objeto [nombre] en la capa de objetos, o -1.
+  int objeto(String nombre) => nombresObjetos.indexOf(nombre);
+
+  /// Cambia el objeto de la celda (x, y), por ejemplo una reja por la reja
+  /// abierta, y recalcula qué bloquea.
+  void cambiarObjeto(int x, int y, int objeto) {
+    objetos[y][x] = objeto;
+    _calcular(x, y);
+  }
+
+  static Future<MapaMundo> cargar([String zona = primera]) async => MapaMundo._(
+    jsonDecode(
+          await rootBundle.loadString(
+            'assets/mapas/${_archivos[zona] ?? _archivos[primera]}',
+          ),
+        )
         as Map<String, dynamic>,
   );
+
+  static Paso? _paso(Object? datos, String campo) => switch (datos) {
+    final Map<String, dynamic> d => (
+      x: d['x'] as int,
+      y: d['y'] as int,
+      zona: d[campo] as String,
+      rejas: [
+        for (final r in d['rejaSalida'] as List? ?? const [])
+          (r[0] as int, r[1] as int),
+      ],
+    ),
+    _ => null,
+  };
 
   static List<List<int>> _rejilla(Object? capa) => [
     for (final fila in capa as List) List<int>.from(fila as List),
@@ -192,6 +300,10 @@ class MapaMundo {
         return r.nombre;
       }
     }
-    return 'Tierras del Umbral';
+    return nombre;
   }
+
+  /// Centro de la celda (x, y).
+  static Vector2 centroDe(int x, int y) =>
+      Vector2((x + 0.5) * tile, (y + 0.5) * tile);
 }

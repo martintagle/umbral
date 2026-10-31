@@ -103,7 +103,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
   bool get despierto =>
       vivo && _estado != _Estado.deambular && _estado != _Estado.volver;
 
-  /// El Rey Hueco a media vida: más rápido y con más golpes.
+  /// Un jefe a media vida: más rápido y con más golpes.
   bool get furioso => tipo.jefe && vida < vidaMaxima / 2;
 
   double get _velocidad => tipo.velocidad * (furioso ? 1.35 : 1);
@@ -119,6 +119,11 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
   /// (eventos `despega` y `aterriza`); la fauce tiene filas separadas.
   bool get _saltoCompleto =>
       _hoja.tiene('salto') && _hoja['salto'].eventos.containsKey('despega');
+
+  /// Fila del cuerpo lanzado en una embestida: el salto de la fauce o del
+  /// sapo; las que no saltan (gusano, gárgola, caballo) usan su ataque.
+  String get _animacionEmbestida =>
+      _hoja.tiene('salto') ? 'salto' : tipo.animacionAtaque;
 
   /// Fila con el golpe o el disparo que se está usando.
   String get _animacionAtaque =>
@@ -489,7 +494,9 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
             desde: salto.eventos['despega']!,
             hasta: salto.eventos['aterriza']!);
       } else {
-        _modelo.tramo('salto', p);
+        final nombre = _animacionEmbestida;
+        _modelo.tramo(nombre, p,
+            hasta: nombre == 'salto' ? null : _hoja[nombre].golpes.first + 1);
       }
     } else if (_herido > 0 && _hoja.tiene('herido')) {
       // El rey no tiene `herido`: le basta el destello.
@@ -532,8 +539,11 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
             hasta: _hoja[_animacionAtaque].eventos['disparo']!);
       case _Golpe.embestida when _saltoCompleto:
         _modelo.tramo('salto', k, hasta: _hoja['salto'].eventos['despega']!);
-      case _Golpe.embestida:
+      case _Golpe.embestida when _hoja.tiene('agazaparse'):
         _modelo.tramo('agazaparse', k);
+      case _Golpe.embestida:
+        final nombre = _animacionEmbestida;
+        _modelo.tramo(nombre, k, hasta: _hoja[nombre].golpes.firstOrNull);
     }
   }
 

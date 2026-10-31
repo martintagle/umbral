@@ -1,7 +1,7 @@
 {
   "imagen": "hoja-estructuras.png",
   "tamano": {
-    "w": 416,
+    "w": 736,
     "h": 64
   },
   "escalaRecomendada": 4,
@@ -60,6 +60,36 @@
       "y": 0,
       "w": 48,
       "h": 64
+    },
+    "santuario-de-cera": {
+      "x": 416,
+      "y": 16,
+      "w": 64,
+      "h": 48
+    },
+    "bocamina-profunda": {
+      "x": 480,
+      "y": 16,
+      "w": 64,
+      "h": 48
+    },
+    "portico-de-la-nave": {
+      "x": 544,
+      "y": 16,
+      "w": 64,
+      "h": 48
+    },
+    "puerta-del-juramento": {
+      "x": 608,
+      "y": 16,
+      "w": 64,
+      "h": 48
+    },
+    "altar-mayor": {
+      "x": 672,
+      "y": 16,
+      "w": 64,
+      "h": 48
     }
   }
 }

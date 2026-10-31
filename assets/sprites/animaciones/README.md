@@ -1,6 +1,6 @@
 # Animaciones de Umbral
 
-Hojas de sprites cuadro a cuadro para los 5 personajes (hombre y mujer), los 6 enemigos, el Rey Hueco y los efectos. Están hechas a partir de los mismos sprites, piezas y pivotes de `../animaciones.json`, así que encajan con el arte actual.
+Hojas de sprites cuadro a cuadro para los 5 personajes (hombre y mujer), los 21 enemigos, los 6 jefes y los efectos. Están hechas a partir de los mismos sprites, piezas y pivotes de `../animaciones.json`, así que encajan con el arte actual.
 
 ## Formato
 
@@ -103,3 +103,55 @@ final anim = SpriteAnimation.variableSpriteList(
 Si una duración del código no coincide (el ataque dura entre 0,24 y 0,42 s según la recarga), escala los `ms` de esa animación para que sumen la duración real.
 
 El juego ya usa estas hojas (`lib/ui/juego/animacion.dart`). `../animaciones.json`, el recorte en piezas de antes, ya no se incluye en la app: se conserva solo como fuente de estas hojas.
+
+## Zonas 2 a 6: enemigos y jefes nuevos
+
+Mismo formato y mismo motor que las hojas anteriores. Sus datos ya están en `hojas.json` (`enemigos` y `efectos`). Las estadísticas sugeridas están en `assets/datos/enemigos-nuevos.json`, y la zona de cada uno en `docs/guion.md`.
+
+**El ancla cambia según la criatura.** Las voladoras y las bajas no apoyan los pies en la misma fila. Léela siempre de `hojas.json`.
+
+| Archivo | Celda | Filas: animación (cuadros) |
+| --- | --- | --- |
+| `enemigos/enjambre.png` | 48×48 | 0 quieto (8), 1 volar (8), 2 picar (10), 3 herido (2), 4 aturdido (6), 5 morir (6) |
+| `enemigos/sapo-lapida.png` | 48×48 | 0 quieto (8), 1 caminar (8), 2 agazaparse (3), 3 salto (5), 4 herido (2), 5 aturdido (6), 6 morir (6) |
+| `enemigos/ahogado-de-cera.png` | 48×48 | 0 quieto (8), 1 caminar (8), 2 golpe (5), 3 herido (2), 4 morir (6) |
+| `enemigos/minero-hueco.png` | 48×48 | 0 quieto (8), 1 caminar (8), 2 picazo (9), 3 herido (2), 4 aturdido (6), 5 morir (6) |
+| `enemigos/gusano-de-sal.png` | 48×48 | 0 quieto (8), 1 caminar (8), 2 agazaparse (3), 3 embestir (5), 4 herido (2), 5 aturdido (6), 6 morir (6) |
+| `enemigos/cristal-vivo.png` | 48×48 | 0 quieto (8), 1 caminar (8), 2 esquirlas (5), 3 herido (2), 4 morir (6) |
+| `enemigos/gargola-rota.png` | 48×48 | 0 quieto (8), 1 volar (8), 2 picado (6), 3 herido (2), 4 aturdido (6), 5 morir (6) |
+| `enemigos/monja-sin-rostro.png` | 48×48 | 0 quieto (8), 1 caminar (8), 2 rezo (5), 3 herido (2), 4 aturdido (6), 5 morir (6) |
+| `enemigos/campanero.png` | 48×48 | 0 quieto (8), 1 caminar (8), 2 campanada (6), 3 herido (2), 4 aturdido (6), 5 morir (6) |
+| `enemigos/estandarte-poseido.png` | 48×48 | 0 quieto (8), 1 volar (8), 2 brasas (5), 3 herido (2), 4 aturdido (6), 5 morir (6) |
+| `enemigos/caballo-sin-jinete.png` | 48×48 | 0 quieto (8), 1 caminar (8), 2 agazaparse (3), 3 embestida (5), 4 herido (2), 5 aturdido (6), 6 morir (6) |
+| `enemigos/soldado-de-ceniza.png` | 48×48 | 0 quieto (8), 1 caminar (8), 2 tajos (13), 3 herido (2), 4 aturdido (6), 5 morir (6) |
+| `enemigos/boca-del-hueco.png` | 48×48 | 0 quieto (8), 1 caminar (8), 2 morder (4), 3 herido (2), 4 morir (6) |
+| `enemigos/vigia.png` | 48×48 | 0 quieto (8), 1 caminar (8), 2 rayo (5), 3 herido (2), 4 morir (6) |
+| `enemigos/sombra-sin-nombre.png` | 48×48 | 0 quieto (8), 1 caminar (8), 2 tajos (9), 3 herido (2), 4 aturdido (6), 5 morir (6) |
+| `enemigos/jefe-madre-cirio.png` | 96×96 | 0 quieto (8), 1 caminar (8), 2 barrido (8), 3 salto (9), 4 lluvia (7), 5 enfurecerse (10), 6 quieto-furioso (8), 7 caminar-furioso (8), 8 morir (12) |
+| `enemigos/jefe-capataz-de-sal.png` | 96×96 | 0 quieto (8), 1 caminar (8), 2 barrido (8), 3 salto (9), 4 lluvia (7), 5 enfurecerse (10), 6 quieto-furioso (8), 7 caminar-furioso (8), 8 morir (12) |
+| `enemigos/jefe-abadesa.png` | 96×96 | 0 quieto (8), 1 caminar (8), 2 barrido (8), 3 salto (9), 4 lluvia (7), 5 enfurecerse (10), 6 quieto-furioso (8), 7 caminar-furioso (8), 8 morir (12) |
+| `enemigos/jefe-caballero-de-ceniza.png` | 96×96 | 0 quieto (8), 1 caminar (8), 2 barrido (8), 3 salto (9), 4 lluvia (7), 5 enfurecerse (10), 6 quieto-furioso (8), 7 caminar-furioso (8), 8 morir (12) |
+| `enemigos/jefe-el-que-mira.png` | 96×96 | 0 quieto (8), 1 caminar (8), 2 barrido (8), 3 salto (9), 4 lluvia (7), 5 enfurecerse (10), 6 quieto-furioso (8), 7 caminar-furioso (8), 8 morir (12) |
+| `enemigos/efectos-2.png` | 32×32 | 0 esquirla (4), 1 brasa (4), 2 rayo (4) |
+
+**Enemigos.** Todos tienen `quieto`, `herido` y `morir`, y casi todos `aturdido`. No lo tienen el ahogado de cera, el cristal vivo, la boca del Hueco y el vigía: son firmes y no se tambalean. Los voladores usan `volar` en lugar de `caminar`. Ataques:
+
+- **Enjambre:** `picar`, tres picotazos (`golpe1-3`).
+- **Sapo lápida:** `agazaparse` y `salto`, que aplasta (`golpe`).
+- **Ahogado de cera:** `golpe` lento y firme.
+- **Minero hueco:** `picazo`, dos golpes.
+- **Gusano de sal:** `agazaparse` y `embestir`.
+- **Cristal vivo:** `esquirlas`, que suelta un abanico en `disparo` y usa el efecto `esquirla`.
+- **Gárgola rota:** `picado`.
+- **Monja sin rostro:** `rezo` (`disparo`).
+- **Campanero:** `campanada`, con una onda que aturde.
+- **Estandarte poseído:** `brasas` (`disparo`, efecto `brasa`).
+- **Caballo sin jinete:** `agazaparse` y `embestida`.
+- **Soldado de ceniza:** `tajos`, tres golpes.
+- **Boca del Hueco:** `morder`, y no se mueve.
+- **Vigía:** `rayo` (`disparo`, efecto `rayo`).
+- **Sombra sin nombre:** `tajos`, dos golpes.
+
+**Jefes.** Los 5 tienen las mismas 9 filas que el Rey Hueco: `quieto`, `caminar`, `barrido`, `salto` (`despega`/`aterriza`), `lluvia` (`disparo`), `enfurecerse` (`cambio`), `quieto-furioso`, `caminar-furioso` y `morir`. Así el mismo código de jefe sirve para todos. `onda-expansiva.png` también vale para ellos.
+
+**Efectos nuevos:** `efectos-2.png` (32×32) trae `esquirla`, `brasa` y `rayo`, y apuntan a la derecha.

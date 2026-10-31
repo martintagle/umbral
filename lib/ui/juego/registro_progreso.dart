@@ -26,6 +26,15 @@ class RegistroProgreso {
   int muertes = 0;
   double segundos = 0;
 
+  /// Cofres del mundo abiertos (`zonaId/cofreId`) y el oro que se espera de
+  /// ellos. No caen al morir: un cofre abierto queda abierto.
+  final Set<String> cofres = {};
+  int oroCofres = 0;
+
+  void cofreAbierto(String id, int oro) {
+    if (cofres.add(id)) oroCofres += oro;
+  }
+
   /// Anota la derrota y tira lo que da, dentro de los rangos del servidor.
   ({int exp, int oro}) enemigoDerrotado(String tipo) {
     enemigos.update(tipo, (n) => n + 1, ifAbsent: () => 1);
@@ -62,6 +71,8 @@ class RegistroProgreso {
       segundosJugados: segundos.floor(),
       vidaActual: vidaActual,
       ubicacion: ubicacion,
+      cofresAbiertos: cofres.toList(),
+      oroCofres: oroCofres,
     );
   }
 
@@ -97,5 +108,7 @@ class RegistroProgreso {
     oro = max(0, oro - enviado.oro);
     muertes -= enviado.muertes;
     segundos -= enviado.segundosJugados;
+    cofres.removeAll(enviado.cofresAbiertos);
+    oroCofres = max(0, oroCofres - enviado.oroCofres);
   }
 }

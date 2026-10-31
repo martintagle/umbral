@@ -84,6 +84,7 @@ abstract final class Hojas {
   static final Map<String, Hoja> _listas = {};
 
   static const efectos = 'efectos/efectos';
+  static const efectos2 = 'efectos/efectos-2';
   static const ondaExpansiva = 'efectos/onda-expansiva';
 
   /// [claves] son `grupo/nombre` de `hojas.json`: `personajes/mago-mujer`,

@@ -9,7 +9,15 @@ class ApiExcepcion implements Exception {
   /// que se puede seguir con los datos del teléfono.
   final bool sinConexion;
 
-  const ApiExcepcion(this.mensaje, {this.estado, this.sinConexion = false});
+  /// El servidor no respondió a tiempo: la petición pudo llegar o no.
+  final bool agotado;
+
+  const ApiExcepcion(
+    this.mensaje, {
+    this.estado,
+    this.sinConexion = false,
+    this.agotado = false,
+  });
 
   bool get sesionCaducada => estado == 401;
 

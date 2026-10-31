@@ -41,6 +41,8 @@ flutter:
     - assets/sprites/animaciones/
     - assets/sprites/animaciones/personajes/
     - assets/sprites/animaciones/enemigos/
+    - assets/minimapa/
+    - assets/datos/
 
 flutter_launcher_icons:
   android: true

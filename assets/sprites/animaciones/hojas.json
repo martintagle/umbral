@@ -2121,6 +2121,2329 @@
      "nota": "Se tambalea, la corona cae, los ojos se cierran y el cuerpo se desploma en un montón de tela."
     }
    }
+  },
+  "enjambre": {
+   "archivo": "enemigos/enjambre.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 39
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80
+     ],
+     "bucle": true
+    },
+    "volar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      70,
+      70,
+      70,
+      70,
+      70,
+      70,
+      70,
+      70
+     ],
+     "bucle": true,
+     "nota": "Vuela; úsala también como «caminar»."
+    },
+    "picar": {
+     "fila": 2,
+     "cuadros": 10,
+     "ms": [
+      60,
+      50,
+      60,
+      60,
+      50,
+      60,
+      60,
+      50,
+      60,
+      80
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe1": 1,
+      "golpe2": 4,
+      "golpe3": 7
+     },
+     "nota": "Combo de tres picaduras rápidas."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe."
+    },
+    "aturdido": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza."
+    },
+    "morir": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "sapo-lapida": {
+   "archivo": "enemigos/sapo-lapida.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85
+     ],
+     "bucle": true
+    },
+    "agazaparse": {
+     "fila": 2,
+     "cuadros": 3,
+     "ms": [
+      80,
+      90,
+      120
+     ],
+     "bucle": false,
+     "nota": "Carga antes de lanzarse."
+    },
+    "salto": {
+     "fila": 3,
+     "cuadros": 5,
+     "ms": [
+      60,
+      60,
+      60,
+      80,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe": 3
+     },
+     "nota": "Salta desde lejos y aplasta con la lápida."
+    },
+    "herido": {
+     "fila": 4,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe."
+    },
+    "aturdido": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza."
+    },
+    "morir": {
+     "fila": 6,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "ahogado-de-cera": {
+   "archivo": "enemigos/ahogado-de-cera.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85
+     ],
+     "bucle": true
+    },
+    "golpe": {
+     "fila": 2,
+     "cuadros": 5,
+     "ms": [
+      55,
+      55,
+      45,
+      55,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe": 2
+     },
+     "nota": "Alza los dos brazos de cera y los deja caer. No se inmuta."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe. No se aturde."
+    },
+    "morir": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "minero-hueco": {
+   "archivo": "enemigos/minero-hueco.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85
+     ],
+     "bucle": true
+    },
+    "picazo": {
+     "fila": 2,
+     "cuadros": 9,
+     "ms": [
+      55,
+      55,
+      45,
+      55,
+      55,
+      55,
+      45,
+      55,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe1": 2,
+      "golpe2": 6
+     },
+     "nota": "Dos golpes de pico."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe."
+    },
+    "aturdido": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza."
+    },
+    "morir": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "gusano-de-sal": {
+   "archivo": "enemigos/gusano-de-sal.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85
+     ],
+     "bucle": true
+    },
+    "agazaparse": {
+     "fila": 2,
+     "cuadros": 3,
+     "ms": [
+      80,
+      90,
+      120
+     ],
+     "bucle": false,
+     "nota": "Carga antes de lanzarse."
+    },
+    "embestir": {
+     "fila": 3,
+     "cuadros": 5,
+     "ms": [
+      60,
+      60,
+      60,
+      80,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe": 2
+     },
+     "nota": "Se hunde un poco y embiste estirándose."
+    },
+    "herido": {
+     "fila": 4,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe."
+    },
+    "aturdido": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza."
+    },
+    "morir": {
+     "fila": 6,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "cristal-vivo": {
+   "archivo": "enemigos/cristal-vivo.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85
+     ],
+     "bucle": true
+    },
+    "esquirlas": {
+     "fila": 2,
+     "cuadros": 5,
+     "ms": [
+      90,
+      110,
+      50,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "disparo": 2
+     },
+     "nota": "Dispara tres esquirlas de sal en abanico (efecto «esquirla»)."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe. No se aturde."
+    },
+    "morir": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "gargola-rota": {
+   "archivo": "enemigos/gargola-rota.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 39
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80
+     ],
+     "bucle": true
+    },
+    "volar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      70,
+      70,
+      70,
+      70,
+      70,
+      70,
+      70,
+      70
+     ],
+     "bucle": true,
+     "nota": "Vuela; úsala también como «caminar»."
+    },
+    "picado": {
+     "fila": 2,
+     "cuadros": 6,
+     "ms": [
+      80,
+      100,
+      50,
+      60,
+      80,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe": 3
+     },
+     "nota": "Sube y cae en picado sobre el jugador."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe."
+    },
+    "aturdido": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza."
+    },
+    "morir": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "monja-sin-rostro": {
+   "archivo": "enemigos/monja-sin-rostro.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85
+     ],
+     "bucle": true
+    },
+    "rezo": {
+     "fila": 2,
+     "cuadros": 5,
+     "ms": [
+      90,
+      110,
+      50,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "disparo": 2
+     },
+     "nota": "Alza la vela y lanza un rezo de alma (efecto «hechizo»)."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe."
+    },
+    "aturdido": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza."
+    },
+    "morir": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "campanero": {
+   "archivo": "enemigos/campanero.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85
+     ],
+     "bucle": true
+    },
+    "campanada": {
+     "fila": 2,
+     "cuadros": 6,
+     "ms": [
+      90,
+      120,
+      50,
+      60,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe": 2
+     },
+     "nota": "Levanta la campana y la deja caer; la onda aturde a corta distancia."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe."
+    },
+    "aturdido": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza."
+    },
+    "morir": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "estandarte-poseido": {
+   "archivo": "enemigos/estandarte-poseido.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 39
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80,
+      80
+     ],
+     "bucle": true
+    },
+    "volar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      70,
+      70,
+      70,
+      70,
+      70,
+      70,
+      70,
+      70
+     ],
+     "bucle": true,
+     "nota": "Vuela; úsala también como «caminar»."
+    },
+    "brasas": {
+     "fila": 2,
+     "cuadros": 5,
+     "ms": [
+      90,
+      110,
+      50,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "disparo": 2
+     },
+     "nota": "El ojo del estandarte escupe dos brasas (efecto «brasa»)."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe."
+    },
+    "aturdido": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza."
+    },
+    "morir": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "caballo-sin-jinete": {
+   "archivo": "enemigos/caballo-sin-jinete.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85
+     ],
+     "bucle": true
+    },
+    "agazaparse": {
+     "fila": 2,
+     "cuadros": 3,
+     "ms": [
+      80,
+      90,
+      120
+     ],
+     "bucle": false,
+     "nota": "Carga antes de lanzarse."
+    },
+    "embestida": {
+     "fila": 3,
+     "cuadros": 5,
+     "ms": [
+      60,
+      60,
+      60,
+      80,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe": 2
+     },
+     "nota": "Piafa y embiste a toda velocidad."
+    },
+    "herido": {
+     "fila": 4,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe."
+    },
+    "aturdido": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza."
+    },
+    "morir": {
+     "fila": 6,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "soldado-de-ceniza": {
+   "archivo": "enemigos/soldado-de-ceniza.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85
+     ],
+     "bucle": true
+    },
+    "tajos": {
+     "fila": 2,
+     "cuadros": 13,
+     "ms": [
+      55,
+      55,
+      45,
+      55,
+      55,
+      55,
+      45,
+      55,
+      55,
+      55,
+      45,
+      55,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe1": 2,
+      "golpe2": 6,
+      "golpe3": 10
+     },
+     "nota": "Combo de tres tajos con la espada."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe."
+    },
+    "aturdido": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza."
+    },
+    "morir": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "boca-del-hueco": {
+   "archivo": "enemigos/boca-del-hueco.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85
+     ],
+     "bucle": true
+    },
+    "morder": {
+     "fila": 2,
+     "cuadros": 4,
+     "ms": [
+      60,
+      50,
+      60,
+      80
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe": 1
+     },
+     "nota": "Abre las fauces y muerde desde el suelo."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe. No se aturde."
+    },
+    "morir": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "vigia": {
+   "archivo": "enemigos/vigia.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85
+     ],
+     "bucle": true
+    },
+    "rayo": {
+     "fila": 2,
+     "cuadros": 5,
+     "ms": [
+      90,
+      110,
+      50,
+      70,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "disparo": 2
+     },
+     "nota": "El ojo se carga y dispara un rayo (efecto «rayo»)."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe. No se aturde."
+    },
+    "morir": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "sombra-sin-nombre": {
+   "archivo": "enemigos/sombra-sin-nombre.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85,
+      85
+     ],
+     "bucle": true
+    },
+    "tajos": {
+     "fila": 2,
+     "cuadros": 9,
+     "ms": [
+      55,
+      55,
+      45,
+      55,
+      55,
+      55,
+      45,
+      55,
+      90
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe1": 2,
+      "golpe2": 6
+     },
+     "nota": "Dos tajos muy rápidos con la daga de alma."
+    },
+    "herido": {
+     "fila": 3,
+     "cuadros": 2,
+     "ms": [
+      70,
+      90
+     ],
+     "bucle": false,
+     "nota": "Destello y sacudida al recibir un golpe."
+    },
+    "aturdido": {
+     "fila": 4,
+     "cuadros": 6,
+     "ms": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Se tambalea con estrellas sobre la cabeza."
+    },
+    "morir": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      70,
+      70,
+      80,
+      90,
+      120,
+      500
+     ],
+     "bucle": false,
+     "nota": "Se desploma. El último cuadro queda fijo."
+    }
+   }
+  },
+  "jefe-madre-cirio": {
+   "archivo": "enemigos/jefe-madre-cirio.png",
+   "celda": {
+    "ancho": 96,
+    "alto": 96
+   },
+   "ancla": {
+    "x": 48,
+    "y": 91
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90
+     ],
+     "bucle": true
+    },
+    "barrido": {
+     "fila": 2,
+     "cuadros": 8,
+     "ms": [
+      80,
+      90,
+      110,
+      50,
+      60,
+      80,
+      90,
+      100
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe": 3
+     },
+     "nota": "Golpea con los brazos de cera."
+    },
+    "salto": {
+     "fila": 3,
+     "cuadros": 9,
+     "ms": [
+      90,
+      110,
+      60,
+      60,
+      80,
+      50,
+      60,
+      120,
+      120
+     ],
+     "bucle": false,
+     "eventos": {
+      "despega": 2,
+      "aterriza": 6
+     },
+     "nota": "Se hunde y salta para aplastar. Furioso, al aterrizar suelta la onda expansiva."
+    },
+    "lluvia": {
+     "fila": 4,
+     "cuadros": 7,
+     "ms": [
+      100,
+      100,
+      90,
+      80,
+      70,
+      90,
+      100
+     ],
+     "bucle": false,
+     "eventos": {
+      "disparo": 4
+     },
+     "nota": "Lluvia de fuego desde las velas de su cabeza."
+    },
+    "enfurecerse": {
+     "fila": 5,
+     "cuadros": 10,
+     "ms": [
+      80,
+      70,
+      70,
+      70,
+      90,
+      70,
+      70,
+      90,
+      110,
+      160
+     ],
+     "bucle": false,
+     "eventos": {
+      "cambio": 4
+     },
+     "nota": "Se derrite: la cera se vuelve naranja y las velas arden más."
+    },
+    "quieto-furioso": {
+     "fila": 6,
+     "cuadros": 8,
+     "ms": [
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110
+     ],
+     "bucle": true
+    },
+    "caminar-furioso": {
+     "fila": 7,
+     "cuadros": 8,
+     "ms": [
+      75,
+      75,
+      75,
+      75,
+      75,
+      75,
+      75,
+      75
+     ],
+     "bucle": true
+    },
+    "morir": {
+     "fila": 8,
+     "cuadros": 12,
+     "ms": [
+      90,
+      90,
+      90,
+      100,
+      90,
+      90,
+      100,
+      100,
+      110,
+      120,
+      140,
+      900
+     ],
+     "bucle": false,
+     "nota": "Se tambalea, suelta su ascua (chispas) y se desploma."
+    }
+   }
+  },
+  "jefe-capataz-de-sal": {
+   "archivo": "enemigos/jefe-capataz-de-sal.png",
+   "celda": {
+    "ancho": 96,
+    "alto": 96
+   },
+   "ancla": {
+    "x": 48,
+    "y": 91
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90
+     ],
+     "bucle": true
+    },
+    "barrido": {
+     "fila": 2,
+     "cuadros": 8,
+     "ms": [
+      80,
+      90,
+      110,
+      50,
+      60,
+      80,
+      90,
+      100
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe": 3
+     },
+     "nota": "Barre con el pico gigante."
+    },
+    "salto": {
+     "fila": 3,
+     "cuadros": 9,
+     "ms": [
+      90,
+      110,
+      60,
+      60,
+      80,
+      50,
+      60,
+      120,
+      120
+     ],
+     "bucle": false,
+     "eventos": {
+      "despega": 2,
+      "aterriza": 6
+     },
+     "nota": "Salta y hace brotar sal al caer. Furioso, al aterrizar suelta la onda expansiva."
+    },
+    "lluvia": {
+     "fila": 4,
+     "cuadros": 7,
+     "ms": [
+      100,
+      100,
+      90,
+      80,
+      70,
+      90,
+      100
+     ],
+     "bucle": false,
+     "eventos": {
+      "disparo": 4
+     },
+     "nota": "Lanza esquirlas de sal en abanico."
+    },
+    "enfurecerse": {
+     "fila": 5,
+     "cuadros": 10,
+     "ms": [
+      80,
+      70,
+      70,
+      70,
+      90,
+      70,
+      70,
+      90,
+      110,
+      160
+     ],
+     "bucle": false,
+     "eventos": {
+      "cambio": 4
+     },
+     "nota": "Los cristales de su espalda se encienden de alma."
+    },
+    "quieto-furioso": {
+     "fila": 6,
+     "cuadros": 8,
+     "ms": [
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110
+     ],
+     "bucle": true
+    },
+    "caminar-furioso": {
+     "fila": 7,
+     "cuadros": 8,
+     "ms": [
+      75,
+      75,
+      75,
+      75,
+      75,
+      75,
+      75,
+      75
+     ],
+     "bucle": true
+    },
+    "morir": {
+     "fila": 8,
+     "cuadros": 12,
+     "ms": [
+      90,
+      90,
+      90,
+      100,
+      90,
+      90,
+      100,
+      100,
+      110,
+      120,
+      140,
+      900
+     ],
+     "bucle": false,
+     "nota": "Se tambalea, suelta su ascua (chispas) y se desploma."
+    }
+   }
+  },
+  "jefe-abadesa": {
+   "archivo": "enemigos/jefe-abadesa.png",
+   "celda": {
+    "ancho": 96,
+    "alto": 96
+   },
+   "ancla": {
+    "x": 48,
+    "y": 91
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90
+     ],
+     "bucle": true
+    },
+    "barrido": {
+     "fila": 2,
+     "cuadros": 8,
+     "ms": [
+      80,
+      90,
+      110,
+      50,
+      60,
+      80,
+      90,
+      100
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe": 3
+     },
+     "nota": "Barre con sus muchas manos."
+    },
+    "salto": {
+     "fila": 3,
+     "cuadros": 9,
+     "ms": [
+      90,
+      110,
+      60,
+      60,
+      80,
+      50,
+      60,
+      120,
+      120
+     ],
+     "bucle": false,
+     "eventos": {
+      "despega": 2,
+      "aterriza": 6
+     },
+     "nota": "Se eleva y cae sobre el jugador. Furioso, al aterrizar suelta la onda expansiva."
+    },
+    "lluvia": {
+     "fila": 4,
+     "cuadros": 7,
+     "ms": [
+      100,
+      100,
+      90,
+      80,
+      70,
+      90,
+      100
+     ],
+     "bucle": false,
+     "eventos": {
+      "disparo": 4
+     },
+     "nota": "Lluvia de rezos de alma."
+    },
+    "enfurecerse": {
+     "fila": 5,
+     "cuadros": 10,
+     "ms": [
+      80,
+      70,
+      70,
+      70,
+      90,
+      70,
+      70,
+      90,
+      110,
+      160
+     ],
+     "bucle": false,
+     "eventos": {
+      "cambio": 4
+     },
+     "nota": "El halo arde y el rostro se vuelve rojo."
+    },
+    "quieto-furioso": {
+     "fila": 6,
+     "cuadros": 8,
+     "ms": [
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110
+     ],
+     "bucle": true
+    },
+    "caminar-furioso": {
+     "fila": 7,
+     "cuadros": 8,
+     "ms": [
+      75,
+      75,
+      75,
+      75,
+      75,
+      75,
+      75,
+      75
+     ],
+     "bucle": true
+    },
+    "morir": {
+     "fila": 8,
+     "cuadros": 12,
+     "ms": [
+      90,
+      90,
+      90,
+      100,
+      90,
+      90,
+      100,
+      100,
+      110,
+      120,
+      140,
+      900
+     ],
+     "bucle": false,
+     "nota": "Se tambalea, suelta su ascua (chispas) y se desploma."
+    }
+   }
+  },
+  "jefe-caballero-de-ceniza": {
+   "archivo": "enemigos/jefe-caballero-de-ceniza.png",
+   "celda": {
+    "ancho": 96,
+    "alto": 96
+   },
+   "ancla": {
+    "x": 48,
+    "y": 91
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90
+     ],
+     "bucle": true
+    },
+    "barrido": {
+     "fila": 2,
+     "cuadros": 8,
+     "ms": [
+      80,
+      90,
+      110,
+      50,
+      60,
+      80,
+      90,
+      100
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe": 3
+     },
+     "nota": "Barre con el espadón encendido."
+    },
+    "salto": {
+     "fila": 3,
+     "cuadros": 9,
+     "ms": [
+      90,
+      110,
+      60,
+      60,
+      80,
+      50,
+      60,
+      120,
+      120
+     ],
+     "bucle": false,
+     "eventos": {
+      "despega": 2,
+      "aterriza": 6
+     },
+     "nota": "Carga y salta con todo el peso de la armadura. Furioso, al aterrizar suelta la onda expansiva."
+    },
+    "lluvia": {
+     "fila": 4,
+     "cuadros": 7,
+     "ms": [
+      100,
+      100,
+      90,
+      80,
+      70,
+      90,
+      100
+     ],
+     "bucle": false,
+     "eventos": {
+      "disparo": 4
+     },
+     "nota": "Clava la espada y llueven brasas."
+    },
+    "enfurecerse": {
+     "fila": 5,
+     "cuadros": 10,
+     "ms": [
+      80,
+      70,
+      70,
+      70,
+      90,
+      70,
+      70,
+      90,
+      110,
+      160
+     ],
+     "bucle": false,
+     "eventos": {
+      "cambio": 4
+     },
+     "nota": "La armadura se agrieta en llamas."
+    },
+    "quieto-furioso": {
+     "fila": 6,
+     "cuadros": 8,
+     "ms": [
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110
+     ],
+     "bucle": true
+    },
+    "caminar-furioso": {
+     "fila": 7,
+     "cuadros": 8,
+     "ms": [
+      75,
+      75,
+      75,
+      75,
+      75,
+      75,
+      75,
+      75
+     ],
+     "bucle": true
+    },
+    "morir": {
+     "fila": 8,
+     "cuadros": 12,
+     "ms": [
+      90,
+      90,
+      90,
+      100,
+      90,
+      90,
+      100,
+      100,
+      110,
+      120,
+      140,
+      900
+     ],
+     "bucle": false,
+     "nota": "Se tambalea, suelta su ascua (chispas) y se desploma."
+    }
+   }
+  },
+  "jefe-el-que-mira": {
+   "archivo": "enemigos/jefe-el-que-mira.png",
+   "celda": {
+    "ancho": 96,
+    "alto": 96
+   },
+   "ancla": {
+    "x": 48,
+    "y": 91
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140
+     ],
+     "bucle": true
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90,
+      90
+     ],
+     "bucle": true
+    },
+    "barrido": {
+     "fila": 2,
+     "cuadros": 8,
+     "ms": [
+      80,
+      90,
+      110,
+      50,
+      60,
+      80,
+      90,
+      100
+     ],
+     "bucle": false,
+     "eventos": {
+      "golpe": 3
+     },
+     "nota": "Barre con los tentáculos."
+    },
+    "salto": {
+     "fila": 3,
+     "cuadros": 9,
+     "ms": [
+      90,
+      110,
+      60,
+      60,
+      80,
+      50,
+      60,
+      120,
+      120
+     ],
+     "bucle": false,
+     "eventos": {
+      "despega": 2,
+      "aterriza": 6
+     },
+     "nota": "Se eleva y cae haciendo temblar el Umbral. Furioso, al aterrizar suelta la onda expansiva."
+    },
+    "lluvia": {
+     "fila": 4,
+     "cuadros": 7,
+     "ms": [
+      100,
+      100,
+      90,
+      80,
+      70,
+      90,
+      100
+     ],
+     "bucle": false,
+     "eventos": {
+      "disparo": 4
+     },
+     "nota": "Lluvia de ojos en abanico (9 si está furioso)."
+    },
+    "enfurecerse": {
+     "fila": 5,
+     "cuadros": 10,
+     "ms": [
+      80,
+      70,
+      70,
+      70,
+      90,
+      70,
+      70,
+      90,
+      110,
+      160
+     ],
+     "bucle": false,
+     "eventos": {
+      "cambio": 4
+     },
+     "nota": "Se abre del todo: el iris pasa a brasa y la carne se enrojece."
+    },
+    "quieto-furioso": {
+     "fila": 6,
+     "cuadros": 8,
+     "ms": [
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110
+     ],
+     "bucle": true
+    },
+    "caminar-furioso": {
+     "fila": 7,
+     "cuadros": 8,
+     "ms": [
+      75,
+      75,
+      75,
+      75,
+      75,
+      75,
+      75,
+      75
+     ],
+     "bucle": true
+    },
+    "morir": {
+     "fila": 8,
+     "cuadros": 12,
+     "ms": [
+      90,
+      90,
+      90,
+      100,
+      90,
+      90,
+      100,
+      100,
+      110,
+      120,
+      140,
+      900
+     ],
+     "bucle": false,
+     "nota": "Se tambalea, suelta su ascua (chispas) y se desploma."
+    }
+   }
   }
  },
  "efectos": {
@@ -2236,6 +4559,55 @@
       "danio": 2
      },
      "nota": "Onda expansiva del Rey furioso al aterrizar: un anillo de brasa con 9 ojos que se abre hasta 60 px de radio. Centro en (64, 64)."
+    }
+   }
+  },
+  "efectos-2": {
+   "archivo": "enemigos/efectos-2.png",
+   "celda": {
+    "ancho": 32,
+    "alto": 32
+   },
+   "ancla": {
+    "x": 16,
+    "y": 16
+   },
+   "animaciones": {
+    "esquirla": {
+     "fila": 0,
+     "cuadros": 4,
+     "ms": [
+      60,
+      60,
+      60,
+      60
+     ],
+     "bucle": true,
+     "nota": "Esquirla de sal (Cristal vivo, Capataz de Sal)."
+    },
+    "brasa": {
+     "fila": 1,
+     "cuadros": 4,
+     "ms": [
+      70,
+      70,
+      70,
+      70
+     ],
+     "bucle": true,
+     "nota": "Brasa pequeña (Estandarte poseído, Caballero de Ceniza, Madre Cirio)."
+    },
+    "rayo": {
+     "fila": 2,
+     "cuadros": 4,
+     "ms": [
+      50,
+      50,
+      50,
+      50
+     ],
+     "bucle": true,
+     "nota": "Rayo del Vigía (se estira a lo largo de su trayectoria)."
     }
    }
   }

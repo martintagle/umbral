@@ -71,8 +71,12 @@ class TipoEnemigo {
   /// `golpe2`... (o `disparo`) marcan cada impacto del combo.
   final String animacionAtaque;
 
-  /// Animación de `efectos.png` de sus proyectiles.
+  /// Animación de `efectos.png` o `efectos-2.png` de sus proyectiles.
   final String? efectoProyectil;
+
+  /// Lo que dice un custodio al caer y el ascua que deja.
+  final String? ultimasPalabras;
+  final String? ascua;
 
   const TipoEnemigo({
     required this.id,
@@ -101,6 +105,8 @@ class TipoEnemigo {
     double? alturaCentro,
     required this.animacionAtaque,
     this.efectoProyectil,
+    this.ultimasPalabras,
+    this.ascua,
   }) : alturaCentro = alturaCentro ?? (vuela ? 10 : 6);
 
   /// Su hoja en `assets/sprites/animaciones/hojas.json`.
@@ -235,9 +241,407 @@ abstract final class Enemigos {
     alturaCentro: 14,
     animacionAtaque: 'barrido',
     efectoProyectil: 'ojo',
+    ultimasPalabras: 'Tanto mirar… y nunca vi quién venía.',
+    ascua: 'Ascua de Hueso',
   );
 
-  /// Las criaturas que aparecen en el mundo y en las salas (el jefe va
+  // Zona 2, Ciénaga de Cera. Las criaturas de cada zona vuelven en la
+  // siguiente como las más débiles (`docs/guion.md`).
+
+  /// Rápido y errático: pica tres veces.
+  static const enjambre = TipoEnemigo(
+    id: 'enjambre',
+    nombre: 'Enjambre',
+    vida: 70,
+    dano: 20,
+    velocidad: 48,
+    deteccion: 100,
+    alcance: 10,
+    preparacion: 0.26,
+    recarga: 0.8,
+    vuela: true,
+    erratico: 1.2,
+    combo: 3,
+    animacionAtaque: 'picar',
+  );
+
+  /// Se agazapa y cae encima desde lejos.
+  static const sapoLapida = TipoEnemigo(
+    id: 'sapo-lapida',
+    nombre: 'Sapo lápida',
+    vida: 170,
+    dano: 44,
+    velocidad: 30,
+    deteccion: 105,
+    alcance: 40,
+    preparacion: 0.6,
+    recarga: 1.5,
+    embestida: 200,
+    firme: true,
+    radio: 8,
+    animacionAtaque: 'salto',
+  );
+
+  /// Lento y firme; el golpe pega cera y frena.
+  static const ahogadoDeCera = TipoEnemigo(
+    id: 'ahogado-de-cera',
+    nombre: 'Ahogado de cera',
+    vida: 240,
+    dano: 40,
+    velocidad: 22,
+    deteccion: 90,
+    alcance: 14,
+    preparacion: 0.7,
+    recarga: 1.4,
+    ralentiza: 1.0,
+    firme: true,
+    radio: 8,
+    animacionAtaque: 'golpe',
+  );
+
+  // Zona 3, Minas de Sal Negra.
+
+  /// Dos picazos seguidos.
+  static const mineroHueco = TipoEnemigo(
+    id: 'minero-hueco',
+    nombre: 'Minero hueco',
+    vida: 230,
+    dano: 36,
+    velocidad: 34,
+    deteccion: 95,
+    alcance: 14,
+    preparacion: 0.45,
+    recarga: 1.1,
+    combo: 2,
+    animacionAtaque: 'picazo',
+  );
+
+  /// Sale del suelo y embiste en línea recta.
+  static const gusanoDeSal = TipoEnemigo(
+    id: 'gusano-de-sal',
+    nombre: 'Gusano de sal',
+    vida: 280,
+    dano: 58,
+    velocidad: 36,
+    deteccion: 110,
+    alcance: 46,
+    preparacion: 0.6,
+    recarga: 1.6,
+    embestida: 230,
+    radio: 8,
+    animacionAtaque: 'embestir',
+  );
+
+  /// No se mueve: suelta un abanico de cinco esquirlas.
+  static const cristalVivo = TipoEnemigo(
+    id: 'cristal-vivo',
+    nombre: 'Cristal vivo',
+    vida: 320,
+    dano: 34,
+    velocidad: 0,
+    deteccion: 120,
+    alcance: 95,
+    preparacion: 0.75,
+    recarga: 2.0,
+    ataque: Ataque.distancia,
+    firme: true,
+    proyectiles: 5,
+    colorProyectil: Colores.hueso,
+    velocidadProyectil: 130,
+    animacionAtaque: 'esquirlas',
+    efectoProyectil: 'esquirla',
+  );
+
+  // Zona 4, Abadía Hundida.
+
+  /// Vuela alto y cae en picado.
+  static const gargolaRota = TipoEnemigo(
+    id: 'gargola-rota',
+    nombre: 'Gárgola rota',
+    vida: 320,
+    dano: 58,
+    velocidad: 44,
+    deteccion: 120,
+    alcance: 50,
+    preparacion: 0.55,
+    recarga: 1.5,
+    vuela: true,
+    embestida: 240,
+    animacionAtaque: 'picado',
+  );
+
+  /// Reza desde lejos y se cura si no la alcanzas.
+  static const monjaSinRostro = TipoEnemigo(
+    id: 'monja-sin-rostro',
+    nombre: 'Monja sin rostro',
+    vida: 300,
+    dano: 46,
+    velocidad: 26,
+    deteccion: 125,
+    alcance: 100,
+    preparacion: 0.7,
+    recarga: 1.8,
+    ataque: Ataque.distancia,
+    proyectiles: 3,
+    colorProyectil: Colores.alma,
+    velocidadProyectil: 115,
+    tamanoProyectil: 3,
+    regeneracion: 12,
+    animacionAtaque: 'rezo',
+    efectoProyectil: 'polvo',
+  );
+
+  /// La onda de la campana te deja lento.
+  static const campanero = TipoEnemigo(
+    id: 'campanero',
+    nombre: 'Campanero',
+    vida: 460,
+    dano: 62,
+    velocidad: 24,
+    deteccion: 95,
+    alcance: 22,
+    preparacion: 0.85,
+    recarga: 1.8,
+    ralentiza: 1.6,
+    firme: true,
+    radio: 9,
+    animacionAtaque: 'campanada',
+  );
+
+  // Zona 5, Páramo de Ceniza.
+
+  /// Flota y dispara brasas en abanico.
+  static const estandartePoseido = TipoEnemigo(
+    id: 'estandarte-poseido',
+    nombre: 'Estandarte poseído',
+    vida: 420,
+    dano: 52,
+    velocidad: 36,
+    deteccion: 130,
+    alcance: 105,
+    preparacion: 0.6,
+    recarga: 1.6,
+    ataque: Ataque.distancia,
+    vuela: true,
+    proyectiles: 3,
+    colorProyectil: Colores.brasa,
+    velocidadProyectil: 135,
+    animacionAtaque: 'brasas',
+    efectoProyectil: 'brasa',
+  );
+
+  /// Embiste a toda velocidad desde muy lejos.
+  static const caballoSinJinete = TipoEnemigo(
+    id: 'caballo-sin-jinete',
+    nombre: 'Caballo sin jinete',
+    vida: 560,
+    dano: 80,
+    velocidad: 46,
+    deteccion: 140,
+    alcance: 60,
+    preparacion: 0.5,
+    recarga: 1.7,
+    embestida: 270,
+    firme: true,
+    radio: 10,
+    animacionAtaque: 'embestida',
+  );
+
+  /// La amenaza más dura del páramo: tres tajos.
+  static const soldadoDeCeniza = TipoEnemigo(
+    id: 'soldado-de-ceniza',
+    nombre: 'Soldado de ceniza',
+    vida: 600,
+    dano: 54,
+    velocidad: 38,
+    deteccion: 110,
+    alcance: 15,
+    preparacion: 0.4,
+    recarga: 1.2,
+    combo: 3,
+    firme: true,
+    animacionAtaque: 'tajos',
+  );
+
+  // Zona 6, El Umbral.
+
+  /// Fija en el suelo: muerde desde abajo si pisas cerca.
+  static const bocaDelHueco = TipoEnemigo(
+    id: 'boca-del-hueco',
+    nombre: 'Boca del Hueco',
+    vida: 700,
+    dano: 96,
+    velocidad: 0,
+    deteccion: 60,
+    alcance: 16,
+    preparacion: 0.5,
+    recarga: 1.6,
+    firme: true,
+    radio: 10,
+    animacionAtaque: 'morder',
+  );
+
+  /// Un ojo sobre un tallo: rayo rápido y largo.
+  static const vigia = TipoEnemigo(
+    id: 'vigia',
+    nombre: 'Vigía',
+    vida: 620,
+    dano: 72,
+    velocidad: 0,
+    deteccion: 150,
+    alcance: 120,
+    preparacion: 0.8,
+    recarga: 1.9,
+    ataque: Ataque.distancia,
+    firme: true,
+    colorProyectil: Colores.sangre,
+    velocidadProyectil: 170,
+    tamanoProyectil: 3,
+    animacionAtaque: 'rayo',
+    efectoProyectil: 'rayo',
+  );
+
+  /// Tu reflejo: rápida, esquiva y con daga.
+  static const sombraSinNombre = TipoEnemigo(
+    id: 'sombra-sin-nombre',
+    nombre: 'Sombra sin nombre',
+    vida: 760,
+    dano: 70,
+    velocidad: 50,
+    deteccion: 130,
+    alcance: 14,
+    preparacion: 0.32,
+    recarga: 0.9,
+    erratico: 0.6,
+    combo: 2,
+    animacionAtaque: 'tajos',
+  );
+
+  // Custodios de las zonas 2 a 6. Pelean como el Rey Hueco: barrido, salto,
+  // lluvia y, a media vida, furia.
+
+  static const madreCirio = TipoEnemigo(
+    id: 'jefe-madre-cirio',
+    nombre: 'La Madre Cirio',
+    vida: 1500,
+    dano: 62,
+    velocidad: 28,
+    deteccion: 150,
+    alcance: 32,
+    preparacion: 0.75,
+    recarga: 1.0,
+    embestida: 170,
+    colorProyectil: Colores.brasa,
+    velocidadProyectil: 115,
+    tamanoProyectil: 4,
+    firme: true,
+    jefe: true,
+    radio: 12,
+    alturaCentro: 16,
+    animacionAtaque: 'barrido',
+    efectoProyectil: 'fuego',
+    ultimasPalabras: 'Se me apagaron todas… ¿cuál eras tú?',
+    ascua: 'Ascua de Cera',
+  );
+
+  static const capatazDeSal = TipoEnemigo(
+    id: 'jefe-capataz-de-sal',
+    nombre: 'El Capataz de Sal',
+    vida: 2300,
+    dano: 82,
+    velocidad: 30,
+    deteccion: 150,
+    alcance: 34,
+    preparacion: 0.7,
+    recarga: 1.0,
+    embestida: 190,
+    colorProyectil: Colores.hueso,
+    velocidadProyectil: 125,
+    tamanoProyectil: 4,
+    firme: true,
+    jefe: true,
+    radio: 12,
+    alturaCentro: 16,
+    animacionAtaque: 'barrido',
+    efectoProyectil: 'esquirla',
+    ultimasPalabras: 'Turno terminado… por fin.',
+    ascua: 'Ascua de Sal',
+  );
+
+  static const abadesa = TipoEnemigo(
+    id: 'jefe-abadesa',
+    nombre: 'La Abadesa de las Mil Manos',
+    vida: 3300,
+    dano: 104,
+    velocidad: 30,
+    deteccion: 160,
+    alcance: 36,
+    preparacion: 0.7,
+    recarga: 0.95,
+    embestida: 180,
+    ralentiza: 1.2,
+    colorProyectil: Colores.brasa,
+    velocidadProyectil: 120,
+    tamanoProyectil: 4,
+    firme: true,
+    jefe: true,
+    radio: 12,
+    alturaCentro: 16,
+    animacionAtaque: 'barrido',
+    efectoProyectil: 'fuego',
+    ultimasPalabras: 'Recé con todas… y ninguna alcanzó.',
+    ascua: 'Ascua de Plegaria',
+  );
+
+  static const caballeroDeCeniza = TipoEnemigo(
+    id: 'jefe-caballero-de-ceniza',
+    nombre: 'El Caballero de Ceniza',
+    vida: 4600,
+    dano: 130,
+    velocidad: 36,
+    deteccion: 170,
+    alcance: 38,
+    preparacion: 0.6,
+    recarga: 0.9,
+    embestida: 230,
+    colorProyectil: Colores.brasa,
+    velocidadProyectil: 140,
+    tamanoProyectil: 4,
+    firme: true,
+    jefe: true,
+    radio: 12,
+    alturaCentro: 16,
+    animacionAtaque: 'barrido',
+    efectoProyectil: 'brasa',
+    ultimasPalabras: 'Cumplí… ¿verdad?',
+    ascua: 'Ascua de Juramento',
+  );
+
+  /// No es un custodio caído: es lo que esperaba del otro lado.
+  static const elQueMira = TipoEnemigo(
+    id: 'jefe-el-que-mira',
+    nombre: 'El Que Mira',
+    vida: 6500,
+    dano: 160,
+    velocidad: 32,
+    deteccion: 200,
+    alcance: 40,
+    preparacion: 0.6,
+    recarga: 0.85,
+    embestida: 200,
+    colorProyectil: Colores.alma,
+    velocidadProyectil: 135,
+    tamanoProyectil: 4,
+    firme: true,
+    jefe: true,
+    radio: 13,
+    alturaCentro: 18,
+    animacionAtaque: 'barrido',
+    efectoProyectil: 'ojo',
+    ascua: 'Ascua Última',
+  );
+
+  /// Las criaturas que aparecen en el mundo y en las salas (los jefes van
   /// aparte).
   static const todos = [
     ojoErrante,
@@ -246,8 +650,32 @@ abstract final class Enemigos {
     larvaCirio,
     manojo,
     ahorcadoFungico,
+    enjambre,
+    sapoLapida,
+    ahogadoDeCera,
+    mineroHueco,
+    gusanoDeSal,
+    cristalVivo,
+    gargolaRota,
+    monjaSinRostro,
+    campanero,
+    estandartePoseido,
+    caballoSinJinete,
+    soldadoDeCeniza,
+    bocaDelHueco,
+    vigia,
+    sombraSinNombre,
+  ];
+
+  static const jefes = [
+    reyHueco,
+    madreCirio,
+    capatazDeSal,
+    abadesa,
+    caballeroDeCeniza,
+    elQueMira,
   ];
 
   static TipoEnemigo? porId(String id) =>
-      [...todos, reyHueco].where((t) => t.id == id).firstOrNull;
+      [...todos, ...jefes].where((t) => t.id == id).firstOrNull;
 }

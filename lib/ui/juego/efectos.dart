@@ -256,7 +256,8 @@ class Proyectil extends PositionComponent with HasGameReference<UmbralJuego> {
   final double tamano;
   final Color color;
 
-  /// Animación de `efectos.png` que lo dibuja, apuntando hacia donde vuela;
+  /// Animación de `efectos.png` o `efectos-2.png` que lo dibuja, apuntando
+  /// hacia donde vuela;
   /// sin ella es una línea o un cuadrado de [color].
   final String? efecto;
   double _recorrido = 0;
@@ -276,7 +277,12 @@ class Proyectil extends PositionComponent with HasGameReference<UmbralJuego> {
        super(position: origen, priority: prioridadEfectos - 2) {
     if (efecto case final nombre?) {
       add(
-        ModeloAnimado(Hojas.de(Hojas.efectos), paint: pinturaSprites())
+        ModeloAnimado(
+          Hojas.de(Hojas.efectos).tiene(nombre)
+              ? Hojas.de(Hojas.efectos)
+              : Hojas.de(Hojas.efectos2),
+          paint: pinturaSprites(),
+        )
           ..scale = Vector2.all(escalaSprites)
           ..angle = atan2(velocidad.y, velocidad.x)
           ..reproducir(nombre),

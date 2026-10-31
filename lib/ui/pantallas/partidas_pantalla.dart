@@ -46,32 +46,55 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
     _cargar();
   }
 
+  /// Cada carga lleva un número: si llega tarde la respuesta de una anterior,
+  /// no pisa a la más reciente.
+  int _carga = 0;
+
   Future<void> _cargar() async {
+    final carga = ++_carga;
     setState(() => _error = null);
+    // Mientras llega la del servidor, la lista guardada en el teléfono: tiene
+    // lo último que devolvió el servidor (niveles, oro, equipo).
+    final guardadas = await _api.partidasGuardadas();
+    if (guardadas != null && carga == _carga && mounted) {
+      setState(() => _partidas = _ordenadas(guardadas));
+    }
     try {
-      // Con la sesión recordada se refresca el usuario (y se comprueba que el
-      // token sigue valiendo). Sin conexión se sigue con el del teléfono.
-      if (!_usuarioAlDia) {
-        try {
-          await UsuarioApi().obtenerYo();
-          _usuarioAlDia = true;
-        } on ApiExcepcion catch (e) {
-          if (!e.sinConexion) rethrow;
-        }
+      // Las tres peticiones van a la vez: con la API recién despertada, en
+      // serie sumaban varias esperas.
+      final resultados = await Future.wait([
+        _refrescarUsuario(),
+        // Las tarjetas muestran el nombre de la clase de cada personaje. Suele
+        // estar ya en caché: se pide al abrir la app.
+        ClaseApi().catalogo(),
+        _api.listarPartidas(),
+      ]);
+      final partidas = resultados[2] as List<PartidaJugable>;
+      if (carga == _carga && mounted) {
+        setState(() => _partidas = _ordenadas(partidas));
       }
-      // Las tarjetas muestran el nombre de la clase de cada personaje. Suele
-      // estar ya en caché: se pide al abrir la app.
-      await ClaseApi().catalogo();
-      final partidas = await _api.listarPartidas();
-      partidas.sort(
+    } on ApiExcepcion catch (e) {
+      if (carga == _carga) _mostrarError(e);
+    }
+  }
+
+  /// Con la sesión recordada se refresca el usuario (y se comprueba que el
+  /// token sigue valiendo). Sin conexión se sigue con el del teléfono.
+  Future<void> _refrescarUsuario() async {
+    if (_usuarioAlDia) return;
+    try {
+      await UsuarioApi().obtenerYo();
+      _usuarioAlDia = true;
+    } on ApiExcepcion catch (e) {
+      if (!e.sinConexion) rethrow;
+    }
+  }
+
+  static List<PartidaJugable> _ordenadas(List<PartidaJugable> partidas) =>
+      partidas..sort(
         (a, b) =>
             b.partida.ultimaVezJugada.compareTo(a.partida.ultimaVezJugada),
       );
-      if (mounted) setState(() => _partidas = partidas);
-    } on ApiExcepcion catch (e) {
-      _mostrarError(e);
-    }
-  }
 
   void _mostrarError(ApiExcepcion e) {
     if (!mounted) return;

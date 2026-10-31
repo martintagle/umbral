@@ -24,6 +24,8 @@ Map<String, dynamic> sumarProgresos(
     'segundosJugados': suma('segundosJugados'),
     'vidaActual': nuevo['vidaActual'],
     'ubicacion': nuevo['ubicacion'],
+    'cofresAbiertos': {..._cofres(anterior), ..._cofres(nuevo)}.toList(),
+    'oroCofres': _oroCofres(anterior) + _oroCofres(nuevo),
   };
 }
 
@@ -47,11 +49,18 @@ Map<String, dynamic> partidaConProgreso(
       'personaje': {
         ...p,
         'exp': (p['exp'] as int) + (progreso['exp'] as int),
-        'oro': (p['oro'] as int) + (progreso['oro'] as int),
+        'oro':
+            (p['oro'] as int) +
+            (progreso['oro'] as int) +
+            _oroCofres(progreso),
         'vidaActual': progreso['vidaActual'],
         'ubicacion': progreso['ubicacion'],
         'mundo': {
           ...mundo,
+          'cofresAbiertos': {
+            ...(mundo['cofresAbiertos'] as List).cast<String>(),
+            ..._cofres(progreso),
+          }.toList(),
           'jefesDerrotados': {
             ...(mundo['jefesDerrotados'] as List).cast<String>(),
             ...enemigos.keys.where(jefes.contains),
@@ -74,3 +83,10 @@ Map<String, dynamic> partidaConProgreso(
 
 Map<String, int> _enemigos(Map<String, dynamic> progreso) =>
     (progreso['enemigosDerrotados'] as Map).cast<String, int>();
+
+/// Los progresos guardados antes de que hubiera cofres no los traen.
+List<String> _cofres(Map<String, dynamic> progreso) =>
+    (progreso['cofresAbiertos'] as List? ?? const []).cast<String>();
+
+int _oroCofres(Map<String, dynamic> progreso) =>
+    progreso['oroCofres'] as int? ?? 0;

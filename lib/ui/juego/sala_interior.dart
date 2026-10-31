@@ -18,7 +18,7 @@ const _lado = 16.0;
 /// Una sala interior (`docs/diseno/interiores.md`). Se crea una vez por sala y
 /// se conserva: lo abierto sigue abierto hasta descansar.
 class SalaInterior extends Escenario {
-  SalaInterior(this.mapa, this.sala) {
+  SalaInterior(this.sala) : mapa = sala.mapa {
     _solido = Uint8List(sala.ancho * sala.alto);
     for (var y = 0; y < sala.alto; y++) {
       for (var x = 0; x < sala.ancho; x++) {
@@ -43,10 +43,18 @@ class SalaInterior extends Escenario {
   @override
   bool get interior => true;
 
-  /// La cripta suena a criaturas que se arrastran en la oscuridad.
+  /// La cripta y las mazmorras suenan a criaturas que se arrastran en la
+  /// oscuridad.
   @override
   String? get pista =>
-      sala.estructura == 'entrada-de-cripta' ? Audios.ambienteCripta : null;
+      sala.estructura == 'entrada-de-cripta' || mapa.zona != null
+          ? Audios.ambienteCripta
+          : null;
+
+  /// El custodio del punto `jefe`: el de la mazmorra o, en la cripta, el Rey
+  /// Hueco.
+  TipoEnemigo get tipoJefe =>
+      Enemigos.porId(mapa.jefe ?? '') ?? Enemigos.reyHueco;
 
   /// El jefe de esta sala, si está despierto y en pie: sella la salida.
   bool get _sellada {
@@ -84,6 +92,10 @@ class SalaInterior extends Escenario {
         altar = mapa.objeto('altar-brasas'),
         altarCapilla = mapa.objeto('altar-capilla'),
         vitral = mapa.objeto('vitral'),
+        velas = mapa.objeto('velas'),
+        brasero = mapa.objeto('brasero'),
+        cristal = mapa.objeto('cristal'),
+        ojo = mapa.objeto('ojo'),
         salida = mapa.suelo('umbral-salida');
     for (var y = 0; y < sala.alto; y++) {
       for (var x = 0; x < sala.ancho; x++) {
@@ -93,6 +105,10 @@ class SalaInterior extends Escenario {
         if (o == altar) luz(x, y, 42, Colores.brasa);
         if (o == altarCapilla) luz(x, y, 26, Colores.brasa);
         if (o == vitral) luz(x, y, 22, Colores.alma);
+        if (o == velas) luz(x, y, 30, Colores.brasa);
+        if (o == brasero) luz(x, y, 40, Colores.brasa);
+        if (o == cristal) luz(x, y, 20, Colores.alma);
+        if (o == ojo) luz(x, y, 14, Colores.sangre);
         if (sala.suelo[y][x] == salida) luz(x, y, 22, null, alto: 0);
       }
     }
@@ -145,12 +161,11 @@ class SalaInterior extends Escenario {
         }
       }
     }
-    // El Rey Hueco espera delante de su trono, si aún no ha caído. Crece la
-    // mitad que el resto: ya cuesta bastante vencerlo.
+    // El custodio espera en su sitio, si aún no ha caído. Crece la mitad que
+    // el resto: ya cuesta bastante vencerlo.
     if (sala.punto('jefe') case final p?
-        when !game.jefesDerrotados.contains(Enemigos.reyHueco.id)) {
-      add(Enemigo(Enemigos.reyHueco, piesEn(p.x, p.y),
-          fuerza: 1 + (fuerza - 1) / 2));
+        when !game.jefesDerrotados.contains(tipoJefe.id)) {
+      add(Enemigo(tipoJefe, piesEn(p.x, p.y), fuerza: 1 + (fuerza - 1) / 2));
     }
   }
 
@@ -236,6 +251,15 @@ class SalaInterior extends Escenario {
 
   @override
   List<AccionContexto> accionesEn(Vector2 pies) {
+    // Vencido el Rey Hueco, tras el trono baja un pasadizo hacia la ciénaga.
+    if (sala.punto('jefe') case final j?
+        when mapa.zona == null &&
+            game.jefesDerrotados.contains(tipoJefe.id) &&
+            piesEn(j.x, j.y).distanceTo(pies) < 32) {
+      return [
+        AccionContexto('Bajar por el pasadizo', game.bajarPorElPasadizo),
+      ];
+    }
     PuntoSala? cerca;
     var mejor = _distanciaInteraccion;
     for (final p in sala.puntos) {
@@ -304,6 +328,11 @@ class SalaInterior extends Escenario {
     } else if (sala.slug == 'cripta-osario') {
       game.rellenarFrascos(
           'Un frasco de brasas a medio llenar. Tus frascos y tu vida se renuevan.');
+    } else if (mapa.zona != null) {
+      // En las mazmorras, lo que guarda el cofre arde como un frasco. El texto
+      // entre paréntesis es una nota de diseño: no se muestra.
+      final hallazgo = p.texto.replaceAll(RegExp(r'\s*\(.*\)'), '');
+      game.rellenarFrascos('$hallazgo. Tus frascos y tu vida se renuevan.');
     } else {
       game.mostrarAviso('El cofre está vacío. Alguien llegó antes.');
     }

@@ -4,9 +4,12 @@ import 'package:flutter/services.dart';
 
 typedef PuntoSala = ({String tipo, int x, int y, String texto});
 
-/// Una sala de `assets/interiores/interiores.json`. Las posiciones están en
-/// tiles.
+/// Una sala de `assets/interiores/interiores.json` o de una mazmorra
+/// (`mazmorra-<zona>.json`). Las posiciones están en tiles.
 class Sala {
+  /// El archivo de la sala: su tileset, sus reglas y su jefe.
+  late final MapaInteriores mapa;
+
   final String slug;
   final String nombre;
 
@@ -44,8 +47,31 @@ class Sala {
   ];
 }
 
-/// Las salas interiores (ver `docs/diseno/interiores.md`) y su tileset.
+/// Un archivo de salas interiores (ver `docs/diseno/interiores.md` y
+/// `docs/mazmorras.md`) y su tileset.
 class MapaInteriores {
+  /// Mazmorras de los jefes de las zonas 2 a 6, además de `interiores.json`.
+  static const _mazmorras = [
+    'mazmorra-cienaga',
+    'mazmorra-minas',
+    'mazmorra-abadia',
+    'mazmorra-paramo',
+    'mazmorra-umbral',
+  ];
+
+  /// `null` en `interiores.json`.
+  final String? id;
+
+  /// Zona de la mazmorra; `null` en `interiores.json`, cuyas salas son de
+  /// la zona 1 (la cripta) o de cualquier zona (chozas, capilla, torre).
+  final String? zona;
+
+  /// Id del jefe que espera en el punto `jefe`; sin él, el Rey Hueco.
+  final String? jefe;
+
+  /// Ambiente de la mazmorra (`cera`, `sal`...).
+  final String? tema;
+
   /// Imagen del tileset, dentro de `assets/interiores/`.
   final String tileset;
   final int columnasTileset;
@@ -57,7 +83,11 @@ class MapaInteriores {
   final List<Sala> salas;
 
   MapaInteriores._(Map<String, dynamic> m)
-    : tileset = m['tileset'] as String,
+    : id = m['id'] as String?,
+      zona = m['zona'] as String?,
+      jefe = m['jefe'] as String?,
+      tema = m['tema'] as String?,
+      tileset = m['tileset'] as String,
       columnasTileset = m['columnasTileset'] as int,
       indiceObjetos = m['tiles']['indiceObjetos'] as int,
       nombresSuelo = List<String>.from(m['tiles']['suelo'] as List),
@@ -72,12 +102,21 @@ class MapaInteriores {
     for (final n in reglas['objetosTransitables'] as List) {
       objetosTransitables.add(nombresObjetos.indexOf(n as String));
     }
+    for (final s in salas) {
+      s.mapa = this;
+    }
   }
 
-  static Future<MapaInteriores> cargar() async => MapaInteriores._(
-    jsonDecode(await rootBundle.loadString('assets/interiores/interiores.json'))
+  static Future<MapaInteriores> _leer(String archivo) async => MapaInteriores._(
+    jsonDecode(await rootBundle.loadString('assets/interiores/$archivo.json'))
         as Map<String, dynamic>,
   );
+
+  /// `interiores.json` y las mazmorras.
+  static Future<Interiores> cargar() async => Interiores([
+    await _leer('interiores'),
+    for (final m in _mazmorras) await _leer(m),
+  ]);
 
   int objeto(String nombre) => nombresObjetos.indexOf(nombre);
   int suelo(String nombre) => nombresSuelo.indexOf(nombre);
@@ -110,4 +149,34 @@ class MapaInteriores {
     }
     return null;
   }
+}
+
+/// Todas las salas interiores, de todos los archivos.
+class Interiores {
+  Interiores(this.mapas);
+
+  final List<MapaInteriores> mapas;
+
+  late final List<Sala> salas = [for (final m in mapas) ...m.salas];
+
+  Sala? porSlug(String slug) => salas.where((s) => s.slug == slug).firstOrNull;
+
+  MapaInteriores? mazmorra(String id) =>
+      mapas.where((m) => m.id == id).firstOrNull;
+
+  /// Salas a las que se llega por la puerta de una estructura con ese sprite.
+  List<Sala> entradas(String estructura) => [
+    for (final m in mapas) ...m.entradas(estructura),
+  ];
+
+  Sala? arriba(Sala sala) => sala.mapa.arriba(sala);
+  Sala? abajo(Sala sala) => sala.mapa.abajo(sala);
+
+  /// Las salas que siguen a [entrada] escalera abajo, empezando por ella.
+  List<Sala> recorrido(Sala entrada) => [
+    for (Sala? s = entrada;
+        s != null;
+        s = s.punto('bajada') == null ? null : abajo(s))
+      s,
+  ];
 }

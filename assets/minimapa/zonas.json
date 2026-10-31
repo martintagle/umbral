@@ -1,0 +1,485 @@
+{
+ "version": 1,
+ "tamanoTile": 16,
+ "mapaMundo": "mapa-mundo-1x.png",
+ "mapaMundoIlustrado": "mapa-mundo.png",
+ "escalaIlustrado": 4,
+ "anchoMundo": 432,
+ "altoMundo": 206,
+ "nota": "Minimapas a 1 px por tile. En el juego, escálalos con filtro nearest y dibuja encima al jugador y los marcadores. \"mundo\" es el desplazamiento de cada zona dentro de mapa-mundo-1x.png.",
+ "zonas": [
+  {
+   "id": "tierras-del-umbral",
+   "numero": 1,
+   "nombre": "Tierras del Umbral",
+   "archivo": "mundo.json",
+   "ancho": 64,
+   "alto": 48,
+   "minimapa": "minimapa-zona-1.png",
+   "jefe": "El Rey Hueco",
+   "zonas": [
+    "Bosque Podrido",
+    "Aldea Cenizal",
+    "Cementerio de los Callados",
+    "Lago Negro",
+    "Ruinas del Sur"
+   ],
+   "marcadores": [
+    {
+     "tipo": "altar",
+     "x": 32,
+     "y": 20
+    },
+    {
+     "tipo": "jefe",
+     "x": 57,
+     "y": 24,
+     "nombre": "El Rey Hueco"
+    },
+    {
+     "tipo": "cofre",
+     "x": 9,
+     "y": 4,
+     "id": "cofre-hoz"
+    },
+    {
+     "tipo": "cofre",
+     "x": 10,
+     "y": 26,
+     "id": "cofre-llave"
+    },
+    {
+     "tipo": "cofre",
+     "x": 34,
+     "y": 43,
+     "id": "cofre-torre"
+    },
+    {
+     "tipo": "cofre",
+     "x": 61,
+     "y": 33,
+     "id": "cofre-cementerio"
+    },
+    {
+     "tipo": "portal",
+     "x": 52,
+     "y": 6
+    },
+    {
+     "tipo": "portal",
+     "x": 30,
+     "y": 29
+    },
+    {
+     "tipo": "portal",
+     "x": 12,
+     "y": 17
+    },
+    {
+     "tipo": "portal",
+     "x": 6,
+     "y": 35
+    }
+   ],
+   "mundo": {
+    "x": 14,
+    "y": 111
+   }
+  },
+  {
+   "id": "cienaga",
+   "numero": 2,
+   "nombre": "Ciénaga de Cera",
+   "archivo": "zona-2-cienaga.json",
+   "ancho": 72,
+   "alto": 54,
+   "minimapa": "minimapa-zona-2.png",
+   "jefe": "La Madre Cirio",
+   "zonas": [
+    "La Orilla de los Cirios",
+    "El Bosque Goteante",
+    "La Isla de las Cunas",
+    "El Santuario de la Madre"
+   ],
+   "marcadores": [
+    {
+     "tipo": "altar",
+     "x": 7,
+     "y": 27
+    },
+    {
+     "tipo": "altar",
+     "x": 49,
+     "y": 31
+    },
+    {
+     "tipo": "jefe",
+     "x": 61,
+     "y": 10,
+     "nombre": "La Madre Cirio"
+    },
+    {
+     "tipo": "cofre",
+     "x": 46,
+     "y": 5,
+     "id": "cofre-llave"
+    },
+    {
+     "tipo": "cofre",
+     "x": 36,
+     "y": 30,
+     "id": "cofre-secreto-cunas"
+    },
+    {
+     "tipo": "cofre",
+     "x": 34,
+     "y": 16,
+     "id": "cofre-bosque"
+    },
+    {
+     "tipo": "cofre",
+     "x": 27,
+     "y": 46,
+     "id": "cofre-sur"
+    },
+    {
+     "tipo": "cofre",
+     "x": 53,
+     "y": 39,
+     "id": "cofre-este"
+    },
+    {
+     "tipo": "portal",
+     "x": 31,
+     "y": 41
+    },
+    {
+     "tipo": "portal",
+     "x": 6,
+     "y": 24
+    }
+   ],
+   "mundo": {
+    "x": 98,
+    "y": 108
+   }
+  },
+  {
+   "id": "minas",
+   "numero": 3,
+   "nombre": "Minas de Sal Negra",
+   "archivo": "zona-3-minas.json",
+   "ancho": 80,
+   "alto": 60,
+   "minimapa": "minimapa-zona-3.png",
+   "jefe": "El Capataz de Sal",
+   "zonas": [
+    "La Bocamina",
+    "Las Galerías de Sal",
+    "El Lago Salobre",
+    "La Veta Profunda"
+   ],
+   "marcadores": [
+    {
+     "tipo": "altar",
+     "x": 16,
+     "y": 47
+    },
+    {
+     "tipo": "altar",
+     "x": 54,
+     "y": 28
+    },
+    {
+     "tipo": "jefe",
+     "x": 69,
+     "y": 46,
+     "nombre": "El Capataz de Sal"
+    },
+    {
+     "tipo": "cofre",
+     "x": 72,
+     "y": 7,
+     "id": "cofre-llave"
+    },
+    {
+     "tipo": "cofre",
+     "x": 38,
+     "y": 41,
+     "id": "cofre-secreto-lago"
+    },
+    {
+     "tipo": "cofre",
+     "x": 8,
+     "y": 27,
+     "id": "cofre-galeria"
+    },
+    {
+     "tipo": "cofre",
+     "x": 29,
+     "y": 46,
+     "id": "cofre-orilla"
+    },
+    {
+     "tipo": "cofre",
+     "x": 18,
+     "y": 54,
+     "id": "cofre-bocamina"
+    },
+    {
+     "tipo": "portal",
+     "x": 30,
+     "y": 16
+    },
+    {
+     "tipo": "portal",
+     "x": 33,
+     "y": 34
+    }
+   ],
+   "mundo": {
+    "x": 98,
+    "y": 28
+   }
+  },
+  {
+   "id": "abadia",
+   "numero": 4,
+   "nombre": "Abadía Hundida",
+   "archivo": "zona-4-abadia.json",
+   "ancho": 88,
+   "alto": 66,
+   "minimapa": "minimapa-zona-4.png",
+   "jefe": "La Abadesa de las Mil Manos",
+   "zonas": [
+    "El Atrio Inundado",
+    "El Claustro",
+    "El Cementerio de Campanas",
+    "La Nave Mayor"
+   ],
+   "marcadores": [
+    {
+     "tipo": "altar",
+     "x": 5,
+     "y": 26
+    },
+    {
+     "tipo": "altar",
+     "x": 42,
+     "y": 42
+    },
+    {
+     "tipo": "jefe",
+     "x": 47,
+     "y": 58,
+     "nombre": "La Abadesa de las Mil Manos"
+    },
+    {
+     "tipo": "cofre",
+     "x": 77,
+     "y": 7,
+     "id": "cofre-llave"
+    },
+    {
+     "tipo": "cofre",
+     "x": 5,
+     "y": 39,
+     "id": "cofre-secreto-atrio"
+    },
+    {
+     "tipo": "cofre",
+     "x": 21,
+     "y": 8,
+     "id": "cofre-sala-norte"
+    },
+    {
+     "tipo": "cofre",
+     "x": 58,
+     "y": 42,
+     "id": "cofre-claustro"
+    },
+    {
+     "tipo": "cofre",
+     "x": 83,
+     "y": 58,
+     "id": "cofre-cementerio"
+    },
+    {
+     "tipo": "portal",
+     "x": 10,
+     "y": 35
+    },
+    {
+     "tipo": "portal",
+     "x": 22,
+     "y": 40
+    }
+   ],
+   "mundo": {
+    "x": 198,
+    "y": 22
+   }
+  },
+  {
+   "id": "paramo",
+   "numero": 5,
+   "nombre": "Páramo de Ceniza",
+   "archivo": "zona-5-paramo.json",
+   "ancho": 96,
+   "alto": 72,
+   "minimapa": "minimapa-zona-5.png",
+   "jefe": "El Caballero de Ceniza",
+   "zonas": [
+    "El Campamento Caído",
+    "Las Trincheras",
+    "La Colina de los Estandartes",
+    "El Círculo del Juramento"
+   ],
+   "marcadores": [
+    {
+     "tipo": "altar",
+     "x": 19,
+     "y": 8
+    },
+    {
+     "tipo": "altar",
+     "x": 39,
+     "y": 16
+    },
+    {
+     "tipo": "jefe",
+     "x": 46,
+     "y": 30,
+     "nombre": "El Caballero de Ceniza"
+    },
+    {
+     "tipo": "cofre",
+     "x": 73,
+     "y": 12,
+     "id": "cofre-llave"
+    },
+    {
+     "tipo": "cofre",
+     "x": 80,
+     "y": 54,
+     "id": "cofre-secreto-charca"
+    },
+    {
+     "tipo": "cofre",
+     "x": 30,
+     "y": 4,
+     "id": "cofre-campamento"
+    },
+    {
+     "tipo": "cofre",
+     "x": 54,
+     "y": 68,
+     "id": "cofre-trinchera"
+    },
+    {
+     "tipo": "cofre",
+     "x": 90,
+     "y": 66,
+     "id": "cofre-sureste"
+    },
+    {
+     "tipo": "portal",
+     "x": 20,
+     "y": 67
+    },
+    {
+     "tipo": "portal",
+     "x": 82,
+     "y": 45
+    }
+   ],
+   "mundo": {
+    "x": 198,
+    "y": 108
+   }
+  },
+  {
+   "id": "umbral",
+   "numero": 6,
+   "nombre": "El Umbral",
+   "archivo": "zona-6-umbral.json",
+   "ancho": 104,
+   "alto": 78,
+   "minimapa": "minimapa-zona-6.png",
+   "jefe": "El Que Mira",
+   "zonas": [
+    "El Borde",
+    "Los Puentes de Hueso",
+    "El Jardín de Ojos",
+    "El Altar Mayor"
+   ],
+   "marcadores": [
+    {
+     "tipo": "altar",
+     "x": 6,
+     "y": 37
+    },
+    {
+     "tipo": "altar",
+     "x": 28,
+     "y": 38
+    },
+    {
+     "tipo": "altar",
+     "x": 63,
+     "y": 48
+    },
+    {
+     "tipo": "jefe",
+     "x": 60,
+     "y": 40,
+     "nombre": "El Que Mira"
+    },
+    {
+     "tipo": "cofre",
+     "x": 90,
+     "y": 61,
+     "id": "cofre-llave"
+    },
+    {
+     "tipo": "cofre",
+     "x": 10,
+     "y": 9,
+     "id": "cofre-secreto-islote"
+    },
+    {
+     "tipo": "cofre",
+     "x": 54,
+     "y": 8,
+     "id": "cofre-puentes"
+    },
+    {
+     "tipo": "cofre",
+     "x": 53,
+     "y": 69,
+     "id": "cofre-sur"
+    },
+    {
+     "tipo": "cofre",
+     "x": 33,
+     "y": 43,
+     "id": "cofre-isla-central"
+    },
+    {
+     "tipo": "portal",
+     "x": 75,
+     "y": 16
+    },
+    {
+     "tipo": "portal",
+     "x": 11,
+     "y": 34
+    }
+   ],
+   "mundo": {
+    "x": 314,
+    "y": 108
+   }
+  }
+ ]
+}

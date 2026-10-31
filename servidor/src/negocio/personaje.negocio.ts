@@ -4,6 +4,7 @@ import type { ClaseDto } from '../dto/clase.dto.js';
 import { APARIENCIAS, type Apariencia, type PersonajeDto } from '../dto/personaje.dto.js';
 import type { UbicacionDto } from '../dto/ubicacion.dto.js';
 import { enemigoNegocio } from './enemigo.negocio.js';
+import { mundoNegocio } from './mundo.negocio.js';
 import { NegocioError } from './negocio-error.js';
 
 /** Lo que cuesta subir un nivel una pieza de equipo y lo que da. */
@@ -66,6 +67,11 @@ export interface Progreso {
   segundosJugados: number;
   vidaActual: number;
   ubicacion: UbicacionDto;
+  /**
+   * Cofres del mundo abiertos, como `zonaId/cofreId`. Su oro lo pone el
+   * servidor: no va en [oro].
+   */
+  cofresAbiertos?: string[];
 }
 
 /**
@@ -127,6 +133,7 @@ const ESTAMINA_MAXIMA = 100;
 const ATRIBUTO_MINIMO = 1;
 const ATRIBUTO_MAXIMO = 50;
 const NIVEL_MAXIMO_EQUIPO = 10;
+const ORO_POR_MEJORA = 20;
 /** Holgura para el redondeo de los segundos que envía la app. */
 const MARGEN_SEGUNDOS = 5;
 /** Ritmo máximo creíble de enemigos derrotados. */
@@ -161,12 +168,12 @@ function costoNiveles(nivel: number, cantidad: number): number {
 
 /**
  * Oro para llevar una pieza al nivel [n] (`docs/diseno/interfaz/componentes.md`,
- * PantallaHerreria): cada mejora cuesta más que la anterior. Solo se paga con
- * oro: el juego no tiene materiales.
+ * PantallaHerreria): crece con el cuadrado del nivel, así las primeras
+ * mejoras salen en una o dos vueltas a la primera zona (+2 cuesta 80) y la
+ * última (+10) cuesta 2.000. Solo se paga con oro: el juego no tiene materiales.
  */
 function costoMejora(n: number): number {
-  if (n >= NIVEL_MAXIMO_EQUIPO) return 2500;
-  return (n <= 6 ? 150 : 200) * n;
+  return ORO_POR_MEJORA * n * n;
 }
 
 type BaseCombate = Pick<PersonajeDto, 'claseCodigo' | 'nivel' | 'atributos' | 'equipo'>;
@@ -289,18 +296,18 @@ export const personajeNegocio = {
       throw new NegocioError('La experiencia o el oro no corresponden a los enemigos derrotados.');
     }
     const e = p.estadisticas;
+    const mundo = mundoNegocio.aplicar(
+      p.mundo,
+      progreso.cofresAbiertos ?? [],
+      enemigoNegocio.jefesEn(progreso.enemigosDerrotados),
+    );
     return {
       ...p,
       exp: p.exp + progreso.exp,
-      oro: p.oro + progreso.oro,
+      oro: p.oro + progreso.oro + mundo.oro,
       vidaActual: progreso.vidaActual,
       ubicacion: progreso.ubicacion,
-      mundo: {
-        ...p.mundo,
-        jefesDerrotados: [
-          ...new Set([...p.mundo.jefesDerrotados, ...enemigoNegocio.jefesEn(progreso.enemigosDerrotados)]),
-        ],
-      },
+      mundo: mundo.mundo,
       estadisticas: {
         enemigosDerrotados: e.enemigosDerrotados + posible.enemigos,
         muertes: e.muertes + progreso.muertes,

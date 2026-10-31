@@ -19,9 +19,26 @@ abstract final class ApiCliente {
 
   // El plan gratis de Render tarda 30-50 s en despertar la API tras estar inactiva.
   static const _espera = Duration(seconds: 60);
-  static final http.Client _cliente = http.Client();
 
-  static Future<dynamic> get(String ruta) => _enviar('GET', ruta);
+  /// Una consulta se puede repetir sin riesgo: se corta antes y se reintenta
+  /// con conexiones nuevas, hasta sumar [_espera]. Así una conexión que quedó
+  /// colgada (la API se durmió o la red cambió) no deja la pantalla cargando.
+  static const _esperaConsulta = Duration(seconds: 12);
+  static const _intentosConsulta = 5;
+  static http.Client _cliente = http.Client();
+
+  static Future<dynamic> get(String ruta) async {
+    for (var intento = 1; ; intento++) {
+      try {
+        return await _enviar('GET', ruta, null, _esperaConsulta);
+      } on ApiExcepcion catch (e) {
+        if (!e.agotado || intento == _intentosConsulta) rethrow;
+        // Las peticiones en curso siguen en el cliente anterior.
+        _cliente = http.Client();
+      }
+    }
+  }
+
   static Future<dynamic> post(String ruta, Object cuerpo) =>
       _enviar('POST', ruta, cuerpo);
   static Future<dynamic> put(String ruta, Object cuerpo) =>
@@ -32,6 +49,7 @@ abstract final class ApiCliente {
     String metodo,
     String ruta, [
     Object? cuerpo,
+    Duration espera = _espera,
   ]) async {
     final peticion = http.Request(metodo, Uri.parse('$base$ruta'))
       ..headers['accept'] = 'application/json';
@@ -45,12 +63,13 @@ abstract final class ApiCliente {
     final http.Response respuesta;
     try {
       respuesta = await http.Response.fromStream(
-        await _cliente.send(peticion).timeout(_espera),
-      );
+        await _cliente.send(peticion),
+      ).timeout(espera);
     } on TimeoutException {
       // No cuenta como sin conexión: la petición pudo llegar y aplicarse.
       throw const ApiExcepcion(
         'El servidor tarda demasiado en responder. Inténtalo de nuevo.',
+        agotado: true,
       );
     } on http.ClientException {
       Sincronizacion.enLinea.value = false;

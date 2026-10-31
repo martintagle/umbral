@@ -180,10 +180,10 @@ Pantalla para mejorar armas y armaduras. Se abre en el **yunque** de la Herrerí
 
 | Nivel | Esquirla de hierro | Polvo de alma | Núcleo de brasa | Oro |
 | --- | --- | --- | --- | --- |
-| +1 a +3 | 2 por nivel | — | — | 150 · nivel |
-| +4 a +6 | 4 | 1 | 1 | 150 · nivel |
-| +7 a +9 | 6 | 2 | 2 | 200 · nivel |
-| +10 | 8 | 3 | 3 | 2.500 |
+| +1 a +3 | 2 por nivel | — | — | 20 · nivel² |
+| +4 a +6 | 4 | 1 | 1 | 20 · nivel² |
+| +7 a +9 | 6 | 2 | 2 | 20 · nivel² |
+| +10 | 8 | 3 | 3 | 2.000 |
 
 - Armas: +8 % de ataque por nivel y el efecto (sangrado, magia) sube un 25 %. Armaduras: +6 % de defensa por nivel.
 - Mejorar siempre funciona (sin probabilidad de fallo). Al confirmar, el yunque suelta chispas y suena un golpe.

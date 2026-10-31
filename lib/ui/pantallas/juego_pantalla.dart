@@ -39,6 +39,9 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
   bool _tituloZona = false;
   int _tituloId = 0;
 
+  /// El final: primero la elección y después lo que pasa.
+  _Final? _final;
+
   @override
   void initState() {
     super.initState();
@@ -49,7 +52,8 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
             alGuardar: _api.registrarProgreso,
           )
           ..alPedirMenu = _abrirMenu
-          ..alAbrirPantalla = _abrirPantalla;
+          ..alAbrirPantalla = _abrirPantalla
+          ..alFinal = _llegarAlFinal;
     _juego.region.addListener(_anunciarRegion);
   }
 
@@ -119,6 +123,76 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
     _enOtraPantalla = false;
   }
 
+  /// Con El Que Mira vencido, el Altar Mayor espera la última decisión.
+  void _llegarAlFinal() {
+    _juego
+      ..soltarControles()
+      ..pauseEngine();
+    setState(() => _final = _Final.eleccion);
+  }
+
+  void _elegirFinal(_Final elegido) {
+    Sonido.pista(elegido == _Final.encender ? Audios.musicaTitulo : null);
+    setState(() => _final = elegido);
+  }
+
+  /// Aún no: se vuelve a la arena.
+  void _aplazarFinal() {
+    _juego
+      ..seguirTrasElFinal()
+      ..resumeEngine();
+    setState(() => _final = null);
+  }
+
+  /// La elección ante el Altar Mayor y sus dos finales (`docs/guion.md`).
+  Widget _capaFinal(_Final f) {
+    void volver() => Navigator.of(context).pop();
+    return switch (f) {
+      _Final.eleccion => _Capa(
+        titulo: 'El Altar Mayor',
+        texto:
+            'Las seis ascuas arden en tus manos. La Brasa Primera espera, '
+            'apagada.',
+        acciones: [
+          BotonUmbral(
+            texto: 'Encender la Brasa',
+            alPulsar: () => _elegirFinal(_Final.encender),
+          ),
+          const SizedBox(height: Espacios.paso4),
+          BotonUmbral(
+            texto: 'Apagar la Brasa',
+            estilo: EstiloBoton.peligro,
+            alPulsar: () => _elegirFinal(_Final.apagar),
+          ),
+          const SizedBox(height: Espacios.paso4),
+          BotonUmbral(
+            texto: 'Todavía no',
+            estilo: EstiloBoton.secundario,
+            alPulsar: _aplazarFinal,
+          ),
+        ],
+      ),
+      _Final.encender => _Capa(
+        titulo: 'El Umbral se cierra',
+        colorTitulo: Colores.brasa,
+        texto:
+            'Enciendes la Brasa y el Umbral se cierra. Te quedas junto al '
+            'altar, el nuevo custodio, para siempre.\n\nEn la aldea Cenizal, '
+            'las chozas vuelven a tener luz.',
+        acciones: [BotonUmbral(texto: 'Volver a las partidas', alPulsar: volver)],
+      ),
+      _Final.apagar => _Capa(
+        titulo: 'El Umbral se abre',
+        colorTitulo: Colores.sangre,
+        texto:
+            'Apagas la Brasa y el Umbral se abre. Entras en el Hueco y, por '
+            'primera vez, recuerdas tu nombre.\n\nEn la oscuridad, un solo '
+            'ojo parpadea.',
+        acciones: [BotonUmbral(texto: 'Volver a las partidas', alPulsar: volver)],
+      ),
+    };
+  }
+
   /// Lleva al juego la partida que devuelve el servidor tras un cambio.
   Future<PartidaJugable> _aplicar(Future<PartidaJugable> peticion) async {
     final nueva = await peticion;
@@ -171,10 +245,17 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
                       children: [
                         _Estado(_juego),
                         Expanded(child: Center(child: _BarraJefe(_juego))),
-                        BotonHud(
-                          pieza: PiezaHud.menu,
-                          descripcion: 'Menú',
-                          alPulsar: _abrirMenu,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            BotonHud(
+                              pieza: PiezaHud.menu,
+                              descripcion: 'Menú',
+                              alPulsar: _abrirMenu,
+                            ),
+                            SizedBox(height: PiezaHud.px(2)),
+                            _Minimapa(_juego),
+                          ],
                         ),
                       ],
                     ),
@@ -231,6 +312,7 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
                     )
                   : const SizedBox.shrink(),
             ),
+            if (_final case final f?) _capaFinal(f),
             if (_menu)
               _Capa(
                 titulo: 'Pausa',
@@ -268,6 +350,66 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+enum _Final { eleccion, encender, apagar }
+
+/// Minimapa de la zona, arriba a la derecha, con el jugador como un punto de
+/// brasa. En los interiores no se muestra.
+class _Minimapa extends StatelessWidget {
+  final UmbralJuego juego;
+
+  const _Minimapa(this.juego);
+
+  static const _ancho = 96.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: ValueListenableBuilder(
+        valueListenable: juego.minimapa,
+        builder: (_, mapa, _) {
+          if (mapa == null) return const SizedBox.shrink();
+          final alto = _ancho * mapa.alto / mapa.ancho;
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colores.borde),
+              color: Colores.abismo,
+            ),
+            child: SizedBox(
+              width: _ancho,
+              height: alto,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 0.85,
+                      child: Image.asset(
+                        mapa.ruta,
+                        fit: BoxFit.fill,
+                        filterQuality: FilterQuality.none,
+                      ),
+                    ),
+                  ),
+                  ValueListenableBuilder(
+                    valueListenable: juego.celdaJugador,
+                    builder: (_, celda, _) => Positioned(
+                      left: (celda.$1 + 0.5) / mapa.ancho * _ancho - 2,
+                      top: (celda.$2 + 0.5) / mapa.alto * alto - 2,
+                      child: const SizedBox.square(
+                        dimension: 4,
+                        child: ColoredBox(color: Colores.brasa),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
