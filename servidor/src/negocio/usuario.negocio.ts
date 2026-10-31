@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { ObjectId } from 'mongodb';
 
 import type { AjustesDto } from '../dto/ajustes.dto.js';
+import type { RolUsuario } from '../dto/rol-usuario.js';
 import type { UsuarioDto } from '../dto/usuario.dto.js';
 import { ajustesDocumento, documentoUsuario, usuarioDto, usuarios } from './coleccion-usuarios.js';
 import { conErroresMongo, idMongo, NegocioError } from './negocio-error.js';
@@ -15,7 +16,10 @@ const USERNAME = /^[A-Za-z0-9_.-]{3,20}$/;
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 /** Usuario tal como lo entrega negocio: sin `passwordHash` y con `_id` como `id` en texto. */
-export type UsuarioPublico = Omit<UsuarioDto, '_id' | 'passwordHash'> & { id: string };
+export type UsuarioPublico = Omit<UsuarioDto, '_id' | 'passwordHash' | 'rol'> & {
+  id: string;
+  rol: RolUsuario;
+};
 
 function publico(u: UsuarioDto): UsuarioPublico {
   return {
@@ -23,6 +27,7 @@ function publico(u: UsuarioDto): UsuarioPublico {
     username: u.username,
     email: u.email,
     estado: u.estado,
+    rol: u.rol ?? 'jugador',
     creadoEn: u.creadoEn,
     ultimoLogin: u.ultimoLogin,
     actualizadoEn: u.actualizadoEn,
@@ -99,6 +104,7 @@ export const usuarioNegocio = {
       email: correo,
       passwordHash: await bcrypt.hash(password, RONDAS_BCRYPT),
       estado: 'activo',
+      rol: 'jugador',
       creadoEn: ahora,
       ultimoLogin: null,
       actualizadoEn: ahora,
@@ -182,6 +188,36 @@ export const usuarioNegocio = {
       () => respaldoLocal.guardarCambio({ ...usuarioLocal(id), ajustes, actualizadoEn: ahora }),
       id,
     );
+  },
+
+  /**
+   * Crea la cuenta, o toma la que ya existe con ese username y contraseña, y
+   * le da el rol `admin`: en el juego no recibe daño, no gasta estamina y pega
+   * más fuerte, para recorrerlo entero al probarlo. Solo lo usa
+   * `dev/crear-admin.ts`; la API no permite pedirlo.
+   */
+  async crearAdmin(username: string, email: string, password: string): Promise<UsuarioPublico> {
+    let usuario: UsuarioPublico;
+    try {
+      usuario = await this.registrar(username, email, password);
+    } catch (e) {
+      if (!(e instanceof NegocioError && e.tipo === 'conflicto')) throw e;
+      usuario = await this.iniciarSesion(username, password);
+    }
+    const { id } = usuario;
+    const ahora = new Date();
+    await sincronizacion.conRespaldo(
+      async () => {
+        const coleccion = await usuarios();
+        await coleccion.updateOne(
+          { _id: idMongo(id) },
+          { $set: { rol: 'admin', actualizadoEn: ahora } },
+        );
+      },
+      () => respaldoLocal.guardarCambio({ ...usuarioLocal(id), rol: 'admin', actualizadoEn: ahora }),
+      id,
+    );
+    return { ...usuario, rol: 'admin', actualizadoEn: ahora };
   },
 
   /** Borra el documento del usuario, con todas sus partidas. */

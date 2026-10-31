@@ -99,7 +99,11 @@ class SalaInterior extends Escenario {
         salida = mapa.suelo('umbral-salida');
     for (var y = 0; y < sala.alto; y++) {
       for (var x = 0; x < sala.ancho; x++) {
+        if (sala.suelo[y][x] == salida) luz(x, y, 22, null, alto: 0);
+        // Una celda vacía vale -1, igual que un objeto que el tileset no
+        // tiene: sin este corte, cada hueco de la sala sería una luz.
         final o = sala.objetos[y][x];
+        if (o < 0) continue;
         if (o == candelabro) luz(x, y, 34, Colores.brasa);
         if (o == forja) luz(x, y, 46, Colores.brasa);
         if (o == altar) luz(x, y, 42, Colores.brasa);
@@ -109,7 +113,6 @@ class SalaInterior extends Escenario {
         if (o == brasero) luz(x, y, 40, Colores.brasa);
         if (o == cristal) luz(x, y, 20, Colores.alma);
         if (o == ojo) luz(x, y, 14, Colores.sangre);
-        if (sala.suelo[y][x] == salida) luz(x, y, 22, null, alto: 0);
       }
     }
     add(iluminacion);

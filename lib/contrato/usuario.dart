@@ -1,6 +1,7 @@
 import 'ajustes.dart';
 import 'estado_usuario.dart';
 import 'partida.dart';
+import 'rol_usuario.dart';
 
 /// Documento de la colección `usuarios`, con sus subdocumentos
 /// embebidos, tal como lo envía la API: `_id` llega como [id] en texto y
@@ -10,6 +11,7 @@ class Usuario {
   final String username;
   final String email;
   final EstadoUsuario estado;
+  final RolUsuario rol;
   final DateTime creadoEn;
   final DateTime? ultimoLogin;
   final DateTime actualizadoEn;
@@ -23,6 +25,7 @@ class Usuario {
     required this.username,
     required this.email,
     required this.estado,
+    this.rol = RolUsuario.jugador,
     required this.creadoEn,
     this.ultimoLogin,
     required this.actualizadoEn,
@@ -39,6 +42,8 @@ class Usuario {
       username: map['username'] as String,
       email: map['email'] as String,
       estado: EstadoUsuario.values.byName(map['estado'] as String),
+      // Las sesiones guardadas antes del campo no lo traen.
+      rol: RolUsuario.values.byName(map['rol'] as String? ?? 'jugador'),
       creadoEn: DateTime.parse(map['creadoEn'] as String),
       ultimoLogin: ultimoLogin == null ? null : DateTime.parse(ultimoLogin),
       actualizadoEn: DateTime.parse(map['actualizadoEn'] as String),
@@ -57,6 +62,7 @@ class Usuario {
       'username': username,
       'email': email,
       'estado': estado.name,
+      'rol': rol.name,
       'creadoEn': creadoEn.toUtc().toIso8601String(),
       'ultimoLogin': ultimoLogin?.toUtc().toIso8601String(),
       'actualizadoEn': actualizadoEn.toUtc().toIso8601String(),

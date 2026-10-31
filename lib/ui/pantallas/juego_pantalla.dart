@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 
 import '../../contrato/partida_jugable.dart';
 import '../../contrato/recompensa.dart';
+import '../../contrato/rol_usuario.dart';
 import '../../api/partida_api.dart';
+import '../../api/sesion.dart';
 import '../juego/umbral_juego.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
@@ -50,6 +52,7 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
             partida: widget.partida,
             recompensas: widget.recompensas,
             alGuardar: _api.registrarProgreso,
+            admin: Sesion.usuario?.rol == RolUsuario.admin,
           )
           ..alPedirMenu = _abrirMenu
           ..alAbrirPantalla = _abrirPantalla
@@ -440,10 +443,13 @@ class _Estado extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          _BarraVida(juego),
-          SizedBox(height: PiezaHud.px(1)),
-          _BarraEstamina(juego),
-          SizedBox(height: PiezaHud.px(2)),
+          // La cuenta admin no pierde vida ni estamina: no hay nada que ver.
+          if (!juego.admin) ...[
+            _BarraVida(juego),
+            SizedBox(height: PiezaHud.px(1)),
+            _BarraEstamina(juego),
+            SizedBox(height: PiezaHud.px(2)),
+          ],
           ListenableBuilder(
             listenable: Listenable.merge([juego.exp, juego.oro]),
             builder: (_, _) => Row(

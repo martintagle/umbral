@@ -29,6 +29,12 @@
         "eliminado"
       ]
     },
+    "rol": {
+      "enum": [
+        "jugador",
+        "admin"
+      ]
+    },
     "creadoEn": {
       "bsonType": "date"
     },

@@ -48,10 +48,14 @@ abstract final class Sonido {
   static String? _archivoBucle;
   static bool _bucleSonando = false;
 
-  /// Efectos cortos y frecuentes: se precargan en grupos de reproductores.
+  /// Efectos cortos: se precargan en grupos de reproductores. Uno sin grupo
+  /// se lee del disco al sonar y llega tarde al golpe o a la muerte.
   static const _frecuentes = {
     Audios.pasoPasto: 3,
     Audios.muerteEnemigo: 3,
+    Audios.exp: 2,
+    Audios.oro: 2,
+    Audios.gameOver: 1,
     Audios.danoHombre: 2,
     Audios.danoMujer: 2,
     Audios.grunido: 2,

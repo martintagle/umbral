@@ -50,6 +50,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     required PartidaJugable partida,
     required Map<String, Recompensa> recompensas,
     required this.alGuardar,
+    this.admin = false,
   }) : _guardada = partida,
        _registro = RegistroProgreso(recompensas),
        super(world: ZonaTierras()) {
@@ -58,6 +59,10 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   }
 
   final GuardarProgreso alGuardar;
+
+  /// Cuenta de pruebas: no recibe daño, no gasta estamina, pega diez veces
+  /// más fuerte y anda más rápido. El HUD oculta la vida y la estamina.
+  final bool admin;
 
   /// Última versión confirmada por el servidor.
   PartidaJugable _guardada;
@@ -528,6 +533,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
 
   /// Gasta [costo] de estamina si alcanza. Si no, la barra parpadea.
   bool gastarEstamina(double costo) {
+    if (admin) return true;
     if (estamina.value < costo) {
       _avisoEstamina = 0.35;
       sinEstamina.value = true;
@@ -731,7 +737,8 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   (int, bool) tirarDano() {
     final critico = _azar.nextDouble() < combate.probabilidadCritico;
     final variacion = 0.9 + _azar.nextDouble() * 0.2;
-    final multiplicador = critico ? combate.multiplicadorCritico : 1;
+    final multiplicador =
+        (critico ? combate.multiplicadorCritico : 1) * (admin ? 10 : 1);
     return ((combate.dano * variacion * multiplicador).round(), critico);
   }
 

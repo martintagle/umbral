@@ -11,7 +11,8 @@
     "start": "node dist/index.js",
     "tipos": "tsc --noEmit",
     "bd:esquema": "tsx src/dev/actualizar-esquema.ts",
-    "bd:clases": "tsx src/dev/cargar-clases.ts"
+    "bd:clases": "tsx src/dev/cargar-clases.ts",
+    "bd:admin": "tsx src/dev/crear-admin.ts"
   },
   "type": "module",
   "engines": {

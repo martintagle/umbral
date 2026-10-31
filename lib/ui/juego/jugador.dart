@@ -56,7 +56,6 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
   double _aturdido = 0;
   double _caida = 0;
   double _sonidoPaso = 0;
-  bool _andando = false;
 
   /// Tiempo desde que empezó a rodar o a beber; negativo si no lo hace.
   double _rodar = -1;
@@ -134,7 +133,8 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
       final rapidez = estilo.velocidad *
           (_lento > 0 ? 0.5 : 1) *
           (_ataque >= 0 ? 0.45 : 1) *
-          (bebiendo ? 0.35 : 1);
+          (bebiendo ? 0.35 : 1) *
+          (game.admin ? 1.6 : 1);
       _mover(dir.x * rapidez * dt, 0);
       _mover(0, dir.y * rapidez * dt);
       _paso += dt * 12 * (bebiendo ? 0.5 : 1);
@@ -198,10 +198,9 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
   /// Pasto en el mundo, paso a paso; piedra en los interiores, en bucle.
   void _sonarPasos(bool andando, double dt) {
     final interior = game.zona.interior;
-    if (andando != _andando || interior) {
-      Sonido.bucle(Audios.pasosPiedra, sonando: andando && interior);
-    }
-    _andando = andando;
+    // Cada cuadro, aunque no cambie [andando]: al salir de una sala
+    // caminando, la piedra tiene que callarse. Si nada cambió, no hace nada.
+    Sonido.bucle(Audios.pasosPiedra, sonando: andando && interior);
     if (!andando || interior) {
       _sonidoPaso = 0;
       return;
@@ -348,7 +347,7 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
   /// Un golpe de [desde]: quita vida, aturde un instante y empuja. Rodando a
   /// tiempo no hace nada; bebiendo, se pierde el trago.
   void recibirGolpe(int danoEnemigo, {double ralentiza = 0, Vector2? desde}) {
-    if (!vivo || _invulnerable > 0 || _inmune) return;
+    if (!vivo || _invulnerable > 0 || _inmune || game.admin) return;
     final dano = game.danoRecibido(danoEnemigo);
     game.vida.value = max(0, game.vida.value - dano);
     _invulnerable = _invulnerabilidad;
