@@ -348,6 +348,20 @@ class MapaMundo {
       Vector2(x * tile + tile / 2, y * tile + tile - 2);
 
   bool solido(double x, double y) => _celda(_solido, x, y);
+
+  /// Si (x, y) cae en agua abierta (no en una pasarela ni un puente).
+  bool agua(double x, double y) {
+    if (x < 0 || y < 0) return false;
+    final tx = x ~/ tile, ty = y ~/ tile;
+    if (tx >= ancho || ty >= alto) return false;
+    return suelo[ty][tx] == _agua;
+  }
+
+  /// Imágenes extra del tileset (`docs/graficos.md`): variantes de cada suelo,
+  /// bordes entre suelos y cuadros animados.
+  String get tilesetVariantes => tileset.replaceFirst('.png', '-variantes.png');
+  String get tilesetBordes => tileset.replaceFirst('.png', '-bordes.png');
+  String get tilesetAnimados => tileset.replaceFirst('.png', '-animados.png');
   bool bloqueaProyectil(double x, double y) => _celda(_bloqueaProyectil, x, y);
 
   bool piedra(double x, double y) {

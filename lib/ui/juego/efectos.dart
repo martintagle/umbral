@@ -208,6 +208,40 @@ class Efecto extends PositionComponent {
   }
 }
 
+/// Copia fantasma de un cuadro del jugador que se apaga: la estela al rodar.
+class Estela extends PositionComponent {
+  Estela(this._sprite, Vector2 pies, this._escala, this._tamano, this._ancla)
+    : super(position: pies, priority: pies.y.round() - 1);
+
+  final Sprite _sprite;
+  final Vector2 _escala, _tamano;
+  final Anchor _ancla;
+  double _t = 0;
+  static const _duracion = 0.2;
+  final _pintura = pinturaSprites();
+
+  @override
+  void update(double dt) {
+    _t += dt;
+    if (_t >= _duracion) removeFromParent();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final a = (1 - _t / _duracion) * 0.45;
+    _pintura.colorFilter = ColorFilter.mode(
+      Colores.alma.withValues(alpha: 0.8),
+      BlendMode.srcATop,
+    );
+    _pintura.color = Color.fromRGBO(255, 255, 255, a);
+    canvas
+      ..save()
+      ..scale(_escala.x, _escala.y);
+    _sprite.render(canvas, size: _tamano, anchor: _ancla, overridePaint: _pintura);
+    canvas.restore();
+  }
+}
+
 /// Restos que salen despedidos cuando muere algo.
 class Estallido extends PositionComponent {
   final List<(Vector2, Vector2, Color)> _trozos = [];
@@ -262,6 +296,7 @@ class Proyectil extends PositionComponent with HasGameReference<UmbralJuego> {
   /// sin ella es una línea o un cuadrado de [color].
   final String? efecto;
   double _recorrido = 0;
+  double _rastro = 0;
 
   Proyectil({
     required Vector2 origen,
@@ -296,12 +331,25 @@ class Proyectil extends PositionComponent with HasGameReference<UmbralJuego> {
     final paso = velocidad * dt;
     position.add(paso);
     _recorrido += paso.length;
+    // Los orbes y el fuego dejan un rastro de chispas que brillan.
+    _rastro -= dt;
+    if (efecto != null && _rastro <= 0) {
+      _rastro = 0.035;
+      game.zona.particulas?.emitir(
+        en: position,
+        colores: [color, Colores.hueso],
+        rapidez: 8,
+        vida: 0.3,
+        brilla: true,
+      );
+    }
 
     if (_recorrido >= distanciaMaxima) {
       removeFromParent();
       return;
     }
     if (game.zona.bloquea(position.x, position.y)) {
+      game.zona.particulas?.chispas(position, -velocidad, n: 4);
       // Los disparos del jugador también rompen los muros agrietados.
       if (delJugador) {
         game.zona.golpearMuros(

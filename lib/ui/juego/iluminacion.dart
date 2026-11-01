@@ -4,7 +4,9 @@ import 'package:flame/components.dart';
 import 'package:flutter/painting.dart';
 
 import '../tema/tema_umbral.dart';
+import 'ambiente.dart';
 import 'efectos.dart';
+import 'escenario.dart';
 import 'umbral_juego.dart';
 
 /// Un punto de luz en el mundo. [parpadeo] es cuántos píxeles crece y mengua
@@ -13,7 +15,7 @@ class Luz {
   Luz(this.posicion, {required this.radio, this.tinte, this.parpadeo = 0});
 
   final Vector2 posicion;
-  final double radio;
+  double radio;
 
   /// Color que la luz añade a lo que ilumina; `null` para luz neutra.
   final Color? tinte;
@@ -30,35 +32,74 @@ class Luz {
   }
 }
 
-/// Noche cerrada sobre todo el mundo. Cada luz abre un círculo en anillos
-/// escalonados alineados a los píxeles de arte, sin degradados suaves.
+/// Algo que alumbra mientras existe: proyectiles de fuego, luciérnagas...
+/// [Iluminacion] pregunta a los hijos de su escenario cada cuadro.
+mixin AportaLuz on Component {
+  void aportarLuces(void Function(Luz luz, Vector2 en) anotar);
+}
+
+/// Un fogonazo: la luz de un golpe, una explosión o un hechizo, que se
+/// encoge hasta apagarse.
+class _Destello {
+  _Destello(Vector2 en, double radio, Color tinte, this.duracion)
+    : luz = Luz(en.clone(), radio: radio, tinte: tinte),
+      _radio = radio;
+
+  final Luz luz;
+  final double _radio, duracion;
+  double t = 0;
+
+  void avanzar(double dt) {
+    t += dt;
+    luz.radio = _radio * (1 - t / duracion).clamp(0.0, 1.0);
+  }
+}
+
+/// Noche sobre todo el lugar, con el color de su clima. Cada luz abre un
+/// círculo en anillos escalonados alineados a los píxeles de arte, y las
+/// luces con tinte tiñen y entibian lo que tocan.
 ///
 /// Va por encima de los sprites y por debajo de los efectos: los números de
 /// daño, los tajos y los proyectiles se ven aunque caigan en la oscuridad.
 class Iluminacion extends Component with HasGameReference<UmbralJuego> {
   /// [oscuridad] es la opacidad de la noche: los interiores son algo menos
-  /// cerrados que el bosque.
-  Iluminacion({double oscuridad = 0.96})
-    : _pinturaOscuridad = Paint()
-        ..color = Colores.abismo.withValues(alpha: oscuridad),
+  /// cerrados que el bosque. [noche] es su color.
+  Iluminacion({double oscuridad = 0.96, Color noche = Colores.abismo})
+    : _pinturaOscuridad = Paint()..color = noche.withValues(alpha: oscuridad),
       super(priority: prioridadEfectos - 100);
 
   final List<Luz> fijas = [];
+  final List<_Destello> _destellos = [];
 
   /// (fracción del radio, cuánto borra de la oscuridad). Del anillo exterior
-  /// al centro, que queda limpio.
-  static const _anillos = [(1.0, 0.3), (0.84, 0.35), (0.68, 0.45), (0.52, 1.0)];
+  /// al centro, que queda limpio. Más anillos que antes: la penumbra cae en
+  /// escalones finos y la luz parece más cálida y amplia.
+  static const _anillos = [
+    (1.0, 0.16),
+    (0.9, 0.2),
+    (0.8, 0.26),
+    (0.69, 0.34),
+    (0.58, 0.48),
+    (0.47, 1.0),
+  ];
 
-  /// (fracción del radio, intensidad) del color que añade una luz con tinte.
-  static const _halo = [(0.75, 0.05), (0.45, 0.07)];
+  /// (fracción del radio, intensidad) del color que añade una luz con tinte:
+  /// halo ancho y tenue, y un corazón más vivo cerca de la llama.
+  static const _halo = [(0.85, 0.035), (0.6, 0.05), (0.38, 0.07), (0.18, 0.09)];
 
   static const _luzVela = 26.0;
 
-  /// El rango de visión del personaje.
-  final _jugador = Luz(Vector2.zero(), radio: 68, parpadeo: 1);
+  /// El rango de visión del personaje: una luz neutra, apenas tibia.
+  final _jugador = Luz(
+    Vector2.zero(),
+    radio: 72,
+    parpadeo: 1,
+    tinte: const Color(0xFF6A5A48),
+  );
 
   /// Las larvas-cirio llevan velas encendidas en el lomo.
   final _velas = Expando<Luz>();
+  final _luzProyectil = Expando<Luz>();
 
   final _pinturaCapa = Paint();
   final Paint _pinturaOscuridad;
@@ -72,7 +113,27 @@ class Iluminacion extends Component with HasGameReference<UmbralJuego> {
   double _t = 0;
 
   @override
-  void update(double dt) => _t += dt;
+  void onMount() {
+    super.onMount();
+    (parent! as Escenario).iluminacion = this;
+  }
+
+  /// Un fogonazo de luz en [en] que dura [duracion] segundos.
+  void destello(
+    Vector2 en, {
+    double radio = 30,
+    Color tinte = Colores.brasa,
+    double duracion = 0.18,
+  }) => _destellos.add(_Destello(en, radio, tinte, duracion));
+
+  @override
+  void update(double dt) {
+    _t += dt;
+    for (final d in _destellos) {
+      d.avanzar(dt);
+    }
+    _destellos.removeWhere((d) => d.t >= d.duracion);
+  }
 
   @override
   void render(Canvas canvas) {
@@ -82,7 +143,8 @@ class Iluminacion extends Component with HasGameReference<UmbralJuego> {
     final luces = <(Luz, double, double, int)>[];
     void anotar(Luz luz, Vector2 p) {
       final r = luz.radioEn(t);
-      if (p.x + r < vista.left ||
+      if (r <= 0 ||
+          p.x + r < vista.left ||
           p.x - r > vista.right ||
           p.y + r < vista.top ||
           p.y - r > vista.bottom) {
@@ -94,6 +156,9 @@ class Iluminacion extends Component with HasGameReference<UmbralJuego> {
     for (final luz in fijas) {
       if (luz.encendida) anotar(luz, luz.posicion);
     }
+    for (final d in _destellos) {
+      anotar(d.luz, d.luz.posicion);
+    }
     anotar(_jugador, game.jugador.centro);
     for (final e in game.zona.enemigosVivos) {
       if (e.tipo.id == 'larva-cirio') {
@@ -104,6 +169,19 @@ class Iluminacion extends Component with HasGameReference<UmbralJuego> {
           parpadeo: 2,
         );
         anotar(vela, e.centro - Vector2(0, 4));
+      }
+    }
+    for (final c in parent!.children) {
+      if (c is AportaLuz) c.aportarLuces(anotar);
+      // Las flechas no alumbran; los orbes, el fuego y la magia sí.
+      if (c is Proyectil && c.efecto != null) {
+        final luz = _luzProyectil[c] ??= Luz(
+          Vector2.zero(),
+          radio: 18,
+          tinte: c.color,
+          parpadeo: 1,
+        );
+        anotar(luz, c.position);
       }
     }
 
@@ -167,7 +245,7 @@ const filtroApagada = ColorFilter.matrix([
 ]);
 
 /// Antorcha clavada en el suelo. Su `position` es la base del poste.
-class Antorcha extends PositionComponent {
+class Antorcha extends PositionComponent with Brilla {
   Antorcha(Vector2 base) : super(position: base, priority: base.y.round());
 
   /// Donde está la llama, para colocar su luz.
@@ -243,8 +321,20 @@ class Antorcha extends PositionComponent {
         pixel(canvas, x, -16 - h.toDouble(), color);
       }
     }
+  }
+
+  /// Las chispas y la punta de la llama se ven aunque esté oscuro alrededor.
+  @override
+  void pintarBrillo(Canvas canvas) {
     for (final c in _chispas) {
-      pixel(canvas, c.x, c.y, c.y < -27 ? Colores.ceniza : Colores.brasa);
+      final k = ((-c.y - 21) / 11).clamp(0.0, 1.0);
+      puntoBrillante(
+        canvas,
+        position.x + c.x + sin(c.y * 0.7) * 0.8,
+        position.y + c.y,
+        k > 0.6 ? Colores.sangre : Colores.brasa,
+        1 - k,
+      );
     }
   }
 }

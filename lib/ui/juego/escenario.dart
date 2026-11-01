@@ -2,7 +2,9 @@ import 'dart:ui';
 
 import 'package:flame/components.dart';
 
+import 'ambiente.dart';
 import 'enemigo.dart';
+import 'iluminacion.dart';
 import 'oreste.dart';
 import 'umbral_juego.dart';
 
@@ -33,6 +35,13 @@ class AccionContexto {
 /// están en píxeles de arte desde la esquina superior izquierda.
 abstract class Escenario extends World with HasGameReference<UmbralJuego> {
   Rect get limites;
+
+  /// La noche del lugar y sus partículas; se anotan solas al montarse.
+  Iluminacion? iluminacion;
+  Particulas? particulas;
+
+  /// Si (x, y) es agua: ahí saltan los peces.
+  bool esAgua(double x, double y) => false;
 
   /// Si [pies] pisan suelo duro (piedra, losas, tablas): los pasos suenan a
   /// piedra en vez de a pasto.

@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/experimental.dart';
 import 'package:flame/game.dart';
@@ -654,7 +655,7 @@ class UmbralJuego extends FlameGame<Escenario>
     region.value = zona.regionEn(jugador.position);
     Sonido.pista(zona.pista, volumen: 0.6);
 
-    camera.follow(jugador, snap: true);
+    _seguirConCamara();
     _limitarCamara();
   }
 
@@ -664,6 +665,10 @@ class UmbralJuego extends FlameGame<Escenario>
   Future<void> _cargarRecursos(MapaMundo mapa) async {
     await images.loadAll([
       mapa.tileset,
+      mapa.tilesetVariantes,
+      mapa.tilesetBordes,
+      mapa.tilesetAnimados,
+      'tiles/niebla.png',
       for (final s in {for (final e in mapa.estructuras) e.sprite})
         'sprites/estructuras/$s.png',
     ]);
@@ -716,8 +721,89 @@ class UmbralJuego extends FlameGame<Escenario>
     );
   }
 
+  // ------------------------------------------------------------ cámara
+
+  /// Lo que sigue la cámara: va un poco por delante del jugador, hacia donde
+  /// camina, y lo alcanza con suavidad. La sacudida se suma encima.
+  final _objetivoCamara = PositionComponent();
+  final Vector2 _camara = Vector2.zero();
+  double _sacudida = 0;
+  double _duracionSacudida = 0;
+  double _fuerzaSacudida = 0;
+  double _congelado = 0;
+
+  /// Cuánto se adelanta la cámara al caminar, en píxeles de arte.
+  static const _adelanto = 10.0;
+
+  /// Lo rápido que la cámara alcanza su punto (mayor, más pegada).
+  static const _suavidad = 7.0;
+
+  /// La cámara salta al jugador, sin deslizarse: al cargar y al cruzar una
+  /// puerta.
+  void _seguirConCamara() {
+    _camara.setFrom(jugador.position - Vector2(0, 8));
+    _objetivoCamara.position.setFrom(_camara);
+    camera.follow(_objetivoCamara, snap: true);
+  }
+
+  /// Sacude la vista [fuerza] píxeles de arte durante [duracion] segundos. Si
+  /// ya temblaba más fuerte, sigue con eso.
+  void sacudir(double fuerza, [double duracion = 0.18]) {
+    final queda = _sacudida <= 0
+        ? 0.0
+        : _fuerzaSacudida * _sacudida / _duracionSacudida;
+    if (fuerza >= queda) {
+      _fuerzaSacudida = fuerza;
+      _duracionSacudida = duracion;
+      _sacudida = duracion;
+    }
+  }
+
+  /// Detiene el juego un instante para que el golpe pese.
+  void congelar(double segundos) => _congelado = max(_congelado, segundos);
+
+  /// Un fogonazo de luz en [en] (golpes, explosiones, hechizos).
+  void destello(Vector2 en, {double radio = 30, Color? tinte, double duracion = 0.18}) =>
+      zona.iluminacion?.destello(
+        en,
+        radio: radio,
+        tinte: tinte ?? Colores.brasa,
+        duracion: duracion,
+      );
+
+  void _moverCamara(double dt) {
+    if (!jugador.isMounted) return;
+    final destino = jugador.position - Vector2(0, 8);
+    if (jugador.vivo && direccionEntrada.length2 > 0.01) {
+      destino.addScaled(jugador.mirando, _adelanto);
+    }
+    final k = 1 - pow(e, -dt * _suavidad).toDouble();
+    _camara.add((destino - _camara)..scale(k));
+    final p = _camara.clone();
+    if (_sacudida > 0) {
+      _sacudida = max(0.0, _sacudida - dt);
+      final f = _fuerzaSacudida * (_sacudida / _duracionSacudida);
+      p.add(Vector2(
+        (_azar.nextDouble() * 2 - 1) * f,
+        (_azar.nextDouble() * 2 - 1) * f,
+      ));
+    }
+    // Alineada a los píxeles de pantalla: sin temblor de subpíxel.
+    _objetivoCamara.position.setValues(
+      (p.x * zoom).roundToDouble() / zoom,
+      (p.y * zoom).roundToDouble() / zoom,
+    );
+  }
+
   @override
   void update(double dt) {
+    // Pausa de impacto: el mundo casi se detiene; la cámara sigue temblando.
+    final real = dt;
+    if (_congelado > 0) {
+      _congelado = max(0.0, _congelado - dt);
+      dt *= 0.06;
+    }
+    _moverCamara(real);
     super.update(dt);
     if (!muerto.value) _registro.segundos += dt;
     _recuperarEstamina(dt);
@@ -1026,7 +1112,7 @@ class UmbralJuego extends FlameGame<Escenario>
       if (destino is SalaInterior && destino.isLoaded) destino.ponerOreste();
     }
     jugador.position.setFrom(pies);
-    camera.follow(jugador, snap: true);
+    _seguirConCamara();
     _limitarCamara();
     _esperaCruce = 0.4;
     region.value = destino.regionEn(pies);

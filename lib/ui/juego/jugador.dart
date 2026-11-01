@@ -69,6 +69,15 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
   double _ataque = -1;
   bool _impactoPendiente = false;
 
+  /// Polvo de los pasos y estela al rodar.
+  double _polvo = 0;
+  double _estela = 0;
+
+  /// Estirado (negativo) o aplastado (positivo) del cuerpo, que vuelve a 0:
+  /// se estira al lanzarse a rodar y se aplasta al levantarse o al recibir
+  /// un golpe.
+  double _aplasta = 0;
+
   bool get vivo => game.vida.value > 0;
   bool get rodando => _rodar >= 0;
   bool get bebiendo => _beber >= 0;
@@ -123,7 +132,20 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
       _mover(_dirRodar.x * rapidez * dt, 0);
       _mover(0, _dirRodar.y * rapidez * dt);
       _paso = 0;
-      if (_rodar >= _duracionRodar) _rodar = -1;
+      _estela -= dt;
+      if (_estela <= 0 && k < 0.7) {
+        _estela = 0.045;
+        if (_modelo.cuadro case final c?) {
+          game.zona.add(Estela(c, position.clone(), _modelo.scale.clone(),
+              _modelo.size.clone(), _modelo.anchor));
+        }
+        game.zona.particulas
+            ?.polvo(position, n: 1, piedra: game.zona.pisaPiedra(position));
+      }
+      if (_rodar >= _duracionRodar) {
+        _rodar = -1;
+        _aplasta = 1;
+      }
     } else if (_aturdido == 0 && quiereMoverse) {
       final dir = entrada.length > 1 ? entrada.normalized() : entrada;
       // Durante el golpe el personaje no se gira: el tajo sale hacia donde
@@ -142,6 +164,19 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
       _paso = 0;
     }
     _sonarPasos(!rodando && _paso > 0, dt);
+    _aplasta = _aplasta > 0
+        ? max(0.0, _aplasta - dt * 8)
+        : min(0.0, _aplasta + dt * 8);
+    if (!rodando && _paso > 0) {
+      _polvo -= dt;
+      if (_polvo <= 0) {
+        _polvo = 0.3;
+        game.zona.particulas
+            ?.polvo(position, n: 1, piedra: game.zona.pisaPiedra(position));
+      }
+    } else {
+      _polvo = 0;
+    }
     if (mirando.x.abs() > 0.2) _lado = mirando.x < 0 ? -1 : 1;
 
     if (bebiendo) {
@@ -150,6 +185,8 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
         _curaPendiente = false;
         game.curarConFrasco(curaFrasco);
         game.zona.add(Estallido(centro, const [Colores.brasa, Colores.hueso]));
+        game.zona.particulas?.brasas(centro, n: 10, ancho: 5);
+        game.destello(centro, radio: 40, duracion: 0.4);
       }
       if (_beber >= _duracionBeber) _beber = -1;
     }
@@ -186,6 +223,10 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
     _dirRodar.setFrom(entrada.length2 > 0.01 ? entrada.normalized() : mirando);
     if (_dirRodar.x.abs() > 0.2) _lado = _dirRodar.x < 0 ? -1 : 1;
     mirando.setFrom(_dirRodar);
+    _aplasta = -1;
+    _estela = 0;
+    game.zona.particulas
+        ?.polvo(position, n: 5, piedra: game.zona.pisaPiedra(position));
   }
 
   void _intentarBeber() {
@@ -193,6 +234,20 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
     if (!game.gastarFrasco()) return;
     _beber = 0;
     _curaPendiente = true;
+  }
+
+  static final _sombra = Paint()
+    ..color = Colores.abismo.withValues(alpha: 0.4)
+    ..isAntiAlias = false;
+
+  /// Sombra ovalada a los pies; al rodar se achica, como si saltara.
+  @override
+  void render(Canvas canvas) {
+    final ancho = rodando ? 3.0 : 4.0;
+    for (final (dy, f) in const [(-1.0, 0.6), (0.0, 1.0), (1.0, 0.7)]) {
+      final m = (ancho * f).roundToDouble();
+      canvas.drawRect(Rect.fromLTWH(-m, dy, m * 2, 1), _sombra);
+    }
   }
 
   /// Pasto paso a paso; piedra (interiores, caminos, losas) en bucle.
@@ -250,7 +305,12 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
     } else {
       _modelo.reproducir('quieto');
     }
-    _modelo.scale.setValues(_lado * escalaSprites, escalaSprites);
+    // Estirar y aplastar: un poco más alto y angosto o más bajo y ancho.
+    final k = _aplasta.abs() < 0.01 ? 0.0 : sin(_aplasta.abs() * pi / 2) * _aplasta.sign;
+    _modelo.scale.setValues(
+      _lado * escalaSprites * (1 + k * 0.12),
+      escalaSprites * (1 - k * 0.12),
+    );
     _pintar();
   }
 
@@ -372,6 +432,13 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
       }
     }
     Sonido.efecto(Audios.dano(game.personaje.apariencia));
+    _aplasta = 0.8;
+    final hacia = desde == null ? Vector2(0, -1) : (centro - desde)
+      ..normalize();
+    game.zona.particulas?.sangre(centro, hacia, n: 7);
+    game
+      ..sacudir(2.5, 0.22)
+      ..destello(centro, radio: 26, tinte: Colores.sangre, duracion: 0.2);
     game.zona.add(TextoFlotante('-$dano', centro - Vector2(0, 8),
         color: Colores.sangre));
     if (game.vida.value == 0) {
@@ -379,6 +446,10 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
       _rodar = -1;
       _beber = -1;
       _caida = 0;
+      game
+        ..sacudir(5, 0.5)
+        ..congelar(0.25);
+      game.zona.particulas?.alma(centro, n: 18, color: Colores.brasa);
       game.jugadorMuerto();
     }
   }

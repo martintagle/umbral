@@ -183,6 +183,9 @@ class ModeloAnimado extends PositionComponent {
   double _velocidad = 1;
   Sprite? _cuadro;
 
+  /// El cuadro que se ve ahora (para la estela al rodar).
+  Sprite? get cuadro => _cuadro;
+
   /// Muestra [nombre] con su propio reloj; empieza desde el principio si
   /// antes se mostraba otra cosa.
   void reproducir(String nombre, {double velocidad = 1}) {

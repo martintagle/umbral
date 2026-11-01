@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
+import 'ambiente.dart';
 import 'efectos.dart';
 import 'enemigo.dart';
 import 'escenario.dart';
@@ -85,7 +86,11 @@ class SalaInterior extends Escenario {
       add(_FilaSala(mapa, sala, tileset, y, sinDibujar: hoguera));
     }
 
-    final iluminacion = Iluminacion(oscuridad: 0.88);
+    final clima = Clima.interior(mapa.zona);
+    final iluminacion = Iluminacion(
+      oscuridad: clima.oscuridad,
+      noche: clima.noche,
+    );
     if (hoguera != null) {
       final fogata = _Fogata(this, tileset, hoguera);
       add(fogata);
@@ -129,6 +134,7 @@ class SalaInterior extends Escenario {
       }
     }
     add(iluminacion);
+    ponerAmbiente(this, clima);
     reiniciarEnemigos();
     ponerOreste();
   }
@@ -414,12 +420,59 @@ class _SueloSala extends PositionComponent {
     : super(priority: -1 << 20) {
     final grabadora = PictureRecorder();
     final canvas = Canvas(grabadora);
+    bool muro(int x, int y) =>
+        x >= 0 &&
+        y >= 0 &&
+        x < sala.ancho &&
+        y < sala.alto &&
+        mapa.sueloBloquea.contains(sala.suelo[y][x]) &&
+        sala.suelo[y][x] != mapa.suelo('agua');
+    final volteables = {
+      for (final n in const ['suelo-piedra', 'suelo-cripta', 'suelo-tierra', 'suelo-madera'])
+        if (mapa.suelo(n) >= 0) mapa.suelo(n),
+    };
     for (var y = 0; y < sala.alto; y++) {
       for (var x = 0; x < sala.ancho; x++) {
-        _tile(canvas, tileset, mapa, sala.suelo[y][x], x, y);
+        final s = sala.suelo[y][x];
+        // Algunas baldosas van volteadas: el piso deja de verse repetido.
+        if (volteables.contains(s) && (x * 7 + y * 13 + x * y) % 3 == 0) {
+          canvas
+            ..save()
+            ..translate((x * 2 + 1) * _lado, 0)
+            ..scale(-1, 1);
+          _tile(canvas, tileset, mapa, s, x, y);
+          canvas.restore();
+        } else {
+          _tile(canvas, tileset, mapa, s, x, y);
+        }
+        if (!muro(x, y)) {
+          // Sombra del muro de arriba y filo oscuro junto a los de los lados.
+          if (muro(x, y - 1)) {
+            for (final (k, a) in const [(0, 0.45), (1, 0.3), (2, 0.18), (3, 0.08)]) {
+              _sombra.color = Colores.abismo.withValues(alpha: a);
+              canvas.drawRect(Rect.fromLTWH(x * _lado, y * _lado + k, _lado, 1), _sombra);
+            }
+          }
+          _sombra.color = Colores.abismo.withValues(alpha: 0.22);
+          if (muro(x - 1, y)) {
+            canvas.drawRect(Rect.fromLTWH(x * _lado, y * _lado, 2, _lado), _sombra);
+          }
+          if (muro(x + 1, y)) {
+            canvas.drawRect(Rect.fromLTWH(x * _lado + _lado - 2, y * _lado, 2, _lado), _sombra);
+          }
+        }
         final o = sala.objetos[y][x];
         if (o >= 0 && mapa.objetosTransitables.contains(o)) {
           _tile(canvas, tileset, mapa, mapa.indiceObjetos + o, x, y);
+        } else if (o >= 0 && !muro(x, y)) {
+          // Los muebles se asientan con una sombra al pie.
+          _sombra.color = Colores.abismo.withValues(alpha: 0.3);
+          for (final (dy, m) in const [(13.0, 4.0), (14.0, 6.0), (15.0, 5.0)]) {
+            canvas.drawRect(
+              Rect.fromLTWH(x * _lado + 8 - m, y * _lado + dy, m * 2, 1),
+              _sombra,
+            );
+          }
         }
       }
     }
@@ -430,6 +483,7 @@ class _SueloSala extends PositionComponent {
   }
 
   late final Image _imagen;
+  static final _sombra = Paint()..isAntiAlias = false;
 
   @override
   void render(Canvas canvas) =>
@@ -488,11 +542,19 @@ class _Fogata extends PositionComponent {
     ..filterQuality = FilterQuality.none
     ..isAntiAlias = false;
 
+  double _brasa = 0;
+
   @override
   void update(double dt) {
     luz.encendida = _sala.fogataVisible &&
         _sala.game.fogataEncendida(UmbralJuego.fogataSala(_sala.sala));
     _paint.colorFilter = luz.encendida ? null : filtroApagada;
+    // Encendida, suelta brasas que suben.
+    _brasa -= dt;
+    if (luz.encendida && _brasa <= 0) {
+      _brasa = 0.09;
+      _sala.particulas?.brasas(luz.posicion.clone(), ancho: 3);
+    }
   }
 
   @override

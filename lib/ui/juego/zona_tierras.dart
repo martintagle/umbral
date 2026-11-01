@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
+import 'ambiente.dart';
 import 'efectos.dart';
 import 'enemigo.dart';
 import 'escenario.dart';
@@ -84,6 +85,9 @@ class ZonaTierras extends Escenario {
   @override
   bool pisaPiedra(Vector2 pies) => mapa.piedra(pies.x, pies.y - 1);
 
+  @override
+  bool esAgua(double x, double y) => mapa.agua(x, y);
+
   /// Las criaturas que vienen de la zona anterior son aquí las débiles:
   /// abundan como tales.
   bool esDebil(String tipo) =>
@@ -125,9 +129,18 @@ class ZonaTierras extends Escenario {
   /// colisiones ya existen cuando se comprueba la posición guardada.
   void preparar(MapaMundo mapa, Interiores interiores, Images imagenes) {
     _tileset = imagenes.fromCache(mapa.tileset);
+    final extra = _Extra(
+      variantes: imagenes.fromCache(mapa.tilesetVariantes),
+      bordes: imagenes.fromCache(mapa.tilesetBordes),
+      animados: imagenes.fromCache(mapa.tilesetAnimados),
+    );
     this.mapa = mapa;
     limites = Rect.fromLTWH(0, 0, mapa.anchoPx, mapa.altoPx);
-    final iluminacion = Iluminacion();
+    final clima = Clima.de(mapa.id);
+    final iluminacion = Iluminacion(
+      oscuridad: clima.oscuridad,
+      noche: clima.noche,
+    );
     _obstaculos.clear();
     _ponerPuertas(interiores);
 
@@ -136,9 +149,10 @@ class ZonaTierras extends Escenario {
       if (game.mecanismoActivado(_idMecanismo(m))) _resolver(m);
     }
 
-    add(_suelo = _Suelo(mapa, _tileset));
+    add(_suelo = _Suelo(mapa, _tileset, extra));
+    add(_Animados(mapa, extra.animados));
     for (var y = 0; y < mapa.alto; y++) {
-      add(_filas[y] = _FilaAlta(mapa, _tileset, y));
+      add(_filas[y] = _FilaAlta(mapa, _tileset, extra.animados, y));
     }
     for (var y = 0; y < mapa.alto; y++) {
       for (var x = 0; x < mapa.ancho; x++) {
@@ -252,6 +266,7 @@ class ZonaTierras extends Escenario {
       _lucesGrietas[m.id] = luces;
     }
     add(iluminacion);
+    ponerAmbiente(this, clima);
 
     abrirCerrojos();
     reiniciarEnemigos();
@@ -721,25 +736,112 @@ class ZonaTierras extends Escenario {
   bool cercaDelAltar(Vector2 pies) => altarCerca(pies) != null;
 }
 
-/// Suelo y objetos bajos (pasto alto, escombros...), dibujados una vez en una
-/// imagen del tamaño del mapa. Las celdas que cambian después (una pasarela
-/// que sube, un muro roto) se pintan encima cada cuadro.
+/// Las hojas extra del tileset (`docs/graficos.md`).
+class _Extra {
+  const _Extra({
+    required this.variantes,
+    required this.bordes,
+    required this.animados,
+  });
+
+  /// Una fila por suelo y cuatro variantes; la 0 es la del tileset.
+  final Image variantes;
+
+  /// Una fila por suelo con lo que derrama sobre sus vecinos (N, S, O, E y
+  /// las cuatro esquinas) y una última fila con la orilla del agua.
+  final Image bordes;
+
+  /// Filas de cuatro cuadros: ondas del agua, pasto alto, pino, árbol seco y
+  /// zarza.
+  final Image animados;
+}
+
+/// Qué suelo se derrama sobre cuál en los bordes: el de número mayor cubre
+/// el filo del menor. Los que no están no se mezclan (muros, puentes).
+const _precedencia = {
+  'agua': 0,
+  'pasarela-hundida': 0,
+  'adoquin': 1,
+  'losa-cripta': 1,
+  'camino': 2,
+  'tierra-tumba': 3,
+  'suelo-bosque': 4,
+  'pasto': 5,
+  'pasto-hierba': 5,
+};
+const _muros = {'muro-roca', 'muro-agrietado', 'hueco'};
+const _aguas = {'agua', 'pasarela-hundida'};
+
+/// Objetos altos que echan sombra al pie, con su medio ancho en píxeles.
+const _sombraObjeto = {
+  'pino': 6,
+  'arbol-seco': 5,
+  'roca': 6,
+  'piedra-sellada': 6,
+  'palanca': 5,
+  'palanca-activa': 5,
+};
+
+/// Filas de `-animados.png`.
+const _filaOndas = 0;
+const _filaPastoAlto = 1;
+const _filasMecidas = {'pino': 2, 'arbol-seco': 3, 'zarza': 4};
+
+/// Lados en el orden de las columnas de `-bordes.png`: (columna, dx, dy).
+const _lados = [(0, 0, -1), (1, 0, 1), (2, -1, 0), (3, 1, 0)];
+
+/// Esquinas: (columna, dx, dy, lado vertical, lado horizontal).
+const _esquinas = [
+  (4, -1, -1, 0, 2),
+  (5, 1, -1, 0, 3),
+  (6, -1, 1, 1, 2),
+  (7, 1, 1, 1, 3),
+];
+
+/// Cuál de las cuatro variantes lleva la celda (x, y): la base algo más de
+/// la mitad de las veces. Siempre la misma para la misma celda.
+int varianteDe(int x, int y) {
+  final k = (x * 7919 + y * 104729 + x * y * 31) % 100;
+  return k < 52
+      ? 0
+      : k < 68
+      ? 1
+      : k < 84
+      ? 2
+      : 3;
+}
+
+/// El reloj del viento que mece pasto y árboles: lo avanza [_Animados].
+double _viento = 0;
+
+/// Suelo y objetos bajos (escombros, zarza cortada...), dibujados una vez en
+/// una imagen del tamaño del mapa: cada celda con su variante, los bordes que
+/// le derraman sus vecinos, la orilla si es agua, la corona y la cara del
+/// acantilado si es muro, y las sombras de muros, árboles y estructuras. Las
+/// celdas que cambian después (una pasarela que sube, un muro roto) se
+/// pintan encima cada cuadro, con sus vecinas.
 class _Suelo extends PositionComponent {
-  _Suelo(this._mapa, this._tileset) : super(priority: -1 << 20) {
-    final mapa = _mapa, tileset = _tileset;
+  _Suelo(this._mapa, this._tileset, this._extra) : super(priority: -1 << 20) {
+    final mapa = _mapa;
+    final n = mapa.nombresSuelo;
+    _filaOrilla = n.length;
+    _filaMuro = n.indexOf('muro-roca');
+    _pastoAlto = mapa.objeto('pasto-alto');
+    _sombras = {
+      for (final MapEntry(:key, :value) in _sombraObjeto.entries)
+        if (mapa.objeto(key) >= 0) mapa.objeto(key): value,
+    };
     final grabadora = PictureRecorder();
     final canvas = Canvas(grabadora);
-    final pintura = Paint()
-      ..filterQuality = FilterQuality.none
-      ..isAntiAlias = false;
     for (var y = 0; y < mapa.alto; y++) {
       for (var x = 0; x < mapa.ancho; x++) {
-        _tile(canvas, tileset, mapa, mapa.suelo[y][x], x, y, pintura);
-        final o = mapa.objetos[y][x];
-        if (o >= 0 && !mapa.objetosAltos.contains(o)) {
-          _tile(canvas, tileset, mapa, mapa.indiceObjetos + o, x, y, pintura);
-        }
+        _pintarCelda(canvas, x, y);
       }
+    }
+    // Las estructuras se asientan con una sombra a lo ancho de su base.
+    for (final e in mapa.estructuras) {
+      final base = (e.y + e.h) * _lado;
+      _elipse(canvas, (e.x + e.w / 2) * _lado, base - 1, e.w * _lado / 2 + 2, 3);
     }
     _imagen = grabadora.endRecording().toImageSync(
       mapa.anchoPx.toInt(),
@@ -749,38 +851,224 @@ class _Suelo extends PositionComponent {
 
   final MapaMundo _mapa;
   final Image _tileset;
+  final _Extra _extra;
+  late final int _filaOrilla, _filaMuro, _pastoAlto;
+  late final Map<int, int> _sombras;
   late final Image _imagen;
   final Set<(int, int)> _repintadas = {};
   final _pintura = Paint()
     ..filterQuality = FilterQuality.none
     ..isAntiAlias = false;
+  static final _sombra = Paint()..isAntiAlias = false;
 
-  /// Vuelve a pintar la celda (x, y) con su suelo y su objeto bajo de ahora.
-  void repintar(int x, int y) => _repintadas.add((x, y));
+  /// Vuelve a pintar la celda (x, y) y sus vecinas con su suelo y su objeto
+  /// bajo de ahora: los bordes y las sombras cambian con ella.
+  void repintar(int x, int y) {
+    for (var dy = -1; dy <= 1; dy++) {
+      for (var dx = -1; dx <= 1; dx++) {
+        final vx = x + dx, vy = y + dy;
+        if (vx >= 0 && vy >= 0 && vx < _mapa.ancho && vy < _mapa.alto) {
+          _repintadas.add((vx, vy));
+        }
+      }
+    }
+  }
 
   @override
   void render(Canvas canvas) {
     canvas.drawImage(_imagen, Offset.zero, _pintura);
     for (final (x, y) in _repintadas) {
-      _tile(canvas, _tileset, _mapa, _mapa.suelo[y][x], x, y, _pintura);
-      final o = _mapa.objetos[y][x];
-      if (o >= 0 && !_mapa.objetosAltos.contains(o)) {
-        _tile(canvas, _tileset, _mapa, _mapa.indiceObjetos + o, x, y, _pintura);
+      _pintarCelda(canvas, x, y);
+    }
+  }
+
+  String? _nombre(int x, int y) {
+    if (x < 0 || y < 0 || x >= _mapa.ancho || y >= _mapa.alto) return null;
+    return _mapa.nombresSuelo[_mapa.suelo[y][x]];
+  }
+
+  void _hoja(Canvas canvas, Image hoja, int columna, int fila, int x, int y) =>
+      canvas.drawImageRect(
+        hoja,
+        Rect.fromLTWH(columna * _lado, fila * _lado, _lado, _lado),
+        Rect.fromLTWH(x * _lado, y * _lado, _lado, _lado),
+        _pintura,
+      );
+
+  void _pintarCelda(Canvas canvas, int x, int y) {
+    final mapa = _mapa;
+    final s = mapa.suelo[y][x];
+    final nombre = mapa.nombresSuelo[s];
+    _hoja(canvas, _extra.variantes, varianteDe(x, y), s, x, y);
+
+    if (_aguas.contains(nombre)) {
+      // Sombra de la ribera y espuma donde el agua toca tierra.
+      for (final (col, dx, dy) in _lados) {
+        final v = _nombre(x + dx, y + dy);
+        if (v != null && !_aguas.contains(v) && v != 'puente') {
+          _hoja(canvas, _extra.bordes, col, _filaOrilla, x, y);
+        }
       }
+    }
+
+    if (_precedencia[nombre] case final p?) {
+      // Los suelos de más precedencia derraman su filo sobre esta celda.
+      for (final (col, dx, dy) in _lados) {
+        final v = _nombre(x + dx, y + dy);
+        final pv = _precedencia[v];
+        if (pv != null && pv > p) {
+          _hoja(canvas, _extra.bordes, col, mapa.nombresSuelo.indexOf(v!), x, y);
+        }
+      }
+      for (final (col, dx, dy, a, b) in _esquinas) {
+        final v = _nombre(x + dx, y + dy);
+        final pv = _precedencia[v];
+        if (pv == null || pv <= p) continue;
+        final va = _precedencia[_nombre(x + _lados[a].$2, y + _lados[a].$3)] ?? -1;
+        final vb = _precedencia[_nombre(x + _lados[b].$2, y + _lados[b].$3)] ?? -1;
+        if (va < pv && vb < pv) {
+          _hoja(canvas, _extra.bordes, col, mapa.nombresSuelo.indexOf(v!), x, y);
+        }
+      }
+    }
+
+    if (_muros.contains(nombre)) {
+      // Donde termina la roca: corona arriba, cara de acantilado abajo.
+      bool fuera(int dx, int dy) {
+        final v = _nombre(x + dx, y + dy);
+        return v != null && !_muros.contains(v);
+      }
+      for (final (col, dx, dy) in _lados) {
+        if (fuera(dx, dy)) _hoja(canvas, _extra.bordes, col, _filaMuro, x, y);
+      }
+      for (final (col, _, _, a, b) in _esquinas) {
+        if (fuera(_lados[a].$2, _lados[a].$3) && fuera(_lados[b].$2, _lados[b].$3)) {
+          _hoja(canvas, _extra.bordes, col, _filaMuro, x, y);
+        }
+      }
+    } else {
+      // El muro de arriba echa sombra sobre esta celda; los de los lados,
+      // un filo oscuro.
+      if (_muros.contains(_nombre(x, y - 1))) {
+        for (final (k, a) in const [(0, 0.42), (1, 0.28), (2, 0.16), (3, 0.07)]) {
+          _sombra.color = Colores.abismo.withValues(alpha: a);
+          canvas.drawRect(
+            Rect.fromLTWH(x * _lado, y * _lado + k, _lado, 1),
+            _sombra,
+          );
+        }
+      }
+      _sombra.color = Colores.abismo.withValues(alpha: 0.2);
+      if (_muros.contains(_nombre(x - 1, y))) {
+        canvas.drawRect(Rect.fromLTWH(x * _lado, y * _lado, 1, _lado), _sombra);
+      }
+      if (_muros.contains(_nombre(x + 1, y))) {
+        canvas.drawRect(
+          Rect.fromLTWH(x * _lado + _lado - 1, y * _lado, 1, _lado),
+          _sombra,
+        );
+      }
+    }
+
+    final o = mapa.objetos[y][x];
+    if (_sombras[o] case final r?) {
+      _elipse(canvas, x * _lado + 8, y * _lado + 14, r.toDouble(), 2);
+    }
+    // El pasto alto lo mece [_Animados]; el resto de objetos bajos va aquí.
+    if (o >= 0 && !mapa.objetosAltos.contains(o) && o != _pastoAlto) {
+      _tile(canvas, _tileset, mapa, mapa.indiceObjetos + o, x, y, _pintura);
+    }
+  }
+
+  /// Sombra ovalada de píxeles: tres filas, la del medio la más ancha.
+  static void _elipse(Canvas canvas, double cx, double cy, double rx, double ry) {
+    _sombra.color = Colores.abismo.withValues(alpha: 0.32);
+    for (var fila = -ry; fila <= ry; fila++) {
+      final k = sqrt(max(0.0, 1 - (fila / (ry + 0.5)) * (fila / (ry + 0.5))));
+      final media = (rx * k).roundToDouble();
+      canvas.drawRect(
+        Rect.fromLTWH((cx - media).roundToDouble(), (cy + fila).roundToDouble(), media * 2, 1),
+        _sombra,
+      );
     }
   }
 }
 
+/// Lo que se mueve en el suelo: ondas en el agua y pasto alto que se mece.
+/// Solo dibuja las celdas a la vista.
+class _Animados extends PositionComponent with HasGameReference<UmbralJuego> {
+  _Animados(this._mapa, this._hoja) : super(priority: -(1 << 20) + 1) {
+    _agua = _mapa.nombresSuelo.indexOf('agua');
+    _pastoAlto = _mapa.objeto('pasto-alto');
+  }
+
+  final MapaMundo _mapa;
+  final Image _hoja;
+  late final int _agua, _pastoAlto;
+  double _t = 0;
+  final _pintura = Paint()
+    ..filterQuality = FilterQuality.none
+    ..isAntiAlias = false;
+
+  @override
+  void update(double dt) {
+    _t += dt;
+    _viento += dt;
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final vista = game.camera.visibleWorldRect;
+    final x0 = max(0, (vista.left / _lado).floor());
+    final y0 = max(0, (vista.top / _lado).floor());
+    final x1 = min(_mapa.ancho - 1, (vista.right / _lado).floor());
+    final y1 = min(_mapa.alto - 1, (vista.bottom / _lado).floor());
+    for (var y = y0; y <= y1; y++) {
+      for (var x = x0; x <= x1; x++) {
+        if (_mapa.suelo[y][x] == _agua) {
+          // Cada celda a su ritmo, para que el lago no lata entero a la vez.
+          final cuadro = ((_t * 2.2).floor() + x * 3 + y * 5) % 4;
+          _dibujar(canvas, cuadro, _filaOndas, x, y);
+        }
+        if (_pastoAlto >= 0 && _mapa.objetos[y][x] == _pastoAlto) {
+          _dibujar(canvas, cuadroMecido(x, y), _filaPastoAlto, x, y);
+        }
+      }
+    }
+  }
+
+  void _dibujar(Canvas canvas, int columna, int fila, int x, int y) =>
+      canvas.drawImageRect(
+        _hoja,
+        Rect.fromLTWH(columna * _lado, fila * _lado, _lado, _lado),
+        Rect.fromLTWH(x * _lado, y * _lado, _lado, _lado),
+        _pintura,
+      );
+}
+
+/// Cuadro (0 a 3) de algo que mece el viento en la celda (x, y): las ráfagas
+/// cruzan el mapa de oeste a este.
+int cuadroMecido(int x, int y) =>
+    ((_viento * 2.4 - x * 0.45 - y * 0.15).floor()) % 4;
+
 /// Árboles, rocas, cercas, rejas, cofres y letreros de una fila del mapa.
 /// Comparte orden con los sprites según su base: el jugador pasa por detrás o
-/// delante. Lo que se abre o se corta cambia aquí su cuadro.
+/// delante. Lo que se abre o se corta cambia aquí su cuadro. Pinos, árboles
+/// secos y zarzas se mecen con el viento.
 class _FilaAlta extends PositionComponent with HasGameReference<UmbralJuego> {
-  _FilaAlta(this._mapa, this._tileset, this._fila)
-    : super(priority: ((_fila + 1) * _lado).round());
+  _FilaAlta(this._mapa, this._tileset, this._animados, this._fila)
+    : super(priority: ((_fila + 1) * _lado).round()) {
+    _mecidos = {
+      for (final MapEntry(:key, :value) in _filasMecidas.entries)
+        if (_mapa.objeto(key) >= 0) _mapa.indiceObjetos + _mapa.objeto(key): value,
+    };
+  }
 
   final MapaMundo _mapa;
   final Image _tileset;
+  final Image _animados;
   final int _fila;
+  late final Map<int, int> _mecidos;
 
   /// Cuadro del tileset en cada columna que tiene algo.
   final Map<int, int> _celdas = {};
@@ -797,7 +1085,16 @@ class _FilaAlta extends PositionComponent with HasGameReference<UmbralJuego> {
     if (y > vista.bottom || y + _lado < vista.top) return;
     for (final MapEntry(key: x, value: cuadro) in _celdas.entries) {
       if (x * _lado > vista.right || (x + 1) * _lado < vista.left) continue;
-      _tile(canvas, _tileset, _mapa, cuadro, x, _fila, _pintura);
+      if (_mecidos[cuadro] case final fila?) {
+        canvas.drawImageRect(
+          _animados,
+          Rect.fromLTWH(cuadroMecido(x, _fila) * _lado, fila * _lado, _lado, _lado),
+          Rect.fromLTWH(x * _lado, y, _lado, _lado),
+          _pintura,
+        );
+      } else {
+        _tile(canvas, _tileset, _mapa, cuadro, x, _fila, _pintura);
+      }
     }
   }
 }
@@ -826,33 +1123,61 @@ void _tile(
 }
 
 /// Chispas del altar: la luz cálida marca un lugar que vale la pena visitar.
-class _Brasas extends PositionComponent {
+/// Suben meciéndose, pasan de amarillo a rojo y se apagan en ceniza; brillan
+/// sobre la oscuridad. De vez en cuando sueltan una brasa a las partículas
+/// del lugar, que vuela más lejos.
+class _Brasas extends PositionComponent with HasGameReference<UmbralJuego>, Brilla {
   _Brasas(Vector2 posicion) : super(position: posicion, priority: 1 << 19);
 
   final _azar = Random();
-  final List<Vector2> _chispas = [];
+  final List<(Vector2, double)> _chispas = [];
   double _t = 0;
+  double _reloj = 0;
 
   /// Apagado no echa chispas nuevas; las que había se apagan solas.
   bool encendida = true;
 
+  static const _vida = 1.1;
+
   @override
   void update(double dt) {
     _t += dt;
-    if (_t > 0.15 && encendida) {
-      _t = 0;
-      _chispas.add(Vector2((_azar.nextInt(7) - 3).toDouble(), 0));
+    _reloj += dt;
+    if (_reloj > 0.07 && encendida) {
+      _reloj = 0;
+      _chispas.add((Vector2((_azar.nextDouble() - 0.5) * 7, 0), 0));
+      if (_azar.nextDouble() < 0.12) {
+        (parent as Escenario?)?.particulas?.brasas(position.clone(), ancho: 4);
+      }
     }
-    for (final c in _chispas) {
-      c.y -= 14 * dt;
+    for (var i = 0; i < _chispas.length; i++) {
+      final (p, edad) = _chispas[i];
+      p.y -= (16 - edad * 6) * dt;
+      p.x += sin(_t * 5 + p.y * 0.4) * 4 * dt;
+      _chispas[i] = (p, edad + dt);
     }
-    _chispas.removeWhere((c) => c.y < -14);
+    _chispas.removeWhere((c) => c.$2 > _vida);
   }
 
+  static const _colores = [
+    Color(0xFFF2C14E),
+    Colores.brasa,
+    Colores.brasa,
+    Colores.sangre,
+    Colores.ceniza,
+  ];
+
   @override
-  void render(Canvas canvas) {
-    for (final c in _chispas) {
-      pixel(canvas, c.x, c.y, c.y < -8 ? Colores.ceniza : Colores.brasa);
+  void pintarBrillo(Canvas canvas) {
+    for (final (p, edad) in _chispas) {
+      final k = edad / _vida;
+      puntoBrillante(
+        canvas,
+        position.x + p.x,
+        position.y + p.y,
+        _colores[min(_colores.length - 1, (k * _colores.length).floor())],
+        k < 0.8 ? 1 : (1 - k) * 5,
+      );
     }
   }
 }

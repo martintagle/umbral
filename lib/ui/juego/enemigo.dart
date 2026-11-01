@@ -65,6 +65,11 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
   double _preparacionTotal = 1;
   double _sinDano = 10;
   double _destello = 0;
+
+  /// Tiempo que queda del aplastamiento al recibir un golpe o aterrizar: el
+  /// cuerpo se ensancha y se encoge un instante.
+  double _aplastado = 0;
+  static const _duracionAplastado = 0.12;
   double _t = _azar.nextDouble() * 10;
   final Vector2 _destino = Vector2.zero();
   final Vector2 _direccionEmbestida = Vector2.zero();
@@ -156,6 +161,7 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
     _t += dt;
     _sinDano += dt;
     _destello = max(0, _destello - dt);
+    _aplastado = max(0.0, _aplastado - dt);
     _golpe = max(0, _golpe - dt);
     _disparo = max(0, _disparo - dt);
     _herido = max(0, _herido - dt);
@@ -225,6 +231,10 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
             final salto = _hoja['salto'];
             _aterrizaje = salto.duracionTramo(
                 salto.eventos['aterriza']!, salto.cuadros);
+            // El suelo tiembla bajo lo grande que cae.
+            game.sacudir(tipo.jefe ? 3.5 : 1.2, tipo.jefe ? 0.3 : 0.15);
+            game.zona.particulas?.polvo(position, n: tipo.jefe ? 14 : 6);
+            _aplastado = _duracionAplastado;
           }
           _recuperar();
         }
@@ -534,7 +544,10 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
       ..visible = game.camera.visibleWorldRect
           .inflate(64)
           .contains(Offset(position.x, position.y))
-      ..scale.setValues(_lado * escalaSprites, escalaSprites);
+      ..scale.setValues(
+        _lado * escalaSprites * (1 + _aplasta * 0.16),
+        escalaSprites * (1 - _aplasta * 0.14),
+      );
 
     // Destello al recibir daño y parpadeo de brasa mientras avisa del golpe.
     final avisando = _estado == _Estado.preparar && (_t * 16).floor().isEven;
@@ -578,12 +591,34 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
     );
   }
 
+  /// De 0 a 1: cuánto está aplastado ahora (sube rápido y vuelve).
+  double get _aplasta {
+    if (_aplastado <= 0) return 0;
+    final k = _aplastado / _duracionAplastado;
+    return sin(k * pi);
+  }
+
+  static final _sombra = Paint()
+    ..color = Colores.abismo.withValues(alpha: 0.38)
+    ..isAntiAlias = false;
+
+  /// Sombra ovalada a los pies, del ancho del cuerpo. Se dibuja antes que el
+  /// modelo, así queda debajo.
+  void _pintarSombra(Canvas canvas) {
+    final rx = max(3.0, radio * 0.9).roundToDouble();
+    for (final (dy, f) in const [(-1.0, 0.7), (0.0, 1.0), (1.0, 0.75)]) {
+      final m = (rx * f).roundToDouble();
+      canvas.drawRect(Rect.fromLTWH(-m, dy, m * 2, 1), _sombra);
+    }
+  }
+
   /// El rey furioso tiene su propio `quieto` y `caminar`.
   String _variante(String nombre) =>
       furioso && _hoja.tiene('$nombre-furioso') ? '$nombre-furioso' : nombre;
 
   @override
   void render(Canvas canvas) {
+    if (vivo && _modelo.visible) _pintarSombra(canvas);
     // Barra de vida sobre la cabeza de las criaturas heridas (el jefe la
     // tiene en el HUD).
     if (!vivo || tipo.jefe || _sinDano > 4 || !_modelo.visible) return;
@@ -604,7 +639,16 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
     vida -= dano;
     _sinDano = 0;
     _destello = 0.08;
+    _aplastado = _duracionAplastado;
     _herido = _duracionHerido;
+    // Que el golpe pese: chispas, sangre, un fogonazo y una pausa mínima.
+    game.zona.particulas
+      ?..chispas(centro, empuje, critico: critico)
+      ..sangre(centro, empuje, n: critico ? 8 : 4);
+    game
+      ..destello(centro, radio: critico ? 34 : 22, duracion: 0.12)
+      ..congelar(critico ? 0.07 : 0.035)
+      ..sacudir(critico ? 2 : 0.8, 0.12);
     game.zona
       ..add(Efecto(Hojas.efectos, 'impacto', centro))
       ..add(TextoFlotante(
@@ -627,6 +671,11 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
       vida = 0;
       Sonido.efecto(Audios.muerteEnemigo, volumen: tipo.jefe ? 1 : 0.7);
       game.enemigoDerrotado(this);
+      game.zona.particulas?.alma(centro, n: tipo.jefe ? 40 : 10);
+      game
+        ..destello(centro, radio: tipo.jefe ? 90 : 36, tinte: Colores.alma, duracion: tipo.jefe ? 0.8 : 0.3)
+        ..congelar(tipo.jefe ? 0.3 : 0.08)
+        ..sacudir(tipo.jefe ? 6 : 1.5, tipo.jefe ? 0.6 : 0.15);
       game.zona
         ..add(Desvanecer(_hoja, position.clone(), _lado))
         ..add(Estallido(centro, const [

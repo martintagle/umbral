@@ -11,6 +11,7 @@ Los datos ya están en `assets/`; aquí solo hay código. Los documentos de dise
 | `docs/zonas.md` | El formato de los mapas de las zonas 2 a 6. |
 | `docs/exploracion.md` | Muros agrietados y palancas: cómo funcionan y dónde están. |
 | `docs/mazmorras.md` | El formato de las mazmorras. |
+| `docs/graficos.md` | Texturas, luz, niebla, partículas, vida y cámara. |
 | `assets/sprites/animaciones/README.md` | Las hojas de sprites y sus animaciones. |
 
 ## Lo que ya funciona (no tocar)
@@ -70,6 +71,22 @@ Lo hizo Claude en el chat, sin compilar: **pasa `flutter analyze`** y mira las t
 - **`partidas_pantalla.dart`:** `_nueva` muestra la cinemática `inicio` antes de `_jugar`.
 - **`juego_pantalla.dart`:** `_elegirFinal` muestra `final-encender` o `final-romper` y vuelve a la lista de partidas.
 - **Detalles:** `docs/cinematicas.md`.
+
+## Cambio ya hecho en el código: gráficos (01-11)
+
+Lo hizo Claude en el chat, sin compilar: **pasa `flutter analyze`** y prueba en el teléfono. Cuida sobre todo los cuadros por segundo en las zonas con muchas luces, como la aldea Cenizal.
+
+- **Texturas nuevas** en `assets/tiles/`: los 6 tilesets redibujados, con el mismo formato, más 18 hojas extra (`-variantes`, `-bordes`, `-animados`) y `niebla.png`. `pubspec.yaml` ya incluye `assets/tiles/`.
+- **Nuevo** `lib/ui/juego/ambiente.dart`: clima por zona, niebla, partículas, cuervos, ratas, polillas y luciérnagas.
+- **Cambiados:**
+  - `iluminacion.dart`: noche con color, más anillos, halos, `AportaLuz` y `destello`.
+  - `zona_tierras.dart`: suelo con variantes, bordes y sombras; agua y vegetación animadas.
+  - `sala_interior.dart`: sombras y baldosas volteadas.
+  - `jugador.dart` y `enemigo.dart`: sombras, estirar y aplastar, estela, chispas, sangre y alma.
+  - `efectos.dart`: `Estela` y el rastro de los proyectiles.
+  - `umbral_juego.dart`: cámara suave, `sacudir`, `congelar` y `destello`.
+  - `escenario.dart`, `mapa_mundo.dart` y `animacion.dart`: cambios pequeños de apoyo.
+- **Detalles y números:** `docs/graficos.md`. Si algo choca con cambios tuyos en esos archivos, la intención está descrita ahí.
 
 ## Tarea 1: Guardar qué diálogos leyó el jugador
 
