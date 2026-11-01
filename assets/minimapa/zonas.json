@@ -449,6 +449,12 @@
     },
     {
      "tipo": "cofre",
+     "x": 98,
+     "y": 10,
+     "id": "cofre-secreto-astilla"
+    },
+    {
+     "tipo": "cofre",
      "x": 54,
      "y": 8,
      "id": "cofre-puentes"

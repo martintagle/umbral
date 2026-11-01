@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 
 import 'enemigo.dart';
+import 'oreste.dart';
 import 'umbral_juego.dart';
 
 /// Algo que se puede hacer donde está el jugador: descansar, entrar, abrir un
@@ -33,8 +34,9 @@ class AccionContexto {
 abstract class Escenario extends World with HasGameReference<UmbralJuego> {
   Rect get limites;
 
-  /// Bajo techo y sobre piedra: cambia el sonido de los pasos.
-  bool get interior => false;
+  /// Si [pies] pisan suelo duro (piedra, losas, tablas): los pasos suenan a
+  /// piedra en vez de a pasto.
+  bool pisaPiedra(Vector2 pies) => false;
 
   /// Música o ambiente del lugar; `null` para el silencio de la noche.
   String? get pista => null;
@@ -43,8 +45,8 @@ abstract class Escenario extends World with HasGameReference<UmbralJuego> {
   String regionEn(Vector2 pies);
 
   /// [pies] es la caja de colisión; [enemigo] pide además las reglas de paso
-  /// de las criaturas.
-  bool libre(Rect pies, {bool enemigo = false});
+  /// de las criaturas, y [diminuto], las del jugador encogido.
+  bool libre(Rect pies, {bool enemigo = false, bool diminuto = false});
 
   /// Para proyectiles.
   bool bloquea(double x, double y);
@@ -57,6 +59,9 @@ abstract class Escenario extends World with HasGameReference<UmbralJuego> {
   void reiniciarEnemigos();
 
   List<AccionContexto> accionesEn(Vector2 pies) => const [];
+
+  /// Oreste, si espera aquí y no se ha desvanecido.
+  Oreste? get oreste => null;
 
   /// Lo llama el juego cada cuadro: para salidas y escaleras que se activan
   /// al pisarlas.

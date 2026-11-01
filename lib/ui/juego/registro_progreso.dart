@@ -31,6 +31,12 @@ class RegistroProgreso {
   final Set<String> cofres = {};
   int oroCofres = 0;
 
+  /// Fogatas encendidas. Tampoco se apagan al morir.
+  final Set<String> fogatas = {};
+
+  /// Diálogos de Oreste leídos. Tampoco se olvidan al morir.
+  final Set<String> dialogos = {};
+
   void cofreAbierto(String id, int oro) {
     if (cofres.add(id)) oroCofres += oro;
   }
@@ -62,7 +68,13 @@ class RegistroProgreso {
         oroMax: 0,
       );
 
-  Progreso aProgreso({required int vidaActual, required Ubicacion ubicacion}) {
+  /// [caidos] son las criaturas caídas desde el último descanso: no es algo
+  /// que se descuente al guardar, el juego lo lleva aparte.
+  Progreso aProgreso({
+    required int vidaActual,
+    required Ubicacion ubicacion,
+    Map<String, int> caidos = const {},
+  }) {
     return Progreso(
       enemigosDerrotados: Map.of(enemigos),
       exp: exp,
@@ -73,6 +85,9 @@ class RegistroProgreso {
       ubicacion: ubicacion,
       cofresAbiertos: cofres.toList(),
       oroCofres: oroCofres,
+      fogatasEncendidas: fogatas.toList(),
+      dialogosLeidos: dialogos.toList(),
+      enemigosCaidos: Map.of(caidos),
     );
   }
 
@@ -110,5 +125,7 @@ class RegistroProgreso {
     segundos -= enviado.segundosJugados;
     cofres.removeAll(enviado.cofresAbiertos);
     oroCofres = max(0, oroCofres - enviado.oroCofres);
+    fogatas.removeAll(enviado.fogatasEncendidas);
+    dialogos.removeAll(enviado.dialogosLeidos);
   }
 }

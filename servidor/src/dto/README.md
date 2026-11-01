@@ -26,6 +26,8 @@ ClaseDto                           clase.dto.ts
 └── atributosBase                  atributos-base.dto.ts
 ```
 
+`MundoDto` guarda, además de zonas, cofres y jefes, tres campos opcionales que no traen las partidas antiguas: `fogatasEncendidas` (`altar:<zona>:<n>` o `sala:<slug>`), `enemigosCaidos` (caídas por punto de aparición desde el último descanso) y `dialogosLeidos` (`oreste-<zona>-<n>`). `UsuarioDto` lleva `rol` opcional (`jugador` o `admin`, en `rol-usuario.ts`).
+
 | BSON | TypeScript |
 |---|---|
 | `objectId` (`_id`) | `ObjectId` |

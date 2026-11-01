@@ -1,0 +1,451 @@
+{
+ "id": "oreste",
+ "nombre": "Oreste, el Apagador",
+ "hoja": "npcs/oreste",
+ "retrato": "npcs/oreste-retrato.png",
+ "descripcion": "Viejo encapuchado con un apagavelas y un farol apagado. Era quien alimentaba la Brasa con los nombres de los que despiertan. Ahora quiere romperla.",
+ "comportamiento": {
+  "enZonaSegura": true,
+  "hostil": false,
+  "presencia": "Espera bajo techo, en la choza o la capilla más cercana al primer altar de cada zona (posiciones[n].interior; x, y es el sitio de fuera de referencia), en la que el jugador tenga diálogos pendientes (y siempre en la zona más avanzada a la que haya llegado). Al leer el último diálogo disponible de una zona, usa «desvanecerse».",
+  "animaciones": {
+   "esperando": [
+    "quieto",
+    "mirar"
+   ],
+   "hablando": "hablar",
+   "trasDescansar": [
+    "sentarse",
+    "sentado"
+   ],
+   "alAcercarse": "levantarse",
+   "adorno": "apagar-vela (a ratos, si hay velas cerca)",
+   "entrar": "aparecer",
+   "salir": "desvanecerse"
+  }
+ },
+ "posiciones": {
+  "1": {
+   "zona": "tierras-del-umbral",
+   "x": 34,
+   "y": 20,
+   "nota": "Junto al altar de brasas de la aldea Cenizal.",
+   "interior": {
+    "sala": "capilla",
+    "x": 4,
+    "y": 4,
+    "nota": "En la capilla de la aldea Cenizal, junto al altar de brasas."
+   }
+  },
+  "2": {
+   "zona": "cienaga",
+   "x": 9,
+   "y": 27,
+   "nota": "Junto al altar de la Orilla de los Cirios.",
+   "interior": {
+    "sala": "refugio-del-apagador",
+    "x": 6,
+    "y": 6,
+    "nota": "En el Refugio del Apagador, la choza junto al altar de la Orilla de los Cirios."
+   }
+  },
+  "3": {
+   "zona": "minas",
+   "x": 17,
+   "y": 47,
+   "nota": "Junto al altar de la Bocamina.",
+   "interior": {
+    "sala": "herreria-abandonada",
+    "x": 6,
+    "y": 6,
+    "nota": "En el barracón de mineros, cerca del altar de la Bocamina."
+   }
+  },
+  "4": {
+   "zona": "abadia",
+   "x": 7,
+   "y": 26,
+   "nota": "En la plataforma del altar del Atrio Inundado.",
+   "interior": {
+    "sala": "refugio-del-apagador",
+    "x": 6,
+    "y": 6,
+    "nota": "En el Refugio del Apagador, la choza junto al altar del Atrio Inundado."
+   }
+  },
+  "5": {
+   "zona": "paramo",
+   "x": 21,
+   "y": 8,
+   "nota": "Junto al altar del Campamento Caído.",
+   "interior": {
+    "sala": "herreria-abandonada",
+    "x": 6,
+    "y": 6,
+    "nota": "En la choza del Campamento Caído, cerca de su altar."
+   }
+  },
+  "6": {
+   "zona": "umbral",
+   "x": 7,
+   "y": 37,
+   "nota": "Junto al altar de El Borde.",
+   "interior": {
+    "sala": "refugio-del-apagador",
+    "x": 6,
+    "y": 6,
+    "nota": "En el Refugio del Apagador, la choza junto al altar de El Borde."
+   }
+  }
+ },
+ "requisitos": {
+  "llegada": "hablarle por primera vez en esa zona",
+  "fogata:<zonaId>": "haber encendido algún altar de brasas de esa zona (mundo.fogatasEncendidas tiene un altar:<zonaId>:<n>)",
+  "cofre:<zonaId>/<cofreId>": "haber abierto ese cofre secreto (está en mundo.cofresAbiertos); son los que solo se alcanzan diminuto",
+  "jefe:<id>": "haber vencido al jefe de esa zona",
+  "leido:<id>": "haber leído antes ese diálogo (los de cada zona van en orden)",
+  "todos": "haber leído los otros 21 diálogos"
+ },
+ "dialogos": [
+  {
+   "id": "oreste-1-1",
+   "zona": 1,
+   "orden": 1,
+   "requiere": [
+    "llegada"
+   ],
+   "lineas": [
+    "Otro que despierta junto al fuego.",
+    "No te asustes. Yo también cuidaba este altar, cuando había quien encendiera velas.",
+    "Me llamo Oreste. Lo recuerdo porque nunca morí cerca de un altar.",
+    "Tú no puedes decir lo mismo, ¿verdad?"
+   ]
+  },
+  {
+   "id": "oreste-1-2",
+   "zona": 1,
+   "orden": 2,
+   "requiere": [
+    "fogata:tierras-del-umbral",
+    "leido:oreste-1-1"
+   ],
+   "lineas": [
+    "Descansaste. Te sientes más fuerte.",
+    "Dime una cosa: ¿recuerdas algo más que antes? ¿O algo menos?",
+    "Cada vez que el fuego te devuelve, cobra. Y siempre cobra en la misma moneda."
+   ]
+  },
+  {
+   "id": "oreste-1-3",
+   "zona": 1,
+   "orden": 3,
+   "requiere": [
+    "jefe:jefe-rey-hueco",
+    "leido:oreste-1-2"
+   ],
+   "lineas": [
+    "El Rey decía que miraba lejos. No miraba nada.",
+    "La Brasa le quitó el reino nombre por nombre. Primero los de sus súbditos. Al final, el suyo.",
+    "Dicen que los ojos lo vaciaron. Los ojos llegaron después. Buscaban algo que ya no estaba.",
+    "Te veré en la ciénaga. Allí las velas hablan más claro."
+   ]
+  },
+  {
+   "id": "oreste-2-1",
+   "zona": 2,
+   "orden": 1,
+   "requiere": [
+    "llegada"
+   ],
+   "lineas": [
+    "¿Hueles? Es cera. Cada vela de esta orilla tenía un nombre escrito en la base.",
+    "Míralas bien. Ya no queda ninguno que se pueda leer."
+   ]
+  },
+  {
+   "id": "oreste-2-2",
+   "zona": 2,
+   "orden": 2,
+   "requiere": [
+    "cofre:cienaga/cofre-secreto-cunas",
+    "leido:oreste-2-1"
+   ],
+   "lineas": [
+    "Estuviste en la isla de las cunas.",
+    "La Madre encendía una vela por cada niño, para que la Brasa no se apagara.",
+    "Cuando un niño enfermaba, encendía otra. El niño olvidaba a su madre. Y la Brasa ardía un poco más.",
+    "Ella no lo sabía. O no quería saberlo."
+   ]
+  },
+  {
+   "id": "oreste-2-3",
+   "zona": 2,
+   "orden": 3,
+   "requiere": [
+    "jefe:jefe-madre-cirio",
+    "leido:oreste-2-2"
+   ],
+   "lineas": [
+    "«¿Cuál eras tú?», preguntó al morir. Ni ella se acordaba ya.",
+    "El fuego no da luz, Sin Nombre. Da tiempo. Y el tiempo se paga con lo que fuimos."
+   ]
+  },
+  {
+   "id": "oreste-3-1",
+   "zona": 3,
+   "orden": 1,
+   "requiere": [
+    "llegada"
+   ],
+   "lineas": [
+    "Aquí abajo nadie ve el cielo. La Brasa se nota menos. Lo que se llevó se nota más.",
+    "Pregúntale a un minero cómo se llamaba. Te dirá su turno."
+   ]
+  },
+  {
+   "id": "oreste-3-2",
+   "zona": 3,
+   "orden": 2,
+   "requiere": [
+    "fogata:minas",
+    "leido:oreste-3-1"
+   ],
+   "lineas": [
+    "¿Sabes por qué despiertas junto a los altares y no en otro sitio?",
+    "Porque el altar no te salva. Te retiene.",
+    "Lo que muere tendría que irse. Al Hueco. A descansar. La Brasa le cierra la puerta."
+   ]
+  },
+  {
+   "id": "oreste-3-3",
+   "zona": 3,
+   "orden": 3,
+   "requiere": [
+    "cofre:minas/cofre-secreto-lago",
+    "leido:oreste-3-2"
+   ],
+   "lineas": [
+    "Los mineros cavaron hasta tocar el borde del Hueco. ¿Sabes qué encontraron?",
+    "Silencio. Ningún monstruo. Un silencio que no dolía.",
+    "El Capataz mandó tapiar la galería. Dijo que ese silencio era malo para el trabajo."
+   ]
+  },
+  {
+   "id": "oreste-3-4",
+   "zona": 3,
+   "orden": 4,
+   "requiere": [
+    "jefe:jefe-capataz-de-sal",
+    "leido:oreste-3-3"
+   ],
+   "lineas": [
+    "«Turno terminado», dijo. Por fin.",
+    "Fíjate: ninguno de los que has matado maldijo al caer. Todos parecían... aliviados.",
+    "Piensa en eso la próxima vez que despiertes junto al fuego."
+   ]
+  },
+  {
+   "id": "oreste-4-1",
+   "zona": 4,
+   "orden": 1,
+   "requiere": [
+    "llegada"
+   ],
+   "lineas": [
+    "Aquí le rezaban a la Brasa. Yo cuidaba las velas del coro.",
+    "Era el Apagador. Recortaba la llama cuando crecía demasiado. Y la alimentaba cuando menguaba."
+   ]
+  },
+  {
+   "id": "oreste-4-2",
+   "zona": 4,
+   "orden": 2,
+   "requiere": [
+    "fogata:abadia",
+    "leido:oreste-4-1"
+   ],
+   "lineas": [
+    "Quieres saber con qué se alimenta.",
+    "Con nombres. Los nombres de los que vuelven. Cada despertar, un nombre al fuego.",
+    "Yo se los echaba con este apagavelas. Uno a uno. Durante siglos.",
+    "Por eso conservo el mío. Es el único que nunca le di."
+   ]
+  },
+  {
+   "id": "oreste-4-3",
+   "zona": 4,
+   "orden": 3,
+   "requiere": [
+    "cofre:abadia/cofre-secreto-atrio",
+    "leido:oreste-4-2"
+   ],
+   "lineas": [
+    "Bajo el ala oeste hay una cripta sellada. Las hermanas guardaban allí una lista.",
+    "Los nombres que la Abadesa pidió conservar. La Brasa se los comió igual.",
+    "Las mil manos no sostenían la llama. Intentaban sacar algo de ella."
+   ]
+  },
+  {
+   "id": "oreste-4-4",
+   "zona": 4,
+   "orden": 4,
+   "requiere": [
+    "jefe:jefe-abadesa",
+    "leido:oreste-4-3"
+   ],
+   "lineas": [
+    "Ninguna mano alcanzó. Ninguna iba a alcanzar.",
+    "Del fuego no se saca nada, Sin Nombre. Se puede apagar... pero lo que se apaga, alguien lo vuelve a encender.",
+    "Hay otra forma. Te la diré en el páramo, si sigues escuchando a un viejo."
+   ]
+  },
+  {
+   "id": "oreste-5-1",
+   "zona": 5,
+   "orden": 1,
+   "requiere": [
+    "llegada"
+   ],
+   "lineas": [
+    "Aquí juraron defender la Brasa con la vida. Y la Brasa aceptó.",
+    "Mira el campo. Ninguno pudo morir del todo. Llevan siglos cayendo y levantándose."
+   ]
+  },
+  {
+   "id": "oreste-5-2",
+   "zona": 5,
+   "orden": 2,
+   "requiere": [
+    "fogata:paramo",
+    "leido:oreste-5-1"
+   ],
+   "lineas": [
+    "¿Has notado que los ojos nunca se acercan a los altares?",
+    "Los ojos son el Hueco mirando por las grietas. No vienen a devorarnos.",
+    "Buscan a los suyos. A los muertos que la Brasa no dejó pasar."
+   ]
+  },
+  {
+   "id": "oreste-5-3",
+   "zona": 5,
+   "orden": 3,
+   "requiere": [
+    "cofre:paramo/cofre-secreto-charca",
+    "leido:oreste-5-2"
+   ],
+   "lineas": [
+    "En el búnker de las trincheras hay cartas. Ninguna llegó a su destino.",
+    "Una dice: «Si no vuelvo, no me esperes junto al fuego. Espérame del otro lado».",
+    "El otro lado. Hubo un tiempo en que no era una amenaza. Era una promesa."
+   ]
+  },
+  {
+   "id": "oreste-5-4",
+   "zona": 5,
+   "orden": 4,
+   "requiere": [
+    "jefe:jefe-caballero-de-ceniza",
+    "leido:oreste-5-3"
+   ],
+   "lineas": [
+    "«Cumplí, ¿verdad?». Cumpliste demasiado, caballero.",
+    "Escucha bien. La Brasa no hay que apagarla. Hay que romperla. Para siempre.",
+    "Con algo que el fuego no pueda quemar.",
+    "Te espero en el borde. Allí te diré dónde está."
+   ]
+  },
+  {
+   "id": "oreste-6-1",
+   "zona": 6,
+   "orden": 1,
+   "requiere": [
+    "llegada"
+   ],
+   "lineas": [
+    "El borde. Desde aquí se oye el Hueco. ¿Lo oyes? No grita. Respira.",
+    "Todos los que nos faltan están ahí abajo. Esperando a que abramos."
+   ]
+  },
+  {
+   "id": "oreste-6-2",
+   "zona": 6,
+   "orden": 2,
+   "requiere": [
+    "fogata:umbral",
+    "leido:oreste-6-1"
+   ],
+   "lineas": [
+    "El sexto custodio nunca existió. Lo inventamos los Apagadores, para que nadie preguntara qué había bajo el Altar.",
+    "Bajo el Altar está El Que Mira. No es un monstruo. Es el Hueco, con los ojos de todos los que perdimos.",
+    "Te mirará con la cara de alguien que conociste. No sabrás de quién."
+   ]
+  },
+  {
+   "id": "oreste-6-3",
+   "zona": 6,
+   "orden": 3,
+   "requiere": [
+    "cofre:umbral/cofre-secreto-islote",
+    "leido:oreste-6-2"
+   ],
+   "lineas": [
+    "La Estatua sin Rostro. ¿Nunca te preguntaste de quién era la cara que le falta?",
+    "Fue el primer Sin Nombre. Bajó al Hueco, volvió con algo en la mano y tuvo miedo de usarlo.",
+    "Se quedó junto al fuego. El fuego le quitó la cara."
+   ]
+  },
+  {
+   "id": "oreste-6-4",
+   "zona": 6,
+   "orden": 4,
+   "requiere": [
+    "todos",
+    "leido:oreste-6-3"
+   ],
+   "lineas": [
+    "Has escuchado todo lo que sé. Nadie lo había hecho antes.",
+    "Lo que el primero trajo del Hueco es una astilla de nada. Lo único que la Brasa no puede quemar.",
+    "La escondió en su torre, sobre el vacío, al noreste del borde. Solo se llega siendo pequeño, por los troncos.",
+    "Cuando caiga El Que Mira y pongas las ascuas en el Altar, no la enciendas. Clava la astilla.",
+    "No te prometo que despiertes. Te prometo que vas a recordar.",
+    "Yo me quedo aquí. Alguien tiene que apagar la última vela."
+   ]
+  }
+ ],
+ "espera": {
+  "1": "Descansa. El fuego no se va a ninguna parte. Por desgracia.",
+  "2": "Las velas siguen goteando. Ve, vuelve cuando hayas visto más.",
+  "3": "Aquí abajo el tiempo no pasa. Pero tú sí. Sigue.",
+  "4": "Reza si quieres. Nadie escucha, pero calma las manos.",
+  "5": "Levántate. Aquí todos se levantan; al menos tú sabes para qué.",
+  "6": "El Hueco respira. Tómate tu tiempo."
+ },
+ "trasAstilla": [
+  "La tienes. Pesa poco, ¿verdad? La nada nunca pesa.",
+  "Ve. No mires atrás cuando el Altar se rompa. Yo apago la última vela."
+ ],
+ "mision": {
+  "id": "la-astilla-de-nada",
+  "nombre": "La astilla de nada",
+  "seActivaCon": "leido:oreste-6-4",
+  "objeto": {
+   "id": "astilla-de-nada",
+   "nombre": "Astilla de nada",
+   "icono": "iconos/astilla-de-nada.png",
+   "descripcion": "Un trozo del Hueco. No pesa, no brilla, no quema. Es lo único que la Brasa no puede quemar.",
+   "zona": 6,
+   "mapa": "zona-6-umbral.json",
+   "cofre": "umbral/cofre-secreto-astilla",
+   "x": 98,
+   "y": 10,
+   "soloDiminuto": true,
+   "lugar": "Torre del primer guardián, en el islote del noreste de El Umbral. Se llega por la hilera de troncos desde el portal de la isla N3, en tamaño diminuto.",
+   "apareceSolo": "el cofre del mapa lleva requiere: leido:oreste-6-4; mientras no se cumpla, no se dibuja ni bloquea"
+  },
+  "efecto": "Con el cofre umbral/cofre-secreto-astilla abierto, en el Altar Mayor aparece la opción «Romper la Brasa» junto a «Encender la Brasa»."
+ },
+ "final": {
+  "normal": "Encender la Brasa: siempre disponible.",
+  "oculto": "Romper la Brasa: solo con la astilla de nada."
+ }
+}

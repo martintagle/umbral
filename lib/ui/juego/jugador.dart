@@ -70,6 +70,10 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
   bool _impactoPendiente = false;
 
   bool get vivo => game.vida.value > 0;
+
+  /// Encogido en un portal: cruza el hueco y los troncos sobre el agua, y
+  /// se dibuja a la mitad.
+  bool diminuto = false;
   bool get rodando => _rodar >= 0;
   bool get bebiendo => _beber >= 0;
   bool get _inmune =>
@@ -195,13 +199,13 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
     _curaPendiente = true;
   }
 
-  /// Pasto en el mundo, paso a paso; piedra en los interiores, en bucle.
+  /// Pasto paso a paso; piedra (interiores, caminos, losas) en bucle.
   void _sonarPasos(bool andando, double dt) {
-    final interior = game.zona.interior;
-    // Cada cuadro, aunque no cambie [andando]: al salir de una sala
+    final piedra = game.zona.pisaPiedra(position);
+    // Cada cuadro, aunque no cambie [andando]: al pasar del camino al pasto
     // caminando, la piedra tiene que callarse. Si nada cambió, no hace nada.
-    Sonido.bucle(Audios.pasosPiedra, sonando: andando && interior);
-    if (!andando || interior) {
+    Sonido.bucle(Audios.pasosPiedra, sonando: andando && piedra);
+    if (!andando || piedra) {
       _sonidoPaso = 0;
       return;
     }
@@ -215,7 +219,7 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
   void _mover(double dx, double dy) {
     if (dx == 0 && dy == 0) return;
     final x = position.x + dx, y = position.y + dy;
-    if (game.zona.libre(Rect.fromCenter(
+    if (game.zona.libre(diminuto: diminuto, Rect.fromCenter(
         center: Offset(x, y - _altoPies / 2),
         width: _anchoPies,
         height: _altoPies))) {
@@ -250,7 +254,8 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
     } else {
       _modelo.reproducir('quieto');
     }
-    _modelo.scale.setValues(_lado * escalaSprites, escalaSprites);
+    final escala = escalaSprites * (diminuto ? 0.5 : 1);
+    _modelo.scale.setValues(_lado * escala, escala);
     _pintar();
   }
 

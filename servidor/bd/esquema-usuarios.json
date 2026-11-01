@@ -239,6 +239,21 @@
                     "items": {
                       "bsonType": "string"
                     }
+                  },
+                  "fogatasEncendidas": {
+                    "bsonType": "array",
+                    "items": {
+                      "bsonType": "string"
+                    }
+                  },
+                  "enemigosCaidos": {
+                    "bsonType": "object"
+                  },
+                  "dialogosLeidos": {
+                    "bsonType": "array",
+                    "items": {
+                      "bsonType": "string"
+                    }
                   }
                 }
               },

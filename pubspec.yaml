@@ -41,6 +41,7 @@ flutter:
     - assets/sprites/animaciones/
     - assets/sprites/animaciones/personajes/
     - assets/sprites/animaciones/enemigos/
+    - assets/sprites/animaciones/npcs/
     - assets/minimapa/
     - assets/datos/
 

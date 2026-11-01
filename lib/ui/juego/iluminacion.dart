@@ -18,6 +18,9 @@ class Luz {
   /// Color que la luz añade a lo que ilumina; `null` para luz neutra.
   final Color? tinte;
   final double parpadeo;
+
+  /// Una fogata apagada no alumbra hasta que se enciende.
+  bool encendida = true;
   final double _fase = Random().nextDouble() * 100;
 
   int radioEn(double t) {
@@ -89,7 +92,7 @@ class Iluminacion extends Component with HasGameReference<UmbralJuego> {
     }
 
     for (final luz in fijas) {
-      anotar(luz, luz.posicion);
+      if (luz.encendida) anotar(luz, luz.posicion);
     }
     anotar(_jugador, game.jugador.centro);
     for (final e in game.zona.enemigosVivos) {
@@ -154,6 +157,14 @@ class Iluminacion extends Component with HasGameReference<UmbralJuego> {
     return path;
   }
 }
+
+/// Fogata apagada: el altar en gris ceniza y más oscuro.
+const filtroApagada = ColorFilter.matrix([
+  0.11, 0.36, 0.04, 0, 0,
+  0.11, 0.36, 0.04, 0, 0,
+  0.11, 0.36, 0.04, 0, 0,
+  0, 0, 0, 1, 0,
+]);
 
 /// Antorcha clavada en el suelo. Su `position` es la base del poste.
 class Antorcha extends PositionComponent {

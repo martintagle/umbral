@@ -155,3 +155,19 @@ Mismo formato y mismo motor que las hojas anteriores. Sus datos ya están en `ho
 **Jefes.** Los 5 tienen las mismas 9 filas que el Rey Hueco: `quieto`, `caminar`, `barrido`, `salto` (`despega`/`aterriza`), `lluvia` (`disparo`), `enfurecerse` (`cambio`), `quieto-furioso`, `caminar-furioso` y `morir`. Así el mismo código de jefe sirve para todos. `onda-expansiva.png` también vale para ellos.
 
 **Efectos nuevos:** `efectos-2.png` (32×32) trae `esquirla`, `brasa` y `rayo`, y apuntan a la derecha.
+
+## NPC: Oreste, el Apagador
+
+| Archivo | Celda | Filas: animación (cuadros) |
+| --- | --- | --- |
+| `npcs/oreste.png` | 48×48 | 0 quieto (8), 1 caminar (8), 2 hablar (8), 3 mirar (8), 4 sentarse (4), 5 sentado (6), 6 levantarse (4), 7 apagar-vela (8), 8 desvanecerse (8), 9 aparecer (8) |
+
+Sus datos están en `hojas.json`, dentro de `npcs.oreste`. El ancla es (24, 43) y mira a la derecha. No tiene ataque: solo hace movimientos naturales.
+
+- **Mientras espera:** alterna `quieto` y `mirar`.
+- **Al hablar:** `hablar`.
+- **Cuando el jugador descansa en el altar:** `sentarse` y luego `sentado`. Usa `levantarse` cuando el jugador se acerca.
+- **Detalle de vez en cuando:** `apagar-vela`, que apaga una vela con el apagavelas; el evento `apaga` está en el cuadro 4.
+- **Al dejar una zona:** `desvanecerse`. Al llegar a otra: `aparecer`.
+
+El retrato para el cuadro de diálogo es `npcs/oreste-retrato.png` (32×32). Los diálogos están en `assets/datos/npc-oreste.json`.

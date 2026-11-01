@@ -113,10 +113,15 @@ void main() {
       await correr(4);
       expect(juego.estamina.value, UmbralJuego.estaminaMaxima);
 
-      // Altar: descansar y atributos.
+      // Altar: empieza apagado; encendido, se descansa, se sube de nivel y
+      // se ve el mapa.
       await correr(0.1);
       expect(juego.acciones.value.map((a) => a.etiqueta),
-          ['Descansar', 'Subir de nivel']);
+          ['Encender la fogata']);
+      juego.acciones.value.single.alPulsar();
+      await correr(0.1);
+      expect(juego.acciones.value.map((a) => a.etiqueta),
+          ['Descansar', 'Subir de nivel', 'Ver mapa']);
 
       // Cinco estructuras con interior; la choza del sur es la herrería.
       final puertas = {
@@ -186,7 +191,11 @@ void main() {
       juego.vida.value = juego.vidaMaxima.value;
       await correr(0.1);
       expect(juego.acciones.value.map((a) => a.etiqueta),
-          ['Descansar', 'Subir de nivel']);
+          ['Encender la fogata']);
+      juego.acciones.value.single.alPulsar();
+      await correr(0.1);
+      expect(juego.acciones.value.map((a) => a.etiqueta),
+          ['Descansar', 'Subir de nivel', 'Ver mapa']);
       final trono = await bajar(galeria);
       expect(trono.sala.slug, 'cripta-sala-del-trono');
       final rey = trono.enemigosVivos.single;

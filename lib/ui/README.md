@@ -43,6 +43,12 @@ Enemigos: ninguno corre más que el personaje más lento, y se ven, persiguen y 
 
 Economía: cada enemigo da experiencia y oro al azar dentro del rango de su categoría; las más difíciles dan más. La experiencia se gasta en el altar para subir de nivel y el oro, en la herrería. El personaje no lleva objetos: solo su arma y su armadura. Respecto al diseño de `docs/diseno/interfaz/componentes.md`, el altar cobra experiencia en vez de ceniza y sube los cuatro atributos que guarda el servidor (no hay espíritu ni fortuna), y la herrería no usa materiales. El cofre de la Choza en ruinas cura del todo una vez por descanso; el de la torre está vacío; la trampilla y la escalera al mirador solo muestran un aviso.
 
+Fogatas: los altares de brasas del mundo y las hogueras de las salas empiezan apagados; al encenderlos se puede descansar, subir de nivel y ver el mapa de la zona con las fogatas encendidas (no hay minimapa en el HUD). La sala de cada jefe tiene una fogata que aparece al vencerlo y deja salir de la mazmorra. Las criaturas que caen no vuelven hasta descansar (o caer y despertar), aunque se salga de la partida.
+
+Encogerse: de pie sobre un tocón con runas (portal) se encoge o se crece. Diminuto se cruza el hueco y los troncos sobre el agua (`MapaMundo.solidoDiminuto`); así se llega a los cofres secretos.
+
+Oreste (`juego/oreste.dart`, datos en `assets/datos/npc-oreste.json`, ver `docs/npc-oreste.md`): espera bajo techo (la capilla, una choza o el Refugio del Apagador, según `posiciones[n].interior`), cerca del primer altar de cada zona en la que le queden diálogos, y siempre en la más avanzada. Las salas sirven a varias zonas, así que `SalaInterior.ponerOreste` lo pone o lo quita al entrar. Las chozas del refugio llevan `interior` en el mapa para decir a qué sala llevan. `DatosOreste` carga los 22 diálogos y evalúa sus requisitos sobre un `EstadoMundo` (lo implementa `UmbralJuego`). La acción «Hablar» abre el cuadro de diálogo (`UmbralJuego.dialogo`), con su retrato y el texto letra a letra; al terminarlo queda leído y se guarda. Al leer el último, aparece el cofre de la astilla de nada (los cofres del mapa pueden llevar `requiere`), que permite romper la Brasa en el final.
+
 ## Qué NO debe hacer
 
 - No hace peticiones HTTP por su cuenta: siempre pasa por `api/`.

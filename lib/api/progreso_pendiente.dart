@@ -26,6 +26,16 @@ Map<String, dynamic> sumarProgresos(
     'ubicacion': nuevo['ubicacion'],
     'cofresAbiertos': {..._cofres(anterior), ..._cofres(nuevo)}.toList(),
     'oroCofres': _oroCofres(anterior) + _oroCofres(nuevo),
+    'fogatasEncendidas': {
+      ..._fogatas(anterior),
+      ..._fogatas(nuevo),
+    }.toList(),
+    'dialogosLeidos': {
+      ..._dialogos(anterior),
+      ..._dialogos(nuevo),
+    }.toList(),
+    // Las caídas son el estado completo: vale el más reciente.
+    'enemigosCaidos': nuevo['enemigosCaidos'] ?? anterior['enemigosCaidos'],
   };
 }
 
@@ -61,6 +71,16 @@ Map<String, dynamic> partidaConProgreso(
             ...(mundo['cofresAbiertos'] as List).cast<String>(),
             ..._cofres(progreso),
           }.toList(),
+          'enemigosCaidos':
+              progreso['enemigosCaidos'] ?? mundo['enemigosCaidos'] ?? {},
+          'dialogosLeidos': {
+            ...(mundo['dialogosLeidos'] as List? ?? const []).cast<String>(),
+            ..._dialogos(progreso),
+          }.toList(),
+          'fogatasEncendidas': {
+            ...(mundo['fogatasEncendidas'] as List? ?? const []).cast<String>(),
+            ..._fogatas(progreso),
+          }.toList(),
           'jefesDerrotados': {
             ...(mundo['jefesDerrotados'] as List).cast<String>(),
             ...enemigos.keys.where(jefes.contains),
@@ -87,6 +107,14 @@ Map<String, int> _enemigos(Map<String, dynamic> progreso) =>
 /// Los progresos guardados antes de que hubiera cofres no los traen.
 List<String> _cofres(Map<String, dynamic> progreso) =>
     (progreso['cofresAbiertos'] as List? ?? const []).cast<String>();
+
+/// Ni los de antes de las fogatas.
+List<String> _fogatas(Map<String, dynamic> progreso) =>
+    (progreso['fogatasEncendidas'] as List? ?? const []).cast<String>();
+
+/// Ni los de antes de Oreste.
+List<String> _dialogos(Map<String, dynamic> progreso) =>
+    (progreso['dialogosLeidos'] as List? ?? const []).cast<String>();
 
 int _oroCofres(Map<String, dynamic> progreso) =>
     progreso['oroCofres'] as int? ?? 0;

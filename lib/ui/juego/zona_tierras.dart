@@ -52,6 +52,10 @@ class ZonaTierras extends Escenario {
 
   /// Base de cada altar de brasas, en el orden del mapa.
   final List<Vector2> altares = [];
+
+  /// Lo que cambia al encender cada altar, en el mismo orden.
+  final List<({SpriteComponent sprite, _Brasas brasas, Luz luz})> _fogatas =
+      [];
   final List<Rect> _obstaculos = [];
   final Map<int, _FilaAlta> _filas = {};
   late final Image _tileset;
@@ -71,6 +75,9 @@ class ZonaTierras extends Escenario {
 
   @override
   String regionEn(Vector2 pies) => mapa.regionEn(pies);
+
+  @override
+  bool pisaPiedra(Vector2 pies) => mapa.piedra(pies.x, pies.y - 1);
 
   /// Las criaturas que vienen de la zona anterior son aquí las débiles:
   /// abundan como tales.
@@ -129,8 +136,9 @@ class ZonaTierras extends Escenario {
         if (mapa.objetosAltos.contains(o)) _poner(x, y, mapa.indiceObjetos + o);
       }
     }
+    // Los cofres con requisito no existen hasta cumplirlo: los saca [update].
     for (final c in mapa.cofres) {
-      _ponerCofre(c);
+      if (_cofreVisible(c)) _ponerCofre(c);
     }
     for (final l in mapa.letreros) {
       _poner(l.x, l.y, _entidad('letrero'));
@@ -139,27 +147,38 @@ class ZonaTierras extends Escenario {
     for (final e in mapa.estructuras) {
       final imagen = imagenes.fromCache('sprites/estructuras/${e.sprite}.png');
       final base = (e.y + e.h) * _lado;
-      add(
-        SpriteComponent(
-          sprite: Sprite(imagen),
-          position: Vector2(
-            (e.x * _lado + (e.w * _lado - imagen.width) / 2).roundToDouble(),
-            base - imagen.height,
-          ),
-          priority: base.round(),
-          paint: Paint()
-            ..filterQuality = FilterQuality.none
-            ..isAntiAlias = false,
+      // Las entradas de las mazmorras vienen dibujadas a 8× (512 px para una
+      // huella de 64): se reducen al ancho de su huella para no tapar la
+      // vista. Escala entera inversa, así cada píxel de arte sigue entero.
+      final escala =
+          1 / max(1, (imagen.width / (e.w * _lado)).ceil()).toDouble();
+      final ancho = imagen.width * escala, alto = imagen.height * escala;
+      final sprite = SpriteComponent(
+        sprite: Sprite(imagen),
+        size: Vector2(ancho, alto),
+        position: Vector2(
+          (e.x * _lado + (e.w * _lado - ancho) / 2).roundToDouble(),
+          base - alto,
         ),
+        priority: base.round(),
+        paint: Paint()
+          ..filterQuality = FilterQuality.none
+          ..isAntiAlias = false,
       );
+      add(sprite);
       if (e.sprite == 'altar-de-brasas') {
         final altar = Vector2((e.x + e.w / 2) * _lado, base);
         altares.add(altar);
-        final fuego = altar + Vector2(0, -26);
-        add(_Brasas(fuego));
-        iluminacion.fijas.add(
-          Luz(fuego, radio: 48, tinte: Colores.brasa, parpadeo: 2),
+        final brasas = _Brasas(altar + Vector2(0, -26));
+        final luz = Luz(
+          brasas.position,
+          radio: 48,
+          tinte: Colores.brasa,
+          parpadeo: 2,
         );
+        add(brasas);
+        iluminacion.fijas.add(luz);
+        _fogatas.add((sprite: sprite, brasas: brasas, luz: luz));
       } else if (e.puerta.isNotEmpty) {
         // La entrada de la mazmorra arde como un faro en la arena.
         iluminacion.fijas.add(
@@ -217,6 +236,15 @@ class ZonaTierras extends Escenario {
     reiniciarEnemigos();
   }
 
+  /// Un cofre sin requisito, o con el requisito cumplido.
+  bool _cofreVisible(CofreMapa c) => switch (c.requiere) {
+    final r? => game.datosOreste.cumple(r, game, c.id),
+    null => true,
+  };
+
+  /// Cofres con requisito ya puestos en el mapa.
+  final Set<CofreMapa> _cofresMostrados = {};
+
   /// La k-ésima estructura con un sprite lleva a la k-ésima sala de entrada
   /// de ese sprite en `interiores.json`: en la zona 1, la choza del norte a la
   /// Choza en ruinas y la del sur a la Herrería abandonada. En las demás, la
@@ -227,8 +255,15 @@ class ZonaTierras extends Escenario {
     final herreria = interiores.porSlug('herreria-abandonada');
     final usadas = <String, int>{};
     for (final e in mapa.estructuras) {
-      final k = usadas.update(e.sprite, (n) => n + 1, ifAbsent: () => 0);
       final Sala? sala;
+      // Una estructura puede decir a qué sala lleva (el Refugio del
+      // Apagador); entonces no cuenta para el orden de las de su sprite.
+      if (e.interior case final slug?) {
+        sala = interiores.porSlug(slug);
+        if (sala != null) puertas.add((_puertaDe(e), sala));
+        continue;
+      }
+      final k = usadas.update(e.sprite, (n) => n + 1, ifAbsent: () => 0);
       if (mapa.jefe case (entrada: final entrada?, mazmorra: final id?, tipo: _)
           when entrada == e.sprite) {
         sala = interiores.mazmorra(id)?.entradas(e.sprite).firstOrNull;
@@ -238,14 +273,13 @@ class ZonaTierras extends Escenario {
         final salas = comunes.entradas(e.sprite);
         sala = k < salas.length ? salas[k] : null;
       }
-      if (sala != null) {
-        puertas.add((
-          Vector2((e.x + e.w / 2) * _lado, (e.y + e.h) * _lado + 3),
-          sala,
-        ));
-      }
+      if (sala != null) puertas.add((_puertaDe(e), sala));
     }
   }
+
+  /// El punto justo delante de la puerta de [e].
+  static Vector2 _puertaDe(Estructura e) =>
+      Vector2((e.x + e.w / 2) * _lado, (e.y + e.h) * _lado + 3);
 
   int _entidad(String nombre) =>
       mapa.indiceEntidades + mapa.nombresEntidades.indexOf(nombre);
@@ -299,8 +333,9 @@ class ZonaTierras extends Escenario {
     }
     // Cada punto del mapa es un grupo, mayor cuanto más débil es su criatura,
     // que crece con el nivel del jugador.
+    // Las que cayeron desde el último descanso no vuelven.
     for (final e in mapa.enemigos) {
-      final n = game.criaturasPorGrupo(e.tipo);
+      final n = game.criaturasPorGrupo(e.tipo) - game.caidosEn(_origen(e));
       for (var i = 0; i < n; i++) {
         _aparecer(e, cerca: i > 0);
       }
@@ -335,8 +370,11 @@ class ZonaTierras extends Escenario {
         }
       }
     }
-    add(Enemigo(tipo, pies, fuerza: game.fuerzaEnemigos));
+    add(Enemigo(tipo, pies, fuerza: game.fuerzaEnemigos, origen: _origen(e)));
   }
+
+  /// Punto de aparición de [e], para anotar sus caídas: `<zona>#<n>`.
+  String _origen(EnemigoMapa e) => '$zonaId#${mapa.enemigos.indexOf(e)}';
 
   /// Mientras el jugador está en el mundo llegan criaturas nuevas a puntos
   /// alejados de él, cada vez más seguido según su nivel. El punto se elige
@@ -367,6 +405,21 @@ class ZonaTierras extends Escenario {
   void update(double dt) {
     super.update(dt);
     _avisoReja = max(0, _avisoReja - dt);
+    for (final c in mapa.cofres) {
+      if (c.requiere != null &&
+          !_cofresMostrados.contains(c) &&
+          _cofreVisible(c)) {
+        _cofresMostrados.add(c);
+        _ponerCofre(c);
+      }
+    }
+    for (var i = 0; i < _fogatas.length; i++) {
+      final f = _fogatas[i];
+      final encendida =
+          game.fogataEncendida(UmbralJuego.fogataAltar(zonaId, i));
+      f.luz.encendida = f.brasas.encendida = encendida;
+      f.sprite.paint.colorFilter = encendida ? null : filtroApagada;
+    }
     if (identical(game.zona, this) && game.jugador.vivo) _refuerzos(dt);
     final pies = game.jugador.position;
 
@@ -402,13 +455,21 @@ class ZonaTierras extends Escenario {
   List<AccionContexto> accionesEn(Vector2 pies) {
     final altar = altarCerca(pies);
     if (altar != null) {
+      return game.accionesFogata(
+        UmbralJuego.fogataAltar(zonaId, altar),
+        donde: _fogatas[altar].brasas.position,
+        descansar: () => game.descansar(altar: altar),
+      );
+    }
+    // De pie sobre un tocón con runas se encoge o se crece.
+    final celda = (pies.x ~/ _lado, (pies.y - 1) ~/ _lado);
+    if (mapa.portales.contains(celda)) {
+      final diminuto = game.jugador.diminuto;
       return [
         AccionContexto(
-          'Descansar',
-          () => game.descansar(altar: altar),
-          boton: 'descansar',
+          diminuto ? 'Crecer' : 'Encoger',
+          () => _cambiarTamano(celda),
         ),
-        game.accionSubirNivel(),
       ];
     }
     for (final (punto, sala) in puertas) {
@@ -418,6 +479,7 @@ class ZonaTierras extends Escenario {
     }
     for (final c in mapa.cofres) {
       if (MapaMundo.centroDe(c.x, c.y).distanceTo(pies) < _distanciaObjeto &&
+          _cofreVisible(c) &&
           !game.cofreAbierto(idCofre(c))) {
         return [
           AccionContexto('Abrir el cofre', () => _abrirCofre(c), boton: 'abrir'),
@@ -443,6 +505,17 @@ class ZonaTierras extends Escenario {
       ];
     }
     return const [];
+  }
+
+  /// Encoge o devuelve al jugador a su tamaño en el portal de [celda].
+  void _cambiarTamano((int, int) celda) {
+    final jugador = game.jugador;
+    jugador.diminuto = !jugador.diminuto;
+    add(Estallido(MapaMundo.centroDe(celda.$1, celda.$2),
+        const [Colores.alma, Colores.hueso]));
+    game.mostrarAviso(jugador.diminuto
+        ? 'Las runas te encogen. Ahora cabes por el hueco y por los troncos.'
+        : 'Las runas te devuelven a tu tamaño.');
   }
 
   /// La celda más cercana a [pies] con el objeto [nombre], si está a mano.
@@ -508,8 +581,12 @@ class ZonaTierras extends Escenario {
 
   /// [pies] es la caja de colisión; los enemigos además evitan los tocones.
   @override
-  bool libre(Rect pies, {bool enemigo = false}) {
-    final solido = enemigo ? mapa.solidoEnemigo : mapa.solido;
+  bool libre(Rect pies, {bool enemigo = false, bool diminuto = false}) {
+    final solido = enemigo
+        ? mapa.solidoEnemigo
+        : diminuto
+        ? mapa.solidoDiminuto
+        : mapa.solido;
     for (final esquina in [
       pies.topLeft,
       pies.topRight,
@@ -635,10 +712,13 @@ class _Brasas extends PositionComponent {
   final List<Vector2> _chispas = [];
   double _t = 0;
 
+  /// Apagado no echa chispas nuevas; las que había se apagan solas.
+  bool encendida = true;
+
   @override
   void update(double dt) {
     _t += dt;
-    if (_t > 0.15) {
+    if (_t > 0.15 && encendida) {
       _t = 0;
       _chispas.add(Vector2((_azar.nextInt(7) - 3).toDouble(), 0));
     }

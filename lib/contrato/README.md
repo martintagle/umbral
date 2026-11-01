@@ -24,9 +24,9 @@ Lo que llega de cada servicio:
 | `/api/clases` | `CatalogoClases`: las `Apariencia` y cada `ClaseInicial` (una `Clase` con su nivel, oro y combate iniciales) | `catalogo_clases.dart`, `clase.dart`, `atributos_base.dart`, `clase_codigo.dart`, `apariencia.dart` |
 | `/api/enemigos` | `Recompensa` de cada enemigo: su `Categoria` y los rangos de exp y oro que da | `recompensa.dart` |
 
-Partes de la partida: `Personaje` (`personaje.dart`), con `Atributos`, `Equipo`, `Ubicacion`, `Mundo` y `Estadisticas`.
+Partes de la partida: `Personaje` (`personaje.dart`), con `Atributos`, `Equipo`, `Ubicacion`, `Mundo` y `Estadisticas`. `Mundo` lleva las zonas desbloqueadas, los cofres abiertos, los jefes vencidos, las fogatas encendidas (`fogatasEncendidas`), las criaturas caídas desde el último descanso (`enemigosCaidos`) y los diálogos de Oreste leídos (`dialogosLeidos`); los tres últimos pueden faltar en las partidas antiguas.
 
-Lo que la app envía: `Progreso` (`progreso.dart`) al guardar; `Atributos` al subir de nivel; `Ajustes` al cambiar el volumen.
+Lo que la app envía: `Progreso` (`progreso.dart`) al guardar, con los cofres, fogatas y diálogos nuevos y el estado completo de las criaturas caídas; `Atributos` al subir de nivel; `Ajustes` al cambiar el volumen.
 
 Fuera de la API de Umbral: `Actualizacion` (`actualizacion.dart`), la versión y la descarga de la última Release de GitHub.
 

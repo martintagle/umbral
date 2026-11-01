@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flame/game.dart';
@@ -8,6 +9,7 @@ import '../../contrato/recompensa.dart';
 import '../../contrato/rol_usuario.dart';
 import '../../api/partida_api.dart';
 import '../../api/sesion.dart';
+import '../juego/oreste.dart';
 import '../juego/umbral_juego.dart';
 import '../sonido.dart';
 import '../tema/tema_umbral.dart';
@@ -148,25 +150,31 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
   }
 
   /// La elección ante el Altar Mayor y sus dos finales (`docs/guion.md`).
+  /// Romper la Brasa solo se puede con la astilla de nada.
   Widget _capaFinal(_Final f) {
     void volver() => Navigator.of(context).pop();
+    final astilla = _juego.cofreAbierto(DatosOreste.cofreAstilla);
     return switch (f) {
       _Final.eleccion => _Capa(
         titulo: 'El Altar Mayor',
-        texto:
-            'Las seis ascuas arden en tus manos. La Brasa Primera espera, '
-            'apagada.',
+        texto: astilla
+            ? 'Las seis ascuas arden en tus manos. En tu bolsillo, la astilla '
+                  'de nada no pesa.'
+            : 'Las seis ascuas arden en tus manos. La Brasa Primera espera, '
+                  'apagada.',
         acciones: [
           BotonUmbral(
             texto: 'Encender la Brasa',
             alPulsar: () => _elegirFinal(_Final.encender),
           ),
-          const SizedBox(height: Espacios.paso4),
-          BotonUmbral(
-            texto: 'Apagar la Brasa',
-            estilo: EstiloBoton.peligro,
-            alPulsar: () => _elegirFinal(_Final.apagar),
-          ),
+          if (astilla) ...[
+            const SizedBox(height: Espacios.paso4),
+            BotonUmbral(
+              texto: 'Romper la Brasa',
+              estilo: EstiloBoton.peligro,
+              alPulsar: () => _elegirFinal(_Final.romper),
+            ),
+          ],
           const SizedBox(height: Espacios.paso4),
           BotonUmbral(
             texto: 'Todavía no',
@@ -179,19 +187,32 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
         titulo: 'El Umbral se cierra',
         colorTitulo: Colores.brasa,
         texto:
-            'Enciendes la Brasa y el Umbral se cierra. Te quedas junto al '
-            'altar, el nuevo custodio, para siempre.\n\nEn la aldea Cenizal, '
-            'las chozas vuelven a tener luz.',
+            'Enciendes la Brasa y el Umbral se cierra. Te sientas junto al '
+            'Altar. Primero olvidas el camino, luego las caras, luego la '
+            'palabra "yo".\n\nEn la aldea Cenizal, las chozas vuelven a tener '
+            'luz. Junto al altar hay una estatua nueva. No tiene rostro.',
         acciones: [BotonUmbral(texto: 'Volver a las partidas', alPulsar: volver)],
       ),
-      _Final.apagar => _Capa(
+      _Final.romper => _Capa(
         titulo: 'El Umbral se abre',
         colorTitulo: Colores.sangre,
         texto:
-            'Apagas la Brasa y el Umbral se abre. Entras en el Hueco y, por '
-            'primera vez, recuerdas tu nombre.\n\nEn la oscuridad, un solo '
-            'ojo parpadea.',
-        acciones: [BotonUmbral(texto: 'Volver a las partidas', alPulsar: volver)],
+            'Clavas la astilla en la llama. La Brasa no se apaga: se agrieta, '
+            'sin ruido, como hielo. Por todo el mundo, los altares se apagan '
+            'uno a uno, y los que se levantaban se sientan y se quedan '
+            'quietos. Al borde, Oreste apaga la última vela y dice su nombre '
+            'en voz alta.\n\nEntras en el Hueco.',
+        acciones: [
+          BotonUmbral(
+            texto: 'Continuar',
+            estilo: EstiloBoton.peligro,
+            alPulsar: () => setState(() => _final = _Final.nombre),
+          ),
+        ],
+      ),
+      _Final.nombre => _CapaNombre(
+        nombre: _juego.personaje.nombre,
+        alVolver: volver,
       ),
     };
   }
@@ -229,7 +250,15 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _menu ? _cerrarMenu() : _abrirMenu();
+        if (didPop) return;
+        // Atrás cierra el diálogo sin darlo por leído, y el mapa.
+        if (_juego.dialogo.value != null) {
+          _juego.cerrarDialogo(leido: false);
+        } else if (_juego.mapaAbierto.value != null) {
+          _juego.cerrarMapa();
+        } else {
+          _menu ? _cerrarMenu() : _abrirMenu();
+        }
       },
       child: Scaffold(
         body: Stack(
@@ -248,17 +277,10 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
                       children: [
                         _Estado(_juego),
                         Expanded(child: Center(child: _BarraJefe(_juego))),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            BotonHud(
-                              pieza: PiezaHud.menu,
-                              descripcion: 'Menú',
-                              alPulsar: _abrirMenu,
-                            ),
-                            SizedBox(height: PiezaHud.px(2)),
-                            _Minimapa(_juego),
-                          ],
+                        BotonHud(
+                          pieza: PiezaHud.menu,
+                          descripcion: 'Menú',
+                          alPulsar: _abrirMenu,
                         ),
                       ],
                     ),
@@ -315,6 +337,18 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
                     )
                   : const SizedBox.shrink(),
             ),
+            ValueListenableBuilder(
+              valueListenable: _juego.dialogo,
+              builder: (_, dialogo, _) => dialogo == null
+                  ? const SizedBox.shrink()
+                  : _CapaDialogo(_juego, dialogo),
+            ),
+            ValueListenableBuilder(
+              valueListenable: _juego.mapaAbierto,
+              builder: (_, vista, _) => vista == null
+                  ? const SizedBox.shrink()
+                  : _CapaMapa(vista, alCerrar: _juego.cerrarMapa),
+            ),
             if (_final case final f?) _capaFinal(f),
             if (_menu)
               _Capa(
@@ -358,61 +392,324 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
   }
 }
 
-enum _Final { eleccion, encender, apagar }
+/// [nombre] es la pantalla negra con el nombre del personaje, tras romper la
+/// Brasa.
+enum _Final { eleccion, encender, romper, nombre }
 
-/// Minimapa de la zona, arriba a la derecha, con el jugador como un punto de
-/// brasa. En los interiores no se muestra.
-class _Minimapa extends StatelessWidget {
-  final UmbralJuego juego;
+/// El mapa de la zona, abierto desde una fogata: las fogatas encendidas como
+/// llamas de brasa y el jugador como un punto de hueso. Tocar o el botón lo
+/// cierra.
+class _CapaMapa extends StatelessWidget {
+  final VistaMapa vista;
+  final VoidCallback alCerrar;
 
-  const _Minimapa(this.juego);
-
-  static const _ancho = 96.0;
+  const _CapaMapa(this.vista, {required this.alCerrar});
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: ValueListenableBuilder(
-        valueListenable: juego.minimapa,
-        builder: (_, mapa, _) {
-          if (mapa == null) return const SizedBox.shrink();
-          final alto = _ancho * mapa.alto / mapa.ancho;
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colores.borde),
-              color: Colores.abismo,
-            ),
-            child: SizedBox(
-              width: _ancho,
-              height: alto,
-              child: Stack(
+    return Positioned.fill(
+      child: GestureDetector(
+        onTap: alCerrar,
+        child: ColoredBox(
+          color: Colores.abismo.withValues(alpha: 0.9),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(Espacios.paso4),
+              child: Column(
                 children: [
-                  Positioned.fill(
-                    child: Opacity(
-                      opacity: 0.85,
-                      child: Image.asset(
-                        mapa.ruta,
-                        fit: BoxFit.fill,
-                        filterQuality: FilterQuality.none,
+                  Text(
+                    vista.nombre,
+                    textAlign: TextAlign.center,
+                    style: Textos.tituloZona(),
+                  ),
+                  const SizedBox(height: Espacios.paso2),
+                  Expanded(
+                    child: Center(
+                      child: AspectRatio(
+                        aspectRatio: vista.ancho / vista.alto,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colores.borde),
+                            color: Colores.abismo,
+                          ),
+                          child: LayoutBuilder(
+                            builder: (_, caja) => Stack(
+                              children: [
+                                Positioned.fill(
+                                  child: Image.asset(
+                                    vista.ruta,
+                                    fit: BoxFit.fill,
+                                    filterQuality: FilterQuality.none,
+                                  ),
+                                ),
+                                for (final f in vista.fogatas)
+                                  _marca(caja, f, 10, Colores.brasa),
+                                _marca(caja, vista.jugador, 6, Colores.hueso),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                  ValueListenableBuilder(
-                    valueListenable: juego.celdaJugador,
-                    builder: (_, celda, _) => Positioned(
-                      left: (celda.$1 + 0.5) / mapa.ancho * _ancho - 2,
-                      top: (celda.$2 + 0.5) / mapa.alto * alto - 2,
-                      child: const SizedBox.square(
-                        dimension: 4,
-                        child: ColoredBox(color: Colores.brasa),
-                      ),
+                  const SizedBox(height: Espacios.paso2),
+                  Text(
+                    vista.fogatas.isEmpty
+                        ? 'Aún no has encendido fogatas en esta zona.'
+                        : 'Fogatas encendidas: ${vista.fogatas.length}',
+                    textAlign: TextAlign.center,
+                    style: Textos.cuerpo(color: Colores.ceniza),
+                  ),
+                  const SizedBox(height: Espacios.paso4),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 360),
+                    child: BotonUmbral(
+                      texto: 'Cerrar',
+                      estilo: EstiloBoton.secundario,
+                      alPulsar: alCerrar,
                     ),
                   ),
                 ],
               ),
             ),
-          );
-        },
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Un cuadrado de [lado] px centrado en la celda [c].
+  Widget _marca(BoxConstraints caja, (int, int) c, double lado, Color color) =>
+      Positioned(
+        left: (c.$1 + 0.5) / vista.ancho * caja.maxWidth - lado / 2,
+        top: (c.$2 + 0.5) / vista.alto * caja.maxHeight - lado / 2,
+        child: SizedBox.square(
+          dimension: lado,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: color,
+              border: Border.all(color: Colores.abismo),
+            ),
+          ),
+        ),
+      );
+}
+
+/// Lo que dice Oreste: un panel abajo con su retrato, su nombre y una línea
+/// cada vez, letra a letra. Tocar completa la línea o pasa a la siguiente;
+/// tras la última se cierra y el diálogo queda leído.
+class _CapaDialogo extends StatefulWidget {
+  final UmbralJuego juego;
+  final ({String nombre, String retrato, List<String> lineas, String? id})
+  dialogo;
+
+  const _CapaDialogo(this.juego, this.dialogo);
+
+  @override
+  State<_CapaDialogo> createState() => _CapaDialogoState();
+}
+
+class _CapaDialogoState extends State<_CapaDialogo> {
+  /// Unos 30 caracteres por segundo.
+  static const _paso = Duration(milliseconds: 33);
+
+  int _linea = 0;
+  int _letras = 0;
+  Timer? _reloj;
+
+  String get _texto => widget.dialogo.lineas[_linea];
+  bool get _completa => _letras >= _texto.length;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.juego.alAvanzarDialogo = _avanzar;
+    _escribir();
+  }
+
+  @override
+  void didUpdateWidget(_CapaDialogo anterior) {
+    super.didUpdateWidget(anterior);
+    if (!identical(anterior.dialogo, widget.dialogo)) {
+      _linea = 0;
+      _escribir();
+    }
+  }
+
+  @override
+  void dispose() {
+    _reloj?.cancel();
+    if (widget.juego.alAvanzarDialogo == _avanzar) {
+      widget.juego.alAvanzarDialogo = null;
+    }
+    super.dispose();
+  }
+
+  void _escribir() {
+    _reloj?.cancel();
+    _letras = 0;
+    _reloj = Timer.periodic(_paso, (reloj) {
+      if (!mounted) return reloj.cancel();
+      setState(() => _letras++);
+      if (_completa) reloj.cancel();
+    });
+  }
+
+  void _avanzar() {
+    if (!_completa) {
+      _reloj?.cancel();
+      setState(() => _letras = _texto.length);
+    } else if (_linea + 1 < widget.dialogo.lineas.length) {
+      setState(() => _linea++);
+      _escribir();
+    } else {
+      widget.juego.cerrarDialogo();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final d = widget.dialogo;
+    return Positioned.fill(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _avanzar,
+        child: SafeArea(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.all(Espacios.paso4),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 640),
+                child: PanelUmbral(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // El retrato de 32 px, a ×3.
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colores.borde),
+                        ),
+                        child: Image.asset(
+                          d.retrato,
+                          width: 96,
+                          height: 96,
+                          fit: BoxFit.fill,
+                          filterQuality: FilterQuality.none,
+                        ),
+                      ),
+                      const SizedBox(width: Espacios.paso4),
+                      Expanded(
+                        child: SizedBox(
+                          height: 96,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                d.nombre,
+                                style: Textos.etiqueta(color: Colores.brasa),
+                              ),
+                              const SizedBox(height: Espacios.paso2),
+                              Expanded(
+                                child: Text(
+                                  _texto.substring(
+                                    0,
+                                    min(_letras, _texto.length),
+                                  ),
+                                  style: Textos.cuerpo(),
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                child: Text(
+                                  _completa ? '▼' : '',
+                                  style: Textos.etiqueta(color: Colores.ceniza),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Tras romper la Brasa: en negro, el nombre del personaje letra a letra.
+class _CapaNombre extends StatefulWidget {
+  final String nombre;
+  final VoidCallback alVolver;
+
+  const _CapaNombre({required this.nombre, required this.alVolver});
+
+  @override
+  State<_CapaNombre> createState() => _CapaNombreState();
+}
+
+class _CapaNombreState extends State<_CapaNombre> {
+  int _letras = 0;
+  Timer? _reloj;
+
+  @override
+  void initState() {
+    super.initState();
+    _reloj = Timer.periodic(const Duration(milliseconds: 220), (reloj) {
+      if (!mounted) return reloj.cancel();
+      setState(() => _letras++);
+      if (_letras >= widget.nombre.length) reloj.cancel();
+    });
+  }
+
+  @override
+  void dispose() {
+    _reloj?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final completo = _letras >= widget.nombre.length;
+    return Positioned.fill(
+      child: ColoredBox(
+        color: Colores.abismo,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(Espacios.paso4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  widget.nombre.substring(
+                    0,
+                    min(_letras, widget.nombre.length),
+                  ),
+                  textAlign: TextAlign.center,
+                  style: Textos.tituloJuego(),
+                ),
+                const SizedBox(height: Espacios.paso6),
+                AnimatedOpacity(
+                  opacity: completo ? 1 : 0,
+                  duration: const Duration(milliseconds: 800),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 360),
+                    child: BotonUmbral(
+                      texto: 'Volver a las partidas',
+                      estilo: EstiloBoton.secundario,
+                      alPulsar: completo ? widget.alVolver : null,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

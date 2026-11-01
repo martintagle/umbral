@@ -4611,5 +4611,176 @@
     }
    }
   }
+ },
+ "npcs": {
+  "oreste": {
+   "archivo": "npcs/oreste.png",
+   "celda": {
+    "ancho": 48,
+    "alto": 48
+   },
+   "ancla": {
+    "x": 24,
+    "y": 43
+   },
+   "animaciones": {
+    "quieto": {
+     "fila": 0,
+     "cuadros": 8,
+     "ms": [
+      160,
+      160,
+      160,
+      160,
+      160,
+      160,
+      160,
+      160
+     ],
+     "bucle": true,
+     "nota": "Respira apoyado en el apagavelas."
+    },
+    "caminar": {
+     "fila": 1,
+     "cuadros": 8,
+     "ms": [
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120,
+      120
+     ],
+     "bucle": true,
+     "nota": "Paso lento. Úsala también para caminar a la izquierda reflejándola."
+    },
+    "hablar": {
+     "fila": 2,
+     "cuadros": 8,
+     "ms": [
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130,
+      130
+     ],
+     "bucle": true,
+     "nota": "Mientras haya texto en pantalla."
+    },
+    "mirar": {
+     "fila": 3,
+     "cuadros": 8,
+     "ms": [
+      220,
+      220,
+      220,
+      220,
+      220,
+      220,
+      220,
+      220
+     ],
+     "bucle": true,
+     "nota": "Mira alrededor, inquieto. Alterna con quieto."
+    },
+    "sentarse": {
+     "fila": 4,
+     "cuadros": 4,
+     "ms": [
+      110,
+      110,
+      110,
+      110
+     ],
+     "bucle": false,
+     "nota": "Se sienta junto al altar. Sigue con sentado.",
+     "eventos": {
+      "sentado": 3
+     }
+    },
+    "sentado": {
+     "fila": 5,
+     "cuadros": 6,
+     "ms": [
+      260,
+      260,
+      260,
+      260,
+      260,
+      260
+     ],
+     "bucle": true,
+     "nota": "Descansa junto al fuego; a ratos cabecea."
+    },
+    "levantarse": {
+     "fila": 6,
+     "cuadros": 4,
+     "ms": [
+      110,
+      110,
+      110,
+      110
+     ],
+     "bucle": false,
+     "nota": "Se levanta. Sigue con quieto."
+    },
+    "apagar-vela": {
+     "fila": 7,
+     "cuadros": 8,
+     "ms": [
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140,
+      140
+     ],
+     "bucle": false,
+     "nota": "Apaga una vela con el apagavelas. Evento \"apaga\" en el cuadro 4. La llama es parte de la animación.",
+     "eventos": {
+      "apaga": 4
+     }
+    },
+    "desvanecerse": {
+     "fila": 8,
+     "cuadros": 8,
+     "ms": [
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110
+     ],
+     "bucle": false,
+     "nota": "Se deshace en ceniza: así deja una zona para esperarte en la siguiente."
+    },
+    "aparecer": {
+     "fila": 9,
+     "cuadros": 8,
+     "ms": [
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110,
+      110
+     ],
+     "bucle": false,
+     "nota": "La ceniza se junta y aparece."
+    }
+   }
+  }
  }
 }

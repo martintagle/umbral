@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:umbral/contrato/partida_jugable.dart';
+import 'package:umbral/contrato/progreso.dart';
 import 'package:umbral/contrato/recompensa.dart';
 import 'package:umbral/ui/juego/animacion.dart';
 import 'package:umbral/ui/juego/enemigo.dart';
@@ -28,6 +29,8 @@ const _zonas = [
 PartidaJugable _partida({
   String zonaId = 'cienaga',
   List<String> jefes = const [],
+  Map<String, int> caidos = const {},
+  List<String> leidos = const [],
 }) => PartidaJugable.fromMap({
   'partida': {
     'partidaId': 'p1',
@@ -55,6 +58,8 @@ PartidaJugable _partida({
         'zonasDesbloqueadas': <String>[],
         'cofresAbiertos': <String>[],
         'jefesDerrotados': jefes,
+        'enemigosCaidos': caidos,
+        'dialogosLeidos': leidos,
       },
       'estadisticas': {
         'enemigosDerrotados': 0,
@@ -75,7 +80,10 @@ PartidaJugable _partida({
   },
 });
 
-UmbralJuego _juego(PartidaJugable partida) => UmbralJuego(
+UmbralJuego _juego(
+  PartidaJugable partida, {
+  void Function(Progreso)? alEnviar,
+}) => UmbralJuego(
   partida: partida,
   recompensas: {
     for (final e in [...Enemigos.todos, ...Enemigos.jefes])
@@ -88,7 +96,10 @@ UmbralJuego _juego(PartidaJugable partida) => UmbralJuego(
         oroMax: 1,
       ),
   },
-  alGuardar: (_, _) async => partida,
+  alGuardar: (_, progreso) async {
+    alEnviar?.call(progreso);
+    return partida;
+  },
 );
 
 void main() {
@@ -157,7 +168,10 @@ void main() {
       expect(juego.world, cienaga);
       expect(juego.jugador.position, cienaga.inicio);
       expect(cienaga.altares, hasLength(2));
-      expect(juego.minimapa.value?.ruta, contains('minimapa-zona-2'));
+      juego.verMapa();
+      expect(juego.mapaAbierto.value?.ruta, contains('minimapa-zona-2'));
+      expect(juego.mapaAbierto.value?.fogatas, isEmpty);
+      juego.cerrarMapa();
       final mapa = cienaga.mapa;
       final reja = mapa.objeto('reja'), abierta = mapa.objeto('reja-abierta');
       expect(mapa.objetos[19][61], reja);
@@ -289,6 +303,144 @@ void main() {
     });
   });
 
+  testWidgets('las criaturas caídas no vuelven hasta descansar', (tester) async {
+    await tester.runAsync(() async {
+      // Se vuelve a entrar en una sala donde ya cayeron las criaturas del
+      // primer punto: no aparecen; las de los demás, sí.
+      const slug = 'cienaga-sala-de-las-cunas';
+      final interiores = await MapaInteriores.cargar();
+      final puntos = [
+        for (final (i, p) in interiores.porSlug(slug)!.puntos.indexed)
+          if (p.tipo == 'enemigo') '$slug#$i',
+      ];
+      Progreso? enviado;
+      final juego = _juego(
+        _partida(zonaId: slug, caidos: {puntos.first: 9}),
+        alEnviar: (p) => enviado = p,
+      );
+      juego.onGameResize(Vector2(844, 390));
+      await juego.load();
+      juego.mount();
+      await juego.ready();
+
+      final sala = juego.world as SalaInterior;
+      expect(sala.sala.slug, slug);
+      Set<String?> origenes() => {for (final e in sala.enemigosVivos) e.origen};
+      expect(origenes(), {...puntos.skip(1)});
+
+      // Lo que cae se anota y viaja al guardar.
+      final otra = sala.enemigosVivos.first;
+      juego.enemigoDerrotado(otra);
+      await juego.guardar(silencioso: true);
+      expect(enviado!.enemigosCaidos, {puntos.first: 9, otra.origen!: 1});
+
+      // Al descansar vuelven todas y se borran las caídas.
+      await juego.descansar(enSala: sala);
+      await juego.ready();
+      expect(origenes(), {...puntos});
+      expect(enviado!.enemigosCaidos, isEmpty);
+    });
+  });
+
+  testWidgets('Oreste, el cofre de la astilla y los portales', (tester) async {
+    await tester.runAsync(() async {
+      Future<UmbralJuego> cargar(List<String> leidos) async {
+        final juego = _juego(_partida(zonaId: 'umbral', leidos: leidos));
+        juego.onGameResize(Vector2(844, 390));
+        await juego.load();
+        juego.mount();
+        await juego.ready();
+        for (var i = 0; i < 3; i++) {
+          juego.update(1 / 60);
+          await juego.ready();
+        }
+        return juego;
+      }
+
+      // La zona 6 es la más avanzada: Oreste no está al aire libre, sino en
+      // la choza del Refugio del Apagador, junto al primer altar.
+      final juego = await cargar(const []);
+      final umbral = juego.tierras;
+      expect(umbral.mapa.numero, 6);
+      expect(umbral.oreste, isNull);
+      final (puerta, salaRefugio) = umbral.puertas.firstWhere(
+        (p) => p.$2.slug == 'refugio-del-apagador',
+      );
+      expect(puerta.distanceTo(umbral.altares.first), lessThan(8 * 16));
+      juego.entrar(salaRefugio, puerta);
+      await juego.ready();
+      for (var i = 0; i < 3; i++) {
+        juego.update(1 / 60);
+        await juego.ready();
+      }
+      final refugio = juego.world as SalaInterior;
+      final oreste = refugio.oreste!;
+      final cerca = oreste.position + Vector2(10, 0);
+      expect(refugio.accionesEn(cerca).first.etiqueta, 'Hablar');
+
+      // Primero, el diálogo de llegada; cerrado, queda leído.
+      refugio.accionesEn(cerca).first.alPulsar();
+      expect(juego.dialogo.value?.id, 'oreste-6-1');
+      expect(juego.direccionEntrada, Vector2.zero());
+      juego.cerrarDialogo();
+      expect(juego.dialogo.value, isNull);
+      expect(juego.dialogosLeidos, contains('oreste-6-1'));
+
+      // Sin altar encendido no hay nada nuevo: la frase de espera.
+      juego.hablarConOreste();
+      expect(juego.dialogo.value?.id, isNull);
+      expect(juego.dialogo.value?.lineas, [juego.datosOreste.espera[6]]);
+      // Atrás lo cierra sin marcar nada.
+      juego.cerrarDialogo(leido: false);
+      expect(juego.dialogosLeidos, ['oreste-6-1']);
+
+      // El cofre de la astilla no existe hasta leer oreste-6-4.
+      final astilla = umbral.mapa.cofres.firstWhere(
+        (c) => c.id == 'cofre-secreto-astilla',
+      );
+      final junto = MapaMundo.piesEnCelda(astilla.x, astilla.y + 1);
+      expect(
+        umbral.accionesEn(junto).map((a) => a.etiqueta),
+        isNot(contains('Abrir el cofre')),
+      );
+
+      // Sobre un portal se encoge: diminuto se cruza el hueco.
+      final (px, py) = umbral.mapa.portales.first;
+      final enPortal = MapaMundo.piesEnCelda(px, py);
+      expect(umbral.accionesEn(enPortal).single.etiqueta, 'Encoger');
+      umbral.accionesEn(enPortal).single.alPulsar();
+      expect(juego.jugador.diminuto, isTrue);
+      expect(umbral.accionesEn(enPortal).single.etiqueta, 'Crecer');
+      final mapa = umbral.mapa;
+      final hueco = mapa.nombresObjetos.isEmpty
+          ? null
+          : [
+              for (var y = 0; y < mapa.alto; y++)
+                for (var x = 0; x < mapa.ancho; x++)
+                  if (!mapa.solidoDiminuto(x * 16 + 8, y * 16 + 8) &&
+                      mapa.solido(x * 16 + 8, y * 16 + 8))
+                    (x, y),
+            ].firstOrNull;
+      expect(hueco, isNotNull, reason: 'hay suelo que solo se cruza diminuto');
+      final (hx, hy) = hueco!;
+      final caja = Rect.fromCenter(
+        center: Offset(hx * 16 + 8, hy * 16 + 8),
+        width: 4,
+        height: 2,
+      );
+      expect(umbral.libre(caja), isFalse);
+      expect(umbral.libre(caja, diminuto: true), isTrue);
+
+      // Con los 22 diálogos leídos, el cofre aparece.
+      final todos = [for (final d in juego.datosOreste.dialogos) d.id];
+      final conTodo = await cargar(todos);
+      expect(
+        conTodo.tierras.accionesEn(junto).map((a) => a.etiqueta),
+        contains('Abrir el cofre'),
+      );
+    });
+  });
+
   testWidgets('tras el trono del Rey Hueco se baja a la ciénaga', (tester) async {
     await tester.runAsync(() async {
       final juego = _juego(
@@ -307,6 +459,18 @@ void main() {
       expect(juego.tierras.zonaId, ZonaTierras.id);
       final acciones = trono.accionesEn(trono.junto('jefe'));
       expect(acciones.map((a) => a.etiqueta), ['Bajar por el pasadizo']);
+
+      // Vencido el custodio, su fogata deja descansar y salir de la cripta.
+      final fogata = trono.junto('hoguera');
+      expect(trono.accionesEn(fogata).map((a) => a.etiqueta),
+          ['Encender la fogata']);
+      trono.accionesEn(fogata).single.alPulsar();
+      expect(trono.accionesEn(fogata).map((a) => a.etiqueta), [
+        'Descansar',
+        'Subir de nivel',
+        'Ver mapa',
+        'Salir de la mazmorra',
+      ]);
 
       await juego.cruzarFrontera('cienaga', adelante: true);
       expect(juego.tierras.zonaId, 'cienaga');

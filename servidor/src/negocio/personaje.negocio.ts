@@ -72,6 +72,15 @@ export interface Progreso {
    * servidor: no va en [oro].
    */
   cofresAbiertos?: string[];
+  /** Fogatas encendidas desde el último guardado. */
+  fogatasEncendidas?: string[];
+  /**
+   * Criaturas caídas desde el último descanso, por punto de aparición. Es el
+   * estado completo, no lo ocurrido desde el guardado: lo reemplaza.
+   */
+  enemigosCaidos?: Record<string, number>;
+  /** Diálogos de Oreste leídos desde el último guardado. */
+  dialogosLeidos?: string[];
 }
 
 /**
@@ -264,7 +273,14 @@ export const personajeNegocio = {
       estaminaActual: ESTAMINA_MAXIMA,
       equipo: { nivelArma: 1, nivelArmadura: reglas.armaduraInicial },
       ubicacion: { zonaId: ZONA_INICIAL, x: 0, y: 0, ultimoPuntoGuardado: null },
-      mundo: { zonasDesbloqueadas: [ZONA_INICIAL], cofresAbiertos: [], jefesDerrotados: [] },
+      mundo: {
+        zonasDesbloqueadas: [ZONA_INICIAL],
+        cofresAbiertos: [],
+        jefesDerrotados: [],
+        fogatasEncendidas: [],
+        enemigosCaidos: {},
+        dialogosLeidos: [],
+      },
       estadisticas: { enemigosDerrotados: 0, muertes: 0, tiempoJugadoSeg: 0 },
     };
   },
@@ -300,6 +316,9 @@ export const personajeNegocio = {
       p.mundo,
       progreso.cofresAbiertos ?? [],
       enemigoNegocio.jefesEn(progreso.enemigosDerrotados),
+      progreso.fogatasEncendidas ?? [],
+      progreso.enemigosCaidos,
+      progreso.dialogosLeidos ?? [],
     );
     return {
       ...p,

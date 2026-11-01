@@ -126,7 +126,7 @@ Un campo de batalla que nunca terminó de arder. El suelo es ceniza tibia; hay e
 
 ### 6. El Umbral
 
-El borde mismo del Hueco. Islas de piedra flotan sobre la nada; los caminos son puentes de hueso y raíz. Todo tiene ojos. En el centro, el Altar Mayor, apagado. Debajo, **El Que Mira**: no es un custodio caído, sino lo que esperaba del otro lado. El sexto custodio nunca existió: fue la primera forma que tomó.
+El borde mismo del Hueco. Islas de piedra flotan sobre la nada; los caminos son puentes de hueso y raíz. Todo tiene ojos. En el centro, el Altar Mayor, apagado. Debajo, **El Que Mira**: no es un custodio caído, sino lo que esperaba del otro lado. El sexto custodio nunca existió: los Apagadores lo inventaron para tapar lo que había bajo el Altar.
 
 - **Enemigos nuevos:**
   - **Boca del Hueco:** una boca en el suelo que muerde desde abajo.
@@ -138,15 +138,58 @@ El borde mismo del Hueco. Islas de piedra flotan sobre la nada; los caminos son 
   - **El Jardín de Ojos.**
   - **El Altar Mayor:** arena del jefe final.
 - **Custodio:** **El Que Mira.** Un ojo enorme entre tentáculos. Barre con ellos, hace llover ojos y suelta ondas expansivas. Furioso, se abre por completo.
-- **Final:** con las cinco ascuas encendidas en el Altar Mayor, vencer a El Que Mira deja la sexta, el Ascua Última. El jugador elige:
-  - **Encender la Brasa:** el Umbral se cierra. El Sin Nombre se convierte en el nuevo custodio y queda junto al altar para siempre. Créditos sobre la aldea Cenizal, donde las chozas vuelven a tener luz.
-  - **Apagar la Brasa:** el Umbral se abre. El Sin Nombre entra en el Hueco y, por primera vez, recuerda su nombre. La pantalla se queda en negro con un solo ojo que parpadea. Es el final oculto.
+- **Final:** con las cinco ascuas encendidas en el Altar Mayor, vencer a El Que Mira deja la sexta, el Ascua Última. Lo que pasa después depende de si llevas la **astilla de nada** (ver «Los dos finales»).
 
-## Personajes secundarios (para futuras versiones)
+## Lo que de verdad hace la Brasa
 
-- **La Estatua sin Rostro:** el único ser que habla desde el principio. Pide los fragmentos de umbral y, al final, se revela como el primer Sin Nombre que eligió quedarse.
-- **La Herrera sin Nombre:** atiende el yunque de Cenizal y aparece en cada zona junto al primer altar.
-- **El Barquero de Cera:** lleva de la ciénaga a las minas a cambio de una vela encendida.
+Esto es lo que Oreste, el Apagador, cuenta poco a poco. El jugador lo descubre solo si lo escucha.
+
+- **La Brasa retiene a los muertos.** No protege al mundo del Hueco. Lo que muere tendría que pasar al Hueco a descansar, y la Brasa le cierra la puerta. Por eso los Sin Nombre despiertan junto a los altares.
+- **Cada despertar cuesta un nombre.** La Brasa se alimenta de los nombres de los que vuelven. Por eso los Sin Nombre no recuerdan quiénes fueron.
+- **Los custodios no se vaciaron por culpa de los ojos.** Los vació el fuego, que les quitó un nombre tras otro.
+- **Los ojos no vienen a devorar.** Son el Hueco mirando por las grietas, buscando a los muertos que la Brasa no dejó pasar.
+- **El sexto custodio nunca existió.** Fue una mentira de los Apagadores para que nadie preguntara qué había bajo el Altar. Ahí está El Que Mira: el Hueco con los ojos de todos los que se perdieron.
+- **La Estatua sin Rostro fue el primer Sin Nombre.** Bajó al Hueco y volvió con una **astilla de nada**, lo único que el fuego no puede quemar. No se atrevió a usarla: la escondió en su torre y se quedó junto al altar. El fuego le quitó la cara.
+
+## Los dos finales
+
+Al poner las ascuas en el Altar Mayor tras vencer a El Que Mira:
+
+### Encender la Brasa (final normal; siempre disponible)
+
+El Umbral se sella. Los ojos se cierran y vuelven abajo.
+
+Pero la llama necesita quien la cuide. El Sin Nombre se sienta junto al Altar y se convierte en el nuevo custodio. Primero olvida el camino, luego las caras, luego la palabra «yo».
+
+Los créditos pasan sobre la aldea Cenizal: las chozas vuelven a tener luz. En el último plano, junto al altar de la aldea, hay una estatua nueva. No tiene rostro.
+
+### Romper la Brasa (final oculto; requiere la astilla de nada)
+
+Para que aparezca esta opción hay que:
+
+1. leer los 22 diálogos de Oreste;
+2. encontrar la astilla en la Torre del primer guardián.
+
+**Lo que pasa:**
+
+1. El Sin Nombre clava la astilla en la llama. La Brasa no se apaga: se agrieta, sin ruido, como hielo.
+2. Las seis ascuas se deshacen en ceniza fría.
+3. En todo el mundo, los altares se apagan uno a uno. Por todos los caminos, los huecos que se levantaban se sientan y se quedan quietos, aliviados.
+4. Los ojos del Hueco se cierran de uno en uno. Han encontrado a los suyos.
+5. El Umbral se abre. No hay luz ni oscuridad al otro lado: solo silencio, uno que no duele.
+6. Al borde, Oreste apaga la última vela con su apagavelas y dice su nombre en voz alta, por última vez.
+7. El Sin Nombre entra en el Hueco. La pantalla se queda en negro y aparece, letra a letra, **el nombre que el jugador le dio a su personaje al crearlo**. Es la primera vez que el juego lo muestra.
+8. Un solo ojo se abre, mira y se cierra despacio. Fin.
+
+## Personajes secundarios
+
+- **Oreste, el Apagador:** NPC de las zonas seguras.
+  - Espera junto al primer altar de cada zona y es el guía del final oculto.
+  - Tiene 22 diálogos repartidos entre las seis zonas.
+  - Guion completo: `docs/npc-oreste.md`.
+- **La Estatua sin Rostro:** el único ser que habla desde el principio. Pide los fragmentos de umbral. En el final oculto se entiende quién fue: el primer Sin Nombre, el que trajo la astilla y no se atrevió a usarla.
+- **La Herrera sin Nombre (futura versión):** atiende el yunque de Cenizal y aparece en cada zona junto al primer altar.
+- **El Barquero de Cera (futura versión):** lleva de la ciénaga a las minas a cambio de una vela encendida.
 
 ## Tono y reglas de escritura
 

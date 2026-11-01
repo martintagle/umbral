@@ -44,4 +44,7 @@ export const progreso = z.object({
     ultimoPuntoGuardado: z.string().max(64).nullable(),
   }),
   cofresAbiertos: z.array(z.string().max(64)).max(100).optional(),
+  fogatasEncendidas: z.array(z.string().max(64)).max(100).optional(),
+  enemigosCaidos: z.record(z.string().max(80), entero(0)).optional(),
+  dialogosLeidos: z.array(z.string().max(32)).max(40).optional(),
 });

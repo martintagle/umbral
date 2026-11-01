@@ -24,6 +24,7 @@ import 'estilo_combate.dart';
 import 'jugador.dart';
 import 'mapa_interiores.dart';
 import 'mapa_mundo.dart';
+import 'oreste.dart';
 import 'registro_progreso.dart';
 import 'sala_interior.dart';
 import 'tipos_enemigo.dart';
@@ -35,6 +36,18 @@ typedef GuardarProgreso = Future<PartidaJugable> Function(
   Progreso progreso,
 );
 
+/// El mapa de una zona que se ve en las fogatas: la imagen de
+/// `assets/minimapa/`, su tamaño en celdas y, en celdas, las fogatas
+/// encendidas y el jugador.
+typedef VistaMapa = ({
+  String nombre,
+  String ruta,
+  int ancho,
+  int alto,
+  List<(int, int)> fogatas,
+  (int, int) jugador,
+});
+
 /// Pantallas de Flutter que se abren desde el juego.
 enum PantallaJuego { estadisticas, herreria }
 
@@ -45,7 +58,9 @@ enum PantallaJuego { estadisticas, herreria }
 /// Es difícil a propósito, como un souls: al caer, la experiencia y el oro
 /// ganados desde el último descanso quedan en el suelo como brasas, y se
 /// pierden para siempre si se vuelve a caer antes de recogerlas.
-class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
+class UmbralJuego extends FlameGame<Escenario>
+    with KeyboardEvents
+    implements EstadoMundo {
   UmbralJuego({
     required PartidaJugable partida,
     required Map<String, Recompensa> recompensas,
@@ -98,12 +113,118 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   /// Jefes vencidos en esta sesión, por si el servidor aún no los anota.
   final Set<String> _jefesVencidos = {};
 
+  /// Fogatas encendidas en esta sesión, por lo mismo.
+  final Set<String> _fogatasEncendidas = {};
+
+  /// Criaturas caídas desde el último descanso, por punto de aparición. Se
+  /// guardan con la partida: salir y volver a entrar no las revive, solo
+  /// descansar (o caer y despertar junto a la fogata).
+  late final Map<String, int> _caidos = {...personaje.mundo.enemigosCaidos};
+
+  /// Cuántas criaturas del punto [origen] ya cayeron y no deben aparecer.
+  int caidosEn(String origen) => _caidos[origen] ?? 0;
+
   Personaje get personaje => _guardada.partida.personaje;
   Combate get combate => _guardada.combate;
   PartidaJugable get partidaGuardada => _guardada;
 
+  @override
   Set<String> get jefesDerrotados =>
       {...personaje.mundo.jefesDerrotados, ..._jefesVencidos};
+
+  /// Los diálogos de Oreste y sus requisitos (`assets/datos/npc-oreste.json`).
+  late final DatosOreste datosOreste;
+
+  /// Diálogos leídos en esta sesión; los guardados están en el personaje.
+  /// No se olvidan al morir.
+  final Set<String> _dialogosLeidos = {};
+
+  @override
+  Set<String> get dialogosLeidos =>
+      {...personaje.mundo.dialogosLeidos, ..._dialogosLeidos};
+
+  /// Anota el diálogo [id] como leído y guarda.
+  void leerDialogo(String id) {
+    if (dialogosLeidos.contains(id)) return;
+    _dialogosLeidos.add(id);
+    _registro.dialogos.add(id);
+    guardar(silencioso: true);
+  }
+
+  /// Lo que dice Oreste en el cuadro de diálogo, o `null` si está cerrado.
+  /// [id] es el diálogo que se marca como leído al terminarlo; `null` en la
+  /// frase de espera.
+  final dialogo = ValueNotifier<
+    ({String nombre, String retrato, List<String> lineas, String? id})?
+  >(null);
+
+  /// Lo pone el cuadro de diálogo: la tecla E, Espacio o Intro lo avanza.
+  VoidCallback? alAvanzarDialogo;
+
+  /// Abre el diálogo que toca en esta zona: el siguiente sin leer, lo que
+  /// dice tras la astilla o su frase de espera.
+  void hablarConOreste() {
+    if (dialogo.value != null) return;
+    final zona = tierras.mapa.numero;
+    final siguiente = datosOreste.siguiente(zona, this);
+    final (lineas, id) = switch (siguiente) {
+      final d? => (d.lineas, d.id),
+      null when zona == 6 && cofreAbierto(DatosOreste.cofreAstilla) => (
+        datosOreste.trasAstilla,
+        null,
+      ),
+      null => ([datosOreste.espera[zona] ?? '...'], null),
+    };
+    soltarControles();
+    dialogo.value = (
+      nombre: DatosOreste.nombre,
+      retrato: DatosOreste.retrato,
+      lineas: lineas,
+      id: id,
+    );
+  }
+
+  /// Cierra el diálogo. Si [leido], lo anota (el botón atrás lo cierra sin
+  /// leerlo). Si Oreste ya no tiene nada que decir en esta zona y no es la
+  /// más avanzada, se desvanece.
+  void cerrarDialogo({bool leido = true}) {
+    final abierto = dialogo.value;
+    if (abierto == null) return;
+    dialogo.value = null;
+    soltarControles();
+    if (leido && abierto.id != null) leerDialogo(abierto.id!);
+    if (!oresteEnZona(tierras.mapa.numero)) zona.oreste?.desvanecerse();
+  }
+
+  bool get _enDialogo => dialogo.value != null;
+
+  /// Algún altar de brasas encendido en [zonaId], guardado o de la sesión.
+  @override
+  bool fogataEncendidaEn(String zonaId) {
+    final prefijo = 'altar:$zonaId:';
+    if (personaje.mundo.fogatasEncendidas.any((f) => f.startsWith(prefijo)) ||
+        _fogatasEncendidas.any((f) => f.startsWith(prefijo))) {
+      return true;
+    }
+    if (_puntoDeGuardado == null) return false;
+    final d = _descanso;
+    return d.sala == null && d.zona == zonaId;
+  }
+
+  /// Oreste espera en la zona [n] si le quedan diálogos en ella, si es la
+  /// más avanzada a la que se llegó o, en la 6, si el jugador ya tiene la
+  /// astilla.
+  bool oresteEnZona(int n) =>
+      datosOreste.tienePendientes(n, this) ||
+      n >= zonaMasAvanzada ||
+      (n == 6 && cofreAbierto(DatosOreste.cofreAstilla));
+
+  /// Orden de la zona más avanzada a la que llegó el jugador, contando la
+  /// actual.
+  int get zonaMasAvanzada => [
+    tierras.mapa.numero,
+    for (final z in personaje.mundo.zonasDesbloqueadas) MapaMundo.numeroDe(z),
+  ].reduce(max);
 
   // Estado que dibuja el HUD de Flutter.
   final vida = ValueNotifier<int>(1);
@@ -148,10 +269,9 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   /// Que Mira, y elige el final.
   VoidCallback? alFinal;
 
-  /// Minimapa de la zona (`assets/minimapa/`) mientras se está en el mundo,
-  /// o `null` en un interior; y la celda del jugador.
-  final minimapa = ValueNotifier<({String ruta, int ancho, int alto})?>(null);
-  final celdaJugador = ValueNotifier<(int, int)>((0, 0));
+  /// El mapa de la zona que se abre desde una fogata, o `null` si está
+  /// cerrado. Mientras se mira, el juego está en pausa.
+  final mapaAbierto = ValueNotifier<VistaMapa?>(null);
 
   static const estaminaMaxima = 100.0;
   static const _recuperacionEstamina = 30.0;
@@ -177,7 +297,9 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   /// Escala entera de pantalla: 1 píxel de arte = [zoom] píxeles lógicos.
   double get zoom => camera.viewfinder.zoom;
 
+  /// Mientras Oreste habla, el jugador no se mueve ni ataca.
   Vector2 get direccionEntrada {
+    if (_enDialogo) return Vector2.zero();
     final teclado = Vector2(
       (_tecla(LogicalKeyboardKey.keyD, LogicalKeyboardKey.arrowRight) ? 1 : 0) -
           (_tecla(LogicalKeyboardKey.keyA, LogicalKeyboardKey.arrowLeft)
@@ -190,7 +312,9 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   }
 
   bool get atacando =>
-      botonAtaque || _tecla(LogicalKeyboardKey.space, LogicalKeyboardKey.keyJ);
+      !_enDialogo &&
+      (botonAtaque ||
+          _tecla(LogicalKeyboardKey.space, LogicalKeyboardKey.keyJ));
 
   bool _tecla(LogicalKeyboardKey a, LogicalKeyboardKey b) =>
       _teclas.contains(a) || _teclas.contains(b);
@@ -202,13 +326,13 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   bool consumirRodar() {
     final pedido = _rodarPedido;
     _rodarPedido = false;
-    return pedido;
+    return pedido && !_enDialogo;
   }
 
   bool consumirBeber() {
     final pedido = _beberPedido;
     _beberPedido = false;
-    return pedido;
+    return pedido && !_enDialogo;
   }
 
   /// Niveles por encima del 10, con el que empiezan las clases. La dificultad
@@ -280,6 +404,110 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
     resaltada: puedeSubirNivel,
   );
 
+  /// Id de la fogata del altar [n] de [zona] del mundo.
+  static String fogataAltar(String zona, int n) => 'altar:$zona:$n';
+
+  /// Id de la fogata de [sala].
+  static String fogataSala(Sala sala) => 'sala:${sala.slug}';
+
+  /// Encendida en el servidor o desde el último guardado. La del último
+  /// descanso también: las partidas de antes de las fogatas ya descansaron
+  /// en alguna, y no deben despertar junto a una apagada.
+  bool fogataEncendida(String id) {
+    if (personaje.mundo.fogatasEncendidas.contains(id) ||
+        _fogatasEncendidas.contains(id)) {
+      return true;
+    }
+    if (_puntoDeGuardado == null) return false;
+    final d = _descanso;
+    final sala = d.sala;
+    return id ==
+        (sala != null ? fogataSala(sala) : fogataAltar(d.zona, d.altar));
+  }
+
+  /// Lo que se hace en una fogata: encenderla o, ya encendida, descansar,
+  /// subir de nivel y ver el mapa de la zona. [donde] es la llama.
+  List<AccionContexto> accionesFogata(
+    String id, {
+    required Vector2 donde,
+    required VoidCallback descansar,
+    List<AccionContexto> ademas = const [],
+  }) {
+    if (!fogataEncendida(id)) {
+      return [
+        AccionContexto(
+          'Encender la fogata',
+          () => _encenderFogata(id, donde),
+          boton: 'descansar',
+          resaltada: true,
+        ),
+      ];
+    }
+    return [
+      AccionContexto('Descansar', descansar, boton: 'descansar'),
+      accionSubirNivel(),
+      AccionContexto('Ver mapa', verMapa, boton: 'leer'),
+      ...ademas,
+    ];
+  }
+
+  void _encenderFogata(String id, Vector2 donde) {
+    if (fogataEncendida(id)) return;
+    _registro.fogatas.add(id);
+    _fogatasEncendidas.add(id);
+    zona.add(Estallido(donde, const [Colores.brasa, Colores.hueso, Colores.sangre]));
+    Sonido.efecto(Audios.oro, volumen: 0.6);
+    mostrarAviso('La fogata prende. Aquí podrás descansar y subir de nivel.');
+    acciones.value = const []; // se recalculan ya encendida
+    guardar(silencioso: true);
+  }
+
+  /// Abre el mapa de la zona en la que se está, con las fogatas encendidas.
+  void verMapa() {
+    soltarControles();
+    pauseEngine();
+    mapaAbierto.value = _vistaMapa();
+  }
+
+  void cerrarMapa() {
+    mapaAbierto.value = null;
+    resumeEngine();
+  }
+
+  /// Las fogatas de las salas se marcan en la puerta de su estructura; el
+  /// jugador, donde está o, dentro de una sala, en la puerta por la que
+  /// entró.
+  VistaMapa _vistaMapa() {
+    final mapa = tierras.mapa;
+    (int, int) celda(Vector2 p) =>
+        (p.x ~/ MapaMundo.tile, (p.y - 1) ~/ MapaMundo.tile);
+    final fogatas = [
+      for (var i = 0; i < tierras.altares.length; i++)
+        if (fogataEncendida(fogataAltar(mapa.id, i))) celda(tierras.altares[i]),
+      for (final s in _interiores.salas)
+        if (s.punto('hoguera') != null &&
+            (s.mapa.zona ?? ZonaTierras.id) == mapa.id &&
+            fogataEncendida(fogataSala(s)))
+          celda(_puertaDe(s)),
+    ];
+    return (
+      nombre: mapa.nombre,
+      ruta: 'assets/minimapa/minimapa-zona-${mapa.numero}.png',
+      ancho: mapa.ancho,
+      alto: mapa.alto,
+      fogatas: fogatas,
+      jugador: celda(
+        zona is ZonaTierras ? jugador.position : _retorno ?? tierras.inicio,
+      ),
+    );
+  }
+
+  /// Desde la fogata del custodio, de vuelta a la puerta de la mazmorra.
+  void salirDeLaMazmorra() {
+    if (!jugador.vivo || zona is! SalaInterior) return;
+    _salirAlMundo();
+  }
+
   /// Dónde se despierta al caer, para el botón de la pantalla de muerte.
   String get lugarDeDescanso =>
       _descanso.sala == null ? 'junto al altar' : 'junto a la hoguera';
@@ -324,6 +552,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   }
 
   /// Un cofre del mundo abierto, en el servidor o desde el último guardado.
+  @override
   bool cofreAbierto(String id) =>
       personaje.mundo.cofresAbiertos.contains(id) ||
       _registro.cofres.contains(id);
@@ -334,6 +563,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
   @override
   Future<void> onLoad() async {
     _interiores = await MapaInteriores.cargar();
+    datosOreste = await DatosOreste.cargar();
     final u = personaje.ubicacion;
     final (zonaGuardada, salaGuardada) = _lugarDe(u.zonaId);
     final mapa = await MapaMundo.cargar(zonaGuardada);
@@ -347,6 +577,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
       Hojas.efectos,
       Hojas.efectos2,
       Hojas.ondaExpansiva,
+      DatosOreste.hoja,
     ]);
     await _cargarRecursos(mapa);
     tierras.preparar(mapa, _interiores, images);
@@ -453,20 +684,6 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
 
     final pies = jugador.position;
     region.value = zona.regionEn(pies);
-    if (zona is ZonaTierras) {
-      final mapa = tierras.mapa;
-      minimapa.value = (
-        ruta: 'assets/minimapa/minimapa-zona-${mapa.numero}.png',
-        ancho: mapa.ancho,
-        alto: mapa.alto,
-      );
-      celdaJugador.value = (
-        pies.x ~/ MapaMundo.tile,
-        (pies.y - 1) ~/ MapaMundo.tile,
-      );
-    } else {
-      minimapa.value = null;
-    }
     _esperaCruce = max(0, _esperaCruce - dt);
     if (jugador.vivo && _esperaCruce == 0) zona.pisando(pies);
     _ponerAcciones(jugador.vivo ? zona.accionesEn(pies) : const []);
@@ -572,7 +789,16 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
       ..addAll(keysPressed);
     if (event is KeyDownEvent) {
       final tecla = event.logicalKey;
-      if (tecla == LogicalKeyboardKey.keyE && acciones.value.isNotEmpty) {
+      if (_enDialogo) {
+        if (tecla == LogicalKeyboardKey.keyE ||
+            tecla == LogicalKeyboardKey.space ||
+            tecla == LogicalKeyboardKey.enter) {
+          alAvanzarDialogo?.call();
+        } else if (tecla == LogicalKeyboardKey.escape) {
+          cerrarDialogo(leido: false);
+        }
+      } else if (tecla == LogicalKeyboardKey.keyE &&
+          acciones.value.isNotEmpty) {
         acciones.value.first.alPulsar();
       } else if (tecla == LogicalKeyboardKey.escape) {
         alPedirMenu?.call();
@@ -722,9 +948,13 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
 
   void _cambiarA(Escenario destino, Vector2 pies) {
     if (!identical(destino, world)) {
+      // Se encoge y se crece en los portales: al cambiar de lugar, crece.
+      jugador.diminuto = false;
       jugador.parent = destino;
       world = destino;
       if (jefe.value == null) Sonido.pista(destino.pista, volumen: 0.6);
+      // Las salas sirven a varias zonas: Oreste está o no según esta.
+      if (destino is SalaInterior && destino.isLoaded) destino.ponerOreste();
     }
     jugador.position.setFrom(pies);
     camera.follow(jugador, snap: true);
@@ -748,6 +978,9 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
       max(max(1, (danoEnemigo * 0.2).round()), danoEnemigo - combate.defensa);
 
   void enemigoDerrotado(Enemigo enemigo) {
+    if (enemigo.origen case final origen?) {
+      _caidos.update(origen, (n) => n + 1, ifAbsent: () => 1);
+    }
     final ganado = _registro.enemigoDerrotado(enemigo.tipo.id);
     zona.add(
       TextoFlotante(
@@ -932,6 +1165,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
 
   void _reiniciarTodo() {
     jefe.value = null;
+    _caidos.clear();
     for (final z in _zonas.values) {
       z.reiniciarEnemigos();
     }
@@ -956,6 +1190,7 @@ class UmbralJuego extends FlameGame<Escenario> with KeyboardEvents {
         y: pies.y.round(),
         ultimoPuntoGuardado: _puntoDeGuardado,
       ),
+      caidos: _caidos,
     );
     try {
       _guardada = await alGuardar(_guardada.partida.partidaId, enviado);

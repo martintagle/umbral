@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui';
 
@@ -10,6 +11,7 @@ import 'enemigo.dart';
 import 'escenario.dart';
 import 'iluminacion.dart';
 import 'mapa_interiores.dart';
+import 'oreste.dart';
 import 'tipos_enemigo.dart';
 import 'umbral_juego.dart';
 
@@ -41,7 +43,7 @@ class SalaInterior extends Escenario {
   static const _distanciaInteraccion = 22.0;
 
   @override
-  bool get interior => true;
+  bool pisaPiedra(Vector2 pies) => true;
 
   /// La cripta y las mazmorras suenan a criaturas que se arrastran en la
   /// oscuridad.
@@ -55,6 +57,11 @@ class SalaInterior extends Escenario {
   /// Hueco.
   TipoEnemigo get tipoJefe =>
       Enemigos.porId(mapa.jefe ?? '') ?? Enemigos.reyHueco;
+
+  /// La fogata de la sala del custodio aparece al vencerlo; las demás están
+  /// siempre.
+  bool get fogataVisible =>
+      sala.punto('jefe') == null || game.jefesDerrotados.contains(tipoJefe.id);
 
   /// El jefe de esta sala, si está despierto y en pie: sella la salida.
   bool get _sellada {
@@ -72,12 +79,18 @@ class SalaInterior extends Escenario {
   @override
   Future<void> onLoad() async {
     final tileset = game.images.fromCache('interiores/${mapa.tileset}');
+    final hoguera = sala.punto('hoguera');
     add(_SueloSala(mapa, sala, tileset));
     for (var y = 0; y < sala.alto; y++) {
-      add(_FilaSala(mapa, sala, tileset, y));
+      add(_FilaSala(mapa, sala, tileset, y, sinDibujar: hoguera));
     }
 
     final iluminacion = Iluminacion(oscuridad: 0.88);
+    if (hoguera != null) {
+      final fogata = _Fogata(this, tileset, hoguera);
+      add(fogata);
+      iluminacion.fijas.add(fogata.luz);
+    }
     void luz(int x, int y, double radio, Color? tinte, {double alto = 4}) =>
         iluminacion.fijas.add(
           Luz(
@@ -103,7 +116,7 @@ class SalaInterior extends Escenario {
         // Una celda vacía vale -1, igual que un objeto que el tileset no
         // tiene: sin este corte, cada hueco de la sala sería una luz.
         final o = sala.objetos[y][x];
-        if (o < 0) continue;
+        if (o < 0 || (hoguera?.x == x && hoguera?.y == y)) continue;
         if (o == candelabro) luz(x, y, 34, Colores.brasa);
         if (o == forja) luz(x, y, 46, Colores.brasa);
         if (o == altar) luz(x, y, 42, Colores.brasa);
@@ -117,10 +130,37 @@ class SalaInterior extends Escenario {
     }
     add(iluminacion);
     reiniciarEnemigos();
+    ponerOreste();
+  }
+
+  Oreste? _oreste;
+
+  @override
+  Oreste? get oreste => switch (_oreste) {
+    final o? when !o.isRemoved && !o.desvaneciendose => o,
+    _ => null,
+  };
+
+  /// Pone a Oreste si esta sala es su refugio en la zona actual y aún tiene
+  /// algo que hacer en ella; si no, lo quita. Las salas comunes (la capilla,
+  /// la herrería, el refugio) sirven a varias zonas: se llama al entrar.
+  void ponerOreste() {
+    final zona = game.tierras.mapa.numero;
+    final refugio = game.datosOreste.refugios[zona];
+    final toca = refugio != null &&
+        refugio.sala == sala.slug &&
+        game.oresteEnZona(zona);
+    final actual = oreste;
+    if (toca && actual == null) {
+      add(_oreste = Oreste(piesEn(refugio.x, refugio.y)));
+    } else if (!toca && actual != null) {
+      actual.removeFromParent();
+      _oreste = null;
+    }
   }
 
   @override
-  bool libre(Rect pies, {bool enemigo = false}) {
+  bool libre(Rect pies, {bool enemigo = false, bool diminuto = false}) {
     for (final esquina in [
       pies.topLeft,
       pies.topRight,
@@ -152,15 +192,18 @@ class SalaInterior extends Escenario {
     // Con el nivel, los puntos de criaturas débiles y medias traen compañía en
     // las celdas libres de al lado.
     final fuerza = game.fuerzaEnemigos;
-    for (final p in sala.puntos.where((p) => p.tipo == 'enemigo')) {
+    for (final (i, p) in sala.puntos.indexed) {
+      if (p.tipo != 'enemigo') continue;
       if (Enemigos.porId(p.texto) case final tipo?) {
-        final n = game.criaturasPorPuntoDeSala(tipo.id);
+        // Las que cayeron desde el último descanso no vuelven.
+        final origen = '${sala.slug}#$i';
+        final n = game.criaturasPorPuntoDeSala(tipo.id) - game.caidosEn(origen);
         final celdas = [
           for (final (dx, dy) in const [(0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)])
             if (_cabe(piesEn(p.x + dx, p.y + dy))) piesEn(p.x + dx, p.y + dy),
         ];
-        for (final pies in celdas.take(n)) {
-          add(Enemigo(tipo, pies, fuerza: fuerza));
+        for (final pies in celdas.take(max(0, n))) {
+          add(Enemigo(tipo, pies, fuerza: fuerza, origen: origen));
         }
       }
     }
@@ -263,10 +306,22 @@ class SalaInterior extends Escenario {
         AccionContexto('Bajar por el pasadizo', game.bajarPorElPasadizo),
       ];
     }
+    // Junto a Oreste se le habla, además de lo que haya a mano.
+    if (oreste case final o? when o.position.distanceTo(pies) < 24) {
+      return [
+        AccionContexto('Hablar', game.hablarConOreste, boton: 'hablar'),
+        ..._accionesDelLugar(pies),
+      ];
+    }
+    return _accionesDelLugar(pies);
+  }
+
+  List<AccionContexto> _accionesDelLugar(Vector2 pies) {
     PuntoSala? cerca;
     var mejor = _distanciaInteraccion;
     for (final p in sala.puntos) {
       if (p.tipo == 'enemigo' || p.tipo == 'jefe') continue;
+      if (p.tipo == 'hoguera' && !fogataVisible) continue;
       final d = Vector2(
         (p.x + 0.5) * _lado,
         (p.y + 0.5) * _lado,
@@ -285,14 +340,18 @@ class SalaInterior extends Escenario {
         ),
       ],
       'estadisticas' => [game.accionSubirNivel()],
-      'hoguera' => [
-        AccionContexto(
-          'Descansar',
-          () => game.descansar(enSala: this),
-          boton: 'descansar',
-        ),
-        game.accionSubirNivel(),
-      ],
+      'hoguera' => game.accionesFogata(
+        UmbralJuego.fogataSala(sala),
+        donde: Vector2((cerca!.x + 0.5) * _lado, (cerca.y + 0.5) * _lado - 6),
+        descansar: () => game.descansar(enSala: this),
+        ademas: [
+          if (sala.punto('jefe') != null)
+            AccionContexto(
+              'Salir de la mazmorra',
+              game.salirDeLaMazmorra,
+            ),
+        ],
+      ),
       'cofre' => [
         AccionContexto(
           _abiertos.contains(cerca) ? 'Cofre vacío' : 'Abrir el cofre',
@@ -371,10 +430,17 @@ class _SueloSala extends PositionComponent {
 }
 
 /// Muebles de una fila: se ordenan con los sprites según su base.
+/// La celda [sinDibujar] (la hoguera) la dibuja [_Fogata].
 class _FilaSala extends PositionComponent {
-  _FilaSala(this._mapa, Sala sala, this._tileset, this._fila)
-    : super(priority: ((_fila + 1) * _lado).round()) {
+  _FilaSala(
+    this._mapa,
+    Sala sala,
+    this._tileset,
+    this._fila, {
+    PuntoSala? sinDibujar,
+  }) : super(priority: ((_fila + 1) * _lado).round()) {
     for (var x = 0; x < sala.ancho; x++) {
+      if (sinDibujar?.x == x && sinDibujar?.y == _fila) continue;
       final o = sala.objetos[_fila][x];
       if (o >= 0 && !_mapa.objetosTransitables.contains(o)) {
         _celdas.add((x, _mapa.indiceObjetos + o));
@@ -395,6 +461,49 @@ class _FilaSala extends PositionComponent {
   }
 }
 
+/// El altar de brasas de la hoguera: gris y sin luz hasta encenderlo. En la
+/// sala del custodio no está hasta vencerlo.
+class _Fogata extends PositionComponent {
+  _Fogata(this._sala, this._tileset, this._punto)
+    : luz = Luz(
+        Vector2((_punto.x + 0.5) * _lado, (_punto.y + 0.5) * _lado - 4),
+        radio: 42,
+        tinte: Colores.brasa,
+        parpadeo: 2,
+      ),
+      super(priority: ((_punto.y + 1) * _lado).round());
+
+  final SalaInterior _sala;
+  final Image _tileset;
+  final PuntoSala _punto;
+  final Luz luz;
+  final _paint = Paint()
+    ..filterQuality = FilterQuality.none
+    ..isAntiAlias = false;
+
+  @override
+  void update(double dt) {
+    luz.encendida = _sala.fogataVisible &&
+        _sala.game.fogataEncendida(UmbralJuego.fogataSala(_sala.sala));
+    _paint.colorFilter = luz.encendida ? null : filtroApagada;
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final altar = _sala.mapa.objeto('altar-brasas');
+    if (!_sala.fogataVisible || altar < 0) return;
+    _tile(
+      canvas,
+      _tileset,
+      _sala.mapa,
+      _sala.mapa.indiceObjetos + altar,
+      _punto.x,
+      _punto.y,
+      _paint,
+    );
+  }
+}
+
 final _pintura = Paint()
   ..filterQuality = FilterQuality.none
   ..isAntiAlias = false;
@@ -405,8 +514,9 @@ void _tile(
   MapaInteriores mapa,
   int cuadro,
   int x,
-  int y,
-) {
+  int y, [
+  Paint? pintura,
+]) {
   final columnas = mapa.columnasTileset;
   canvas.drawImageRect(
     tileset,
@@ -417,6 +527,6 @@ void _tile(
       _lado,
     ),
     Rect.fromLTWH(x * _lado, y * _lado, _lado, _lado),
-    _pintura,
+    pintura ?? _pintura,
   );
 }

@@ -22,6 +22,16 @@ class Progreso {
   final List<String> cofresAbiertos;
   final int oroCofres;
 
+  /// Fogatas encendidas: `altar:<zona>:<n>` o `sala:<slug>`.
+  final List<String> fogatasEncendidas;
+
+  /// Criaturas caídas desde el último descanso por punto de aparición. Es
+  /// el estado completo: el servidor lo reemplaza, no lo suma.
+  final Map<String, int> enemigosCaidos;
+
+  /// Diálogos de Oreste leídos desde el último guardado.
+  final List<String> dialogosLeidos;
+
   const Progreso({
     required this.enemigosDerrotados,
     required this.exp,
@@ -32,6 +42,9 @@ class Progreso {
     required this.ubicacion,
     this.cofresAbiertos = const [],
     this.oroCofres = 0,
+    this.fogatasEncendidas = const [],
+    this.enemigosCaidos = const {},
+    this.dialogosLeidos = const [],
   });
 
   Map<String, dynamic> toMap() {
@@ -45,6 +58,9 @@ class Progreso {
       'ubicacion': ubicacion.toMap(),
       'cofresAbiertos': cofresAbiertos,
       'oroCofres': oroCofres,
+      'fogatasEncendidas': fogatasEncendidas,
+      'enemigosCaidos': enemigosCaidos,
+      'dialogosLeidos': dialogosLeidos,
     };
   }
 }

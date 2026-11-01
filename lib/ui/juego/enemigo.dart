@@ -33,7 +33,11 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
   /// [UmbralJuego.fuerzaEnemigos] según el nivel del jugador.
   final double fuerza;
 
-  Enemigo(this.tipo, Vector2 pies, {this.fuerza = 1})
+  /// Punto de aparición (`<zona o sala>#<n>`): al caer se anota en él para
+  /// que no vuelva hasta descansar. `null` en los jefes, que no vuelven.
+  final String? origen;
+
+  Enemigo(this.tipo, Vector2 pies, {this.fuerza = 1, this.origen})
       : hogar = pies.clone(),
         super(position: pies.clone());
 
