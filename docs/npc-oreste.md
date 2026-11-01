@@ -209,6 +209,23 @@ Cada zona tiene los suyos y van en orden: el siguiente no aparece hasta leer el 
 4. La astilla está en el cofre `cofre-secreto-astilla` de `zona-6-umbral.json` (x 98, y 10). Ese cofre lleva `requiere: leido:oreste-6-4` y no aparece hasta entonces.
 5. Con la astilla, Oreste dice: «La tienes. Pesa poco, ¿verdad? La nada nunca pesa.»
 
+## Los cofres secretos solo están si se sigue a Oreste
+
+Cada cofre secreto que pide un diálogo, y la palanca que lleva a él, tiene `requiere` en su mapa. Mientras no se cumple, la palanca no está (ni se ve ni bloquea) y el cofre tampoco. Aparecen en cuanto se lee el diálogo, sin recargar la zona. Lo ya abierto o accionado en una partida vieja se queda como está.
+
+| Zona | Palanca | Cofre | Aparece al leer |
+| --- | --- | --- | --- |
+| 2 | `palanca-2` | `cofre-secreto-cunas` | `oreste-2-1` |
+| 3 | `palanca-1` | `cofre-secreto-lago` | `oreste-3-2` |
+| 4 | `palanca-1` | `cofre-secreto-atrio` | `oreste-4-2` |
+| 5 | `palanca-1` | `cofre-secreto-charca` | `oreste-5-2` |
+| 6 | `palanca-2` | `cofre-secreto-islote` | `oreste-6-2` |
+| 6 | `palanca-1` | `cofre-secreto-astilla` | `oreste-6-4` |
+
+Un muro agrietado también admite `requiere`: escondido, es roca lisa, sin grietas ni luz, y no se rompe. Hoy ninguno lo lleva.
+
+**Botón de hablar.** Junto a Oreste, el botón de atacar se cambia por el de hablar y «Hablar» no sale entre las acciones de arriba. Con teclado, E sigue hablando y Espacio/J siguen atacando.
+
 ## El final
 
 Al vencer a El Que Mira y colocar las ascuas en el Altar Mayor:

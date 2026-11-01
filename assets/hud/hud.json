@@ -171,6 +171,14 @@
    "nota": "Acción de lugar «abrir». El texto de la acción va a su izquierda, sin panel. Cuadros: 0 normal, 1 presionado.",
    "areaTactil": 30
   },
+  "boton-accion-palanca": {
+   "archivo": "boton-accion-palanca.png",
+   "ancho": 24,
+   "alto": 24,
+   "cuadros": 2,
+   "nota": "Acción de lugar «palanca». El texto de la acción va a su izquierda, sin panel. Cuadros: 0 normal, 1 presionado.",
+   "areaTactil": 30
+  },
   "boton-accion-hablar": {
    "archivo": "boton-accion-hablar.png",
    "ancho": 24,

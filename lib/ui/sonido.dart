@@ -24,6 +24,15 @@ abstract final class Audios {
   static const pasosPiedra = 'walk.mp3';
   static const danoHombre = 'dano-masculino.mp3';
   static const danoMujer = 'dano-femenino.mp3';
+  static const grunido2 = 'sonidos-enemigos3.wav';
+  static const rodar = 'giro-personaje.flac';
+  static const beber = 'drink-potion.mp3';
+  static const pocaVida = 'poca-vida-personaje.wav';
+  static const mejoraYunque = 'mejora-yunque.wav';
+  static const campanas = 'church-bells.mp3';
+  static const ambienteBosque = 'forest-jungle-nature-dark.mp3';
+  static const cinematicaInicio = 'cinematica-inicio.wav';
+  static const cinematicaFinal = 'cinematica-final.wav';
 
   static String ataque(ClaseCodigo clase) => 'ataque-${clase.name}.mp3';
 
@@ -59,6 +68,11 @@ abstract final class Sonido {
     Audios.danoHombre: 2,
     Audios.danoMujer: 2,
     Audios.grunido: 2,
+    Audios.grunido2: 2,
+    Audios.rodar: 3,
+    Audios.beber: 1,
+    Audios.pocaVida: 1,
+    Audios.mejoraYunque: 1,
     'ataque-vagabundo.mp3': 3,
     'ataque-guerrero.mp3': 3,
     'ataque-arquero.mp3': 3,

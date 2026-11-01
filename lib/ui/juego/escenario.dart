@@ -16,7 +16,7 @@ class AccionContexto {
   final VoidCallback alPulsar;
 
   /// Emblema `assets/hud/boton-accion-<boton>.png`: `descansar`, `entrar`,
-  /// `yunque`, `leer`, `abrir` o `hablar`.
+  /// `yunque`, `leer`, `abrir`, `palanca` o `hablar`.
   final String boton;
 
   /// El texto va en `brasa` para llamar la atención (por ejemplo, cuando

@@ -59,9 +59,21 @@ Cuando una celda cambia (un puente que sube o un muro que se rompe), `repintar` 
 
 ### Interiores (`_SueloSala` en `sala_interior.dart`)
 
-Los tilesets de interiores no cambian. Al pintar la sala:
+Los 6 tilesets de interiores (`assets/interiores/tileset-interiores.png` y los de las 5 mazmorras) tienen suelos y muros redibujados. Están en el mismo lugar y con los mismos índices; los muebles no cambian. Cada uno conserva los colores de su tema: cera, sal, abadía, ceniza y vacío.
 
-- Un tercio de las baldosas de piedra, cripta, tierra y madera van volteadas, para que el piso no se vea repetido.
+- **Madera:** tablas con veta, juntas y nudos.
+- **Piedra:** losas biseladas, algunas agrietadas o con musgo.
+- **Cripta y tierra:** manchas tramadas, piedritas y algún hueso.
+- **Alfombra:** con borde y desgaste.
+- **Muros:** sillares con luz arriba y sombra abajo, y el pie más oscuro. La parte de arriba del muro tiene textura tenue.
+- **Escaleras:** escalones que se oscurecen hacia abajo.
+- **Agua (cera, lava...):** ondas tramadas.
+
+Cada tileset trae `<tileset>-variantes.png`: una fila por suelo con 4 variantes. Las genera `interiores2.py`, que toma la paleta de cada tile original.
+
+Al pintar la sala:
+
+- Cada celda usa una de las 4 variantes de su suelo, elegida igual que en el mundo abierto.
 - Bajo los muros cae sombra, y junto a los muros de los lados hay un filo oscuro.
 - Los muebles que bloquean tienen sombra al pie.
 
@@ -157,11 +169,12 @@ Hay un máximo de 420 partículas vivas. El aire se repone según el área de la
 | `lib/ui/juego/escenario.dart` | Campos `iluminacion` y `particulas`; método `esAgua`. |
 | `lib/ui/juego/mapa_mundo.dart` | `agua(x, y)` y las rutas de las hojas extra. |
 | `lib/ui/juego/zona_tierras.dart` | `_Suelo` nuevo, `_Animados`, `_FilaAlta` mecida, `_Brasas` nuevas, clima. |
-| `lib/ui/juego/sala_interior.dart` | Sombras y baldosas volteadas, clima, brasas de la hoguera. |
+| `lib/ui/juego/sala_interior.dart` | Variantes de suelo, sombras, clima, brasas de la hoguera. |
+| `assets/interiores/tileset-*.png` y `tileset-*-variantes.png` | Suelos y muros redibujados; 6 hojas de variantes nuevas. |
 | `lib/ui/juego/jugador.dart` | Sombra, estirar y aplastar, estela, polvo, reacción a golpes. |
 | `lib/ui/juego/enemigo.dart` | Sombra, aplastamiento, chispas, sangre, alma, temblor. |
 | `lib/ui/juego/efectos.dart` | `Estela`; los proyectiles dejan rastro y chispean al chocar. |
 | `lib/ui/juego/animacion.dart` | `ModeloAnimado.cuadro`. |
 | `lib/ui/juego/umbral_juego.dart` | Cámara suave, `sacudir`, `congelar`, `destello`; carga de las hojas nuevas. |
 
-**Lo que no cambió:** las hojas de sprites de personajes, criaturas y jefes (sus cuadros), los tilesets de interiores, el HUD y los mapas. Para ajustar la sensación, todos los números están como constantes con nombre en cada archivo.
+**Lo que no cambió:** las hojas de sprites de personajes, criaturas y jefes (sus cuadros), los muebles de los interiores, el HUD y los mapas. Para ajustar la sensación, todos los números están como constantes con nombre en cada archivo.

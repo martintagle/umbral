@@ -225,6 +225,7 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
     mirando.setFrom(_dirRodar);
     _aplasta = -1;
     _estela = 0;
+    Sonido.efecto(Audios.rodar, volumen: 0.6);
     game.zona.particulas
         ?.polvo(position, n: 5, piedra: game.zona.pisaPiedra(position));
   }
@@ -234,6 +235,7 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
     if (!game.gastarFrasco()) return;
     _beber = 0;
     _curaPendiente = true;
+    Sonido.efecto(Audios.beber);
   }
 
   static final _sombra = Paint()

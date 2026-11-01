@@ -88,6 +88,13 @@ class ZonaTierras extends Escenario {
   @override
   bool esAgua(double x, double y) => mapa.agua(x, y);
 
+  /// Bajo tierra y en el vacío de El Umbral no hay bosque que suene.
+  static const _sinBosque = {'minas', 'umbral'};
+
+  @override
+  String? get pista =>
+      _sinBosque.contains(mapa.id) ? null : Audios.ambienteBosque;
+
   /// Las criaturas que vienen de la zona anterior son aquí las débiles:
   /// abundan como tales.
   bool esDebil(String tipo) =>
@@ -148,6 +155,12 @@ class ZonaTierras extends Escenario {
     for (final m in mapa.mecanismos) {
       if (game.mecanismoActivado(_idMecanismo(m))) _resolver(m);
     }
+    // Lo que lleva a los cofres de la misión de Oreste no está hasta que se
+    // siguen sus diálogos: lo saca [update].
+    _ocultos.clear();
+    for (final m in mapa.mecanismos) {
+      if (!_mecanismoVisible(m)) _ocultar(m);
+    }
 
     add(_suelo = _Suelo(mapa, _tileset, extra));
     add(_Animados(mapa, extra.animados));
@@ -162,7 +175,10 @@ class ZonaTierras extends Escenario {
     }
     // Los cofres con requisito no existen hasta cumplirlo: los saca [update].
     for (final c in mapa.cofres) {
-      if (_cofreVisible(c)) _ponerCofre(c);
+      if (_cofreVisible(c)) {
+        _cofresMostrados.add(c);
+        _ponerCofre(c);
+      }
     }
     for (final l in mapa.letreros) {
       _poner(l.x, l.y, _entidad('letrero'));
@@ -250,20 +266,12 @@ class ZonaTierras extends Escenario {
 
     // Por las grietas de los muros que siguen en pie escapa algo de brasa.
     for (final m in mapa.mecanismos) {
-      if (m.tipo != 'grieta' || game.mecanismoActivado(_idMecanismo(m))) {
+      if (m.tipo != 'grieta' ||
+          game.mecanismoActivado(_idMecanismo(m)) ||
+          _ocultos.contains(m)) {
         continue;
       }
-      final luces = [
-        for (final (x, y) in m.celdas)
-          Luz(
-            MapaMundo.centroDe(x, y),
-            radio: 14,
-            tinte: Colores.brasa,
-            parpadeo: 1,
-          ),
-      ];
-      iluminacion.fijas.addAll(luces);
-      _lucesGrietas[m.id] = luces;
+      _encenderGrieta(m, iluminacion);
     }
     add(iluminacion);
     ponerAmbiente(this, clima);
@@ -272,11 +280,66 @@ class ZonaTierras extends Escenario {
     reiniciarEnemigos();
   }
 
-  /// Un cofre sin requisito, o con el requisito cumplido.
+  /// Un cofre sin requisito, con el requisito cumplido o ya abierto.
   bool _cofreVisible(CofreMapa c) => switch (c.requiere) {
-    final r? => game.datosOreste.cumple(r, game, c.id),
+    final r? =>
+      game.cofreAbierto(idCofre(c)) || game.datosOreste.cumple(r, game, c.id),
     null => true,
   };
+
+  /// Mecanismos con requisito sin cumplir: no se ven ni se usan.
+  final Set<Mecanismo> _ocultos = {};
+
+  /// Un mecanismo sin requisito, con el requisito cumplido o ya activado.
+  bool _mecanismoVisible(Mecanismo m) => switch (m.requiere) {
+    final r? =>
+      game.mecanismoActivado(_idMecanismo(m)) ||
+          game.datosOreste.cumple(r, game, m.id),
+    null => true,
+  };
+
+  /// Esconde [m] al cargar: la palanca no está y el muro agrietado es roca
+  /// lisa, sin grietas ni luz.
+  void _ocultar(Mecanismo m) {
+    _ocultos.add(m);
+    if (m.tipo == 'palanca') {
+      mapa.cambiarObjeto(m.x!, m.y!, -1);
+    } else {
+      for (final (x, y) in m.celdas) {
+        mapa.cambiarSuelo(x, y, mapa.sueloLlamado('muro-roca'));
+      }
+    }
+  }
+
+  /// [m] aparece al cumplirse su requisito.
+  void _mostrar(Mecanismo m) {
+    _ocultos.remove(m);
+    if (m.tipo == 'palanca') {
+      _cambiar(m.x!, m.y!, mapa.objeto('palanca'));
+      _suelo.repintar(m.x!, m.y!);
+    } else {
+      for (final (x, y) in m.celdas) {
+        mapa.cambiarSuelo(x, y, mapa.sueloLlamado('muro-agrietado'));
+        _suelo.repintar(x, y);
+      }
+      if (iluminacion case final luz?) _encenderGrieta(m, luz);
+    }
+  }
+
+  /// Por las grietas del muro [m] escapa algo de brasa.
+  void _encenderGrieta(Mecanismo m, Iluminacion iluminacion) {
+    final luces = [
+      for (final (x, y) in m.celdas)
+        Luz(
+          MapaMundo.centroDe(x, y),
+          radio: 14,
+          tinte: Colores.brasa,
+          parpadeo: 1,
+        ),
+    ];
+    iluminacion.fijas.addAll(luces);
+    _lucesGrietas[m.id] = luces;
+  }
 
   /// Cofres con requisito ya puestos en el mapa.
   final Set<CofreMapa> _cofresMostrados = {};
@@ -390,7 +453,8 @@ class ZonaTierras extends Escenario {
             m.tipo == 'palanca' &&
             MapaMundo.centroDe(m.x!, m.y!).distanceTo(pies) <
                 _distanciaObjeto &&
-            !game.mecanismoActivado(_idMecanismo(m)),
+            !game.mecanismoActivado(_idMecanismo(m)) &&
+            !_ocultos.contains(m),
       )
       .firstOrNull;
 
@@ -435,6 +499,7 @@ class ZonaTierras extends Escenario {
   void golpearMuros(bool Function(Vector2 centro) alcanza) {
     for (final m in mapa.mecanismos) {
       if (m.tipo == 'grieta' &&
+          !_ocultos.contains(m) &&
           m.celdas.any((c) => alcanza(MapaMundo.centroDe(c.$1, c.$2)))) {
         romperGrieta(m);
       }
@@ -551,6 +616,9 @@ class ZonaTierras extends Escenario {
         _ponerCofre(c);
       }
     }
+    for (final m in [..._ocultos]) {
+      if (_mecanismoVisible(m)) _mostrar(m);
+    }
     for (var i = 0; i < _fogatas.length; i++) {
       final f = _fogatas[i];
       final encendida =
@@ -604,7 +672,7 @@ class ZonaTierras extends Escenario {
         AccionContexto(
           'Accionar la palanca',
           () => _accionarPalanca(m),
-          boton: 'abrir',
+          boton: 'palanca',
         ),
       ];
     }

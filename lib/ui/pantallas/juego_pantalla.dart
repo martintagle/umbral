@@ -143,7 +143,6 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
     // Evita abrir la cinemática dos veces con un doble toque.
     if (_enOtraPantalla) return;
     _enOtraPantalla = true;
-    Sonido.pista(elegido == _Final.encender ? Audios.musicaTitulo : null);
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (ruta) => CinematicaPantalla(
@@ -1026,6 +1025,8 @@ class _PalancaState extends State<_Palanca> {
 class _Acciones extends StatelessWidget {
   final UmbralJuego juego;
 
+  static const _botonHablar = 'hablar';
+
   const _Acciones(this.juego);
 
   @override
@@ -1047,8 +1048,9 @@ class _Acciones extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                // Hablar va en el lugar de atacar, no aquí.
                 for (final a in juego.acciones.value)
-                  Row(
+                  if (a.boton != _botonHablar) Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
@@ -1122,12 +1124,36 @@ class _Acciones extends StatelessWidget {
                   ),
                 ],
               ),
-              BotonHud(
-                pieza: atacar,
-                descripcion: 'Atacar',
-                cuadro: sinEstamina ? 2 : 0,
-                alPulsar: () => juego.botonAtaque = true,
-                alSoltar: () => juego.botonAtaque = false,
+              // Junto a Oreste, el botón de atacar pasa a ser el de hablar.
+              ListenableBuilder(
+                listenable: Listenable.merge([juego.acciones, juego.guardando]),
+                builder: (_, _) {
+                  final hablar = juego.acciones.value
+                      .where((a) => a.boton == _botonHablar)
+                      .firstOrNull;
+                  if (hablar == null) {
+                    return BotonHud(
+                      pieza: atacar,
+                      descripcion: 'Atacar',
+                      cuadro: sinEstamina ? 2 : 0,
+                      alPulsar: () => juego.botonAtaque = true,
+                      alSoltar: () => juego.botonAtaque = false,
+                    );
+                  }
+                  // El botón de atacar se quita sin soltarse: que no quede
+                  // atacando solo.
+                  juego.botonAtaque = false;
+                  return SizedBox.square(
+                    dimension: PiezaHud.px(atacar.areaTactil!),
+                    child: Center(
+                      child: BotonHud(
+                        pieza: PiezaHud.accion(_botonHablar),
+                        descripcion: hablar.etiqueta,
+                        alPulsar: juego.guardando.value ? null : hablar.alPulsar,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),

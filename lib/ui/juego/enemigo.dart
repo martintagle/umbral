@@ -268,7 +268,8 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
     if (tipo.jefe) {
       game.jefeDespierta(this);
     } else {
-      Sonido.efecto(Audios.grunido,
+      // Dos gruñidos distintos, para que no suenen todos iguales.
+      Sonido.efecto(_azar.nextBool() ? Audios.grunido : Audios.grunido2,
           volumen: 0.45, espera: const Duration(milliseconds: 1800));
     }
   }

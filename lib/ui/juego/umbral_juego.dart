@@ -612,7 +612,10 @@ class UmbralJuego extends FlameGame<Escenario>
     final hojaJugador =
         'personajes/${personaje.claseCodigo.name}-${personaje.apariencia.name}';
     await images.loadAll([
-      for (final m in _interiores.mapas) 'interiores/${m.tileset}',
+      for (final m in _interiores.mapas) ...[
+        'interiores/${m.tileset}',
+        'interiores/${m.tileset.replaceFirst('.png', '-variantes.png')}',
+      ],
     ]);
     await Hojas.preparar(images, [
       hojaJugador,
@@ -629,6 +632,8 @@ class UmbralJuego extends FlameGame<Escenario>
     vida.value = personaje.vidaActual > 0
         ? min(personaje.vidaActual, combate.vidaMaxima)
         : combate.vidaMaxima;
+    _vidaBaja = _esVidaBaja(vida.value);
+    vida.addListener(_avisarVidaBaja);
 
     // Se empieza donde se guardó: en el mundo o dentro de una sala (por
     // ejemplo, junto a la hoguera de la cripta).
@@ -928,6 +933,21 @@ class UmbralJuego extends FlameGame<Escenario>
     return true;
   }
 
+  /// Por debajo de esta fracción de la vida máxima suena el aviso.
+  static const _umbralVidaBaja = 0.25;
+  bool _vidaBaja = false;
+
+  bool _esVidaBaja(int v) =>
+      v > 0 && v <= combate.vidaMaxima * _umbralVidaBaja;
+
+  /// Suena una vez al caer en vida baja; vuelve a sonar solo si antes se
+  /// sale de ella (un frasco, un descanso).
+  void _avisarVidaBaja() {
+    final baja = _esVidaBaja(vida.value);
+    if (baja && !_vidaBaja) Sonido.efecto(Audios.pocaVida, volumen: 0.8);
+    _vidaBaja = baja;
+  }
+
   /// El trago hace efecto: cura [fraccion] de la vida máxima.
   void curarConFrasco(double fraccion) {
     vida.value = min(
@@ -1165,7 +1185,8 @@ class UmbralJuego extends FlameGame<Escenario>
     _jefesVencidos.add(tipo.id);
     jefe.value = null;
     Sonido.pista(zona.pista, volumen: 0.6);
-    Sonido.efecto(Audios.oro);
+    // Doblan las campanas por el custodio caído.
+    Sonido.efecto(Audios.campanas, volumen: 0.8);
     titular.value = 'SEÑOR CAÍDO';
     Future.delayed(const Duration(milliseconds: 3200), () {
       titular.value = null;

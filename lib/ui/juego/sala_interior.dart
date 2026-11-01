@@ -81,7 +81,10 @@ class SalaInterior extends Escenario {
   Future<void> onLoad() async {
     final tileset = game.images.fromCache('interiores/${mapa.tileset}');
     final hoguera = sala.punto('hoguera');
-    add(_SueloSala(mapa, sala, tileset));
+    final variantes = game.images.fromCache(
+      'interiores/${mapa.tileset.replaceFirst('.png', '-variantes.png')}',
+    );
+    add(_SueloSala(mapa, sala, tileset, variantes));
     for (var y = 0; y < sala.alto; y++) {
       add(_FilaSala(mapa, sala, tileset, y, sinDibujar: hoguera));
     }
@@ -416,7 +419,7 @@ class SalaInterior extends Escenario {
 
 /// Suelo, muros y objetos de paso, dibujados una vez en una imagen.
 class _SueloSala extends PositionComponent {
-  _SueloSala(MapaInteriores mapa, Sala sala, Image tileset)
+  _SueloSala(MapaInteriores mapa, Sala sala, Image tileset, Image variantes)
     : super(priority: -1 << 20) {
     final grabadora = PictureRecorder();
     final canvas = Canvas(grabadora);
@@ -427,24 +430,17 @@ class _SueloSala extends PositionComponent {
         y < sala.alto &&
         mapa.sueloBloquea.contains(sala.suelo[y][x]) &&
         sala.suelo[y][x] != mapa.suelo('agua');
-    final volteables = {
-      for (final n in const ['suelo-piedra', 'suelo-cripta', 'suelo-tierra', 'suelo-madera'])
-        if (mapa.suelo(n) >= 0) mapa.suelo(n),
-    };
     for (var y = 0; y < sala.alto; y++) {
       for (var x = 0; x < sala.ancho; x++) {
         final s = sala.suelo[y][x];
-        // Algunas baldosas van volteadas: el piso deja de verse repetido.
-        if (volteables.contains(s) && (x * 7 + y * 13 + x * y) % 3 == 0) {
-          canvas
-            ..save()
-            ..translate((x * 2 + 1) * _lado, 0)
-            ..scale(-1, 1);
-          _tile(canvas, tileset, mapa, s, x, y);
-          canvas.restore();
-        } else {
-          _tile(canvas, tileset, mapa, s, x, y);
-        }
+        // Cada celda con una de las 4 variantes de su suelo
+        // (`<tileset>-variantes.png`): el piso deja de verse repetido.
+        canvas.drawImageRect(
+          variantes,
+          Rect.fromLTWH(_variante(x, y) * _lado, s * _lado, _lado, _lado),
+          Rect.fromLTWH(x * _lado, y * _lado, _lado, _lado),
+          _pintura,
+        );
         if (!muro(x, y)) {
           // Sombra del muro de arriba y filo oscuro junto a los de los lados.
           if (muro(x, y - 1)) {
@@ -484,6 +480,18 @@ class _SueloSala extends PositionComponent {
 
   late final Image _imagen;
   static final _sombra = Paint()..isAntiAlias = false;
+
+  /// La misma elección de variante que el mundo abierto (`varianteDe`).
+  static int _variante(int x, int y) {
+    final k = (x * 7919 + y * 104729 + x * y * 31) % 100;
+    return k < 52
+        ? 0
+        : k < 68
+        ? 1
+        : k < 84
+        ? 2
+        : 3;
+  }
 
   @override
   void render(Canvas canvas) =>

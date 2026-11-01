@@ -29,7 +29,7 @@ Por qué así:
   - Se ve como agua con tablas apenas visibles bajo la superficie.
   - Bloquea como el agua.
 - **`palanca`** es un objeto que bloquea el paso y está donde antes había un tocón de runas.
-  - Al acercarse aparece la acción **«Accionar»** (emblema `assets/hud/boton-accion-abrir.png` hasta que haya uno propio).
+  - Al acercarse aparece la acción **«Accionar»** (emblema `assets/hud/boton-accion-palanca.png`).
 - **Al accionar la palanca:**
   1. El objeto pasa a `palanca-activa`.
   2. Cada casilla de su lista `celdas` pasa de `pasarela-hundida` a `puente`, en orden, una cada 60 ms: la pasarela sube tabla a tabla desde la palanca.
@@ -52,6 +52,7 @@ Cada mapa (`mundo.json` y `zona-<n>-<id>.json`) trae una lista nueva, **`mecanis
 ```
 
 - **Palancas:** `x`, `y` es la casilla de la palanca y `celdas` son las de su pasarela, ordenadas de la orilla al otro extremo.
+- **`requiere`** (opcional): un requisito como los de Oreste (`leido:oreste-2-1`). Mientras no se cumpla, el mecanismo no está. Lo llevan las palancas de los cofres de su misión (ver `docs/npc-oreste.md`).
 - **Grietas:** `celdas` son las casillas de muro agrietado que se rompen juntas. Hoy cada grieta tiene una o dos.
 - El id que se guarda en la partida es `<zonaId>/<id>`, por ejemplo `cienaga/palanca-2`.
 

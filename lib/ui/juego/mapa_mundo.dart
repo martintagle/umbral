@@ -21,6 +21,8 @@ typedef Letrero = ({int x, int y, String texto});
 /// Una palanca o un muro agrietado (`docs/exploracion.md`). La palanca está
 /// en ([x], [y]) y sus [celdas] son las de su pasarela, de la orilla al otro
 /// extremo; las de una grieta son las de su muro, que se rompen juntas.
+/// [requiere], como el de los cofres, lo esconde mientras no se cumpla: los
+/// que llevan a los cofres de la misión de Oreste.
 typedef Mecanismo = ({
   String id,
   String tipo,
@@ -28,6 +30,7 @@ typedef Mecanismo = ({
   int? y,
   List<(int, int)> celdas,
   String texto,
+  String? requiere,
 });
 typedef EnemigoMapa = ({String tipo, int x, int y, int radio});
 typedef Region = ({String nombre, int x, int y, int w, int h});
@@ -186,6 +189,7 @@ class MapaMundo {
               for (final c in d['celdas'] as List) (c[0] as int, c[1] as int),
             ],
             texto: d['texto'] as String,
+            requiere: d['requiere'] as String?,
           ),
       ],
       enemigos = [

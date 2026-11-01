@@ -479,9 +479,13 @@ void main() {
       (tester) async {
     await tester.runAsync(() async {
       Progreso? enviado;
-      Future<UmbralJuego> cargar(String zona, List<String> mecanismos) async {
+      Future<UmbralJuego> cargar(
+        String zona,
+        List<String> mecanismos, {
+        List<String> leidos = const [],
+      }) async {
         final juego = _juego(
-          _partida(zonaId: zona, mecanismos: mecanismos),
+          _partida(zonaId: zona, mecanismos: mecanismos, leidos: leidos),
           alEnviar: (p) => enviado = p,
         );
         juego.onGameResize(Vector2(844, 390));
@@ -495,14 +499,23 @@ void main() {
         (c) => !z.mapa.solido(c.$1 * 16 + 8, c.$2 * 16 + 8),
       );
 
-      // Zona 6: la palanca de N3 levanta el puente hasta la torre.
+      // Zona 6: la palanca de N3 levanta el puente hasta la torre. Es de la
+      // misión de Oreste: sin su último diálogo, no está.
       var juego = await cargar('umbral', const []);
       var zona = juego.tierras;
       final palanca = zona.mapa.mecanismos.firstWhere(
         (m) => m.id == 'palanca-1',
       );
-      expect(abierta(zona, palanca), isFalse);
       final junto = MapaMundo.piesEnCelda(palanca.x!, palanca.y! + 1);
+      expect(zona.mapa.objetos[palanca.y!][palanca.x!], -1);
+      expect(
+        zona.accionesEn(junto).map((a) => a.etiqueta),
+        isNot(contains('Accionar la palanca')),
+      );
+
+      juego = await cargar('umbral', const [], leidos: const ['oreste-6-4']);
+      zona = juego.tierras;
+      expect(abierta(zona, palanca), isFalse);
       final accion = zona
           .accionesEn(junto)
           .firstWhere((a) => a.etiqueta == 'Accionar la palanca');

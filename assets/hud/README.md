@@ -49,7 +49,7 @@ Al ganar EXP u oro, el número puede parpadear en `hueso` 2 veces; no hace falta
 | `boton-atacar-<clase>.png` | 34×34 | normal · presionado · sin estamina | Ataque, con el arma de cada clase: vagabundo (katana), guerrero (espadón), arquero (arco), mago (grimorio), prisionero (daga). |
 | `boton-rodar.png` | 24×24 | normal · presionado · sin estamina | Rodar. |
 | `boton-frasco.png` | 16×20 | con frascos · presionado · vacío | Beber. La cantidad va abajo a la derecha, en `brasa`, sin caja. |
-| `boton-accion-<accion>.png` | 24×24 | normal · presionado | Acción del lugar: `descansar` (altar), `entrar` (puertas), `yunque` (herrería), `leer` (letreros), `abrir` (cofres), `hablar`. El texto ("DESCANSAR") va a la izquierda del emblema, en `etiqueta` con sombra, sin panel. |
+| `boton-accion-<accion>.png` | 24×24 | normal · presionado | Acción del lugar: `descansar` (altar), `entrar` (puertas), `yunque` (herrería), `leer` (letreros), `abrir` (cofres), `palanca` (palancas), `hablar`. El texto ("DESCANSAR") va a la izquierda del emblema, en `etiqueta` con sombra, sin panel. |
 | `boton-menu.png` | 14×14 | normal · presionado | Pausa, arriba a la derecha. |
 | `palanca-base.png` | 44×44 | — | Anillo de runas semitransparente. |
 | `palanca-perilla.png` | 16×16 | reposo · arrastrando | Se mueve hasta `recorrido` = 14 px de arte (42 px a 3x) del centro. |

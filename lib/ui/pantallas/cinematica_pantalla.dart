@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../sonido.dart';
 import '../tema/tema_umbral.dart';
 
 /// Una escena de `assets/cinematicas/cinematicas.json`: sus cuadros de pixel
@@ -102,6 +103,10 @@ class _CinematicaPantallaState extends State<CinematicaPantalla> {
   @override
   void initState() {
     super.initState();
+    // Su propia música; al terminar, quien la abrió pone la siguiente.
+    Sonido.pista(
+      widget.id == 'inicio' ? Audios.cinematicaInicio : Audios.cinematicaFinal,
+    );
     CinematicaPantalla.cargar(widget.id).then((escenas) {
       if (!mounted) return;
       for (final e in escenas) {

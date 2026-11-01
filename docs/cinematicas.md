@@ -1,6 +1,14 @@
 # Cinemáticas
 
-Hay tres cinemáticas con cuadros de texto: una al empezar una partida nueva y una para cada final. Son escenas de pixel art, cada una con dos a ocho cuadros animados, y textos que se leen de uno en uno.
+Hay tres cinemáticas con cuadros de texto: una al empezar una partida nueva y una para cada final. Son escenas de pixel art, cada una con tres a ocho cuadros animados, y textos que se leen de uno en uno.
+
+**Estilo:** usan los mismos gráficos que el juego (`docs/graficos.md`):
+- los suelos salen de los tilesets nuevos;
+- la noche tiene color y las luces abren anillos escalonados con halo cálido;
+- hay dos capas de niebla;
+- flotan partículas (ceniza, brasas, motas, esquirlas) y las luminosas brillan sobre la oscuridad.
+
+La niebla y las partículas dan la vuelta sin salto, así que las escenas en bucle se repiten limpias.
 
 **Vista previa jugable:** abre `docs/diseno/cinematicas/vista-previa.html` en el navegador. Tiene un botón por cinemática y un campo para probar el nombre del personaje.
 
@@ -51,7 +59,7 @@ Se muestra al elegir **Romper la Brasa**, lo que solo es posible con la astilla 
 | Archivo | Qué es |
 | --- | --- |
 | `assets/cinematicas/cinematicas.json` | Las tres cinemáticas: escenas, cuadros, tiempos y textos. |
-| `assets/cinematicas/<escena>-<n>.png` | 84 cuadros de 256×144 a 1x. |
+| `assets/cinematicas/<escena>-<n>.png` | 115 cuadros de 256×144 a 1x. |
 | `lib/ui/pantallas/cinematica_pantalla.dart` | `CinematicaPantalla(id:, nombre:, alTerminar:)`: el reproductor. |
 | `docs/diseno/cinematicas/vista-previa.html` | La misma lógica en el navegador, para revisar textos y ritmo. |
 | `docs/diseno/cinematicas/lamina.png` | Último cuadro de cada escena. |

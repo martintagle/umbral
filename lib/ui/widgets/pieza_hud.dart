@@ -74,7 +74,7 @@ class PiezaHud {
     areaTactil: 40,
   );
 
-  /// [accion]: `descansar`, `entrar`, `yunque`, `leer`, `abrir` o `hablar`.
+  /// [accion]: `descansar`, `entrar`, `yunque`, `leer`, `abrir`, `palanca` o `hablar`.
   static PiezaHud accion(String accion) =>
       PiezaHud('boton-accion-$accion', 24, 24, cuadros: 2, areaTactil: 30);
 }

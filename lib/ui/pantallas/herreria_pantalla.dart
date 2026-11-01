@@ -47,7 +47,7 @@ class _HerreriaPantallaState extends State<HerreriaPantalla> {
     });
     try {
       final nueva = await widget.alMejorar(_pieza);
-      Sonido.efecto(Audios.oro);
+      Sonido.efecto(Audios.mejoraYunque);
       if (!mounted) return;
       final equipo = nueva.partida.personaje.equipo;
       final nivel = _pieza == 'arma' ? equipo.nivelArma : equipo.nivelArmadura;
