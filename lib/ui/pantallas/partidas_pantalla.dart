@@ -18,6 +18,7 @@ import '../widgets/boton_umbral.dart';
 import '../widgets/panel_umbral.dart';
 import '../widgets/sprite_umbral.dart';
 import 'ajustes_pantalla.dart';
+import 'cinematica_pantalla.dart';
 import 'juego_pantalla.dart';
 import 'login_pantalla.dart';
 import 'nuevo_personaje_pantalla.dart';
@@ -137,6 +138,18 @@ class _PartidasPantallaState extends State<PartidasPantalla> {
       MaterialPageRoute(builder: (_) => const NuevoPersonajePantalla()),
     );
     if (creada != null) {
+      // Una partida nueva empieza con la cinemática del despertar.
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (ruta) => CinematicaPantalla(
+            id: 'inicio',
+            nombre: creada.partida.personaje.nombre,
+            alTerminar: () => Navigator.of(ruta).pop(),
+          ),
+        ),
+      );
+      if (!mounted) return;
       await _jugar(creada);
     } else {
       _cargar();

@@ -351,7 +351,7 @@ class SalaInterior extends Escenario {
         donde: Vector2((cerca!.x + 0.5) * _lado, (cerca.y + 0.5) * _lado - 6),
         descansar: () => game.descansar(enSala: this),
         ademas: [
-          if (pasadizo != null) pasadizo,
+          ?pasadizo,
           if (sala.punto('jefe') != null)
             AccionContexto(
               'Salir de la mazmorra',

@@ -18,6 +18,7 @@ import '../widgets/confirmacion_umbral.dart';
 import '../widgets/panel_umbral.dart';
 import '../widgets/pieza_hud.dart';
 import 'ajustes_pantalla.dart';
+import 'cinematica_pantalla.dart';
 import 'estadisticas_pantalla.dart';
 import 'herreria_pantalla.dart';
 
@@ -136,9 +137,23 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
     setState(() => _final = _Final.eleccion);
   }
 
-  void _elegirFinal(_Final elegido) {
+  /// Cada final se cuenta con su cinemática (`docs/cinematicas.md`); al
+  /// terminarla se vuelve a la lista de partidas.
+  Future<void> _elegirFinal(_Final elegido) async {
+    // Evita abrir la cinemática dos veces con un doble toque.
+    if (_enOtraPantalla) return;
+    _enOtraPantalla = true;
     Sonido.pista(elegido == _Final.encender ? Audios.musicaTitulo : null);
-    setState(() => _final = elegido);
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (ruta) => CinematicaPantalla(
+          id: elegido == _Final.encender ? 'final-encender' : 'final-romper',
+          nombre: _juego.personaje.nombre,
+          alTerminar: () => Navigator.of(ruta).pop(),
+        ),
+      ),
+    );
+    if (mounted) Navigator.of(context).pop();
   }
 
   /// Aún no: se vuelve a la arena.

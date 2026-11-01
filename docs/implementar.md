@@ -62,6 +62,15 @@ Lo hizo Claude en el chat, sin compilar: **pasa `flutter analyze` y pruébalo** 
 
 ---
 
+## Cambio ya hecho en el código: cinemáticas (01-11)
+
+Lo hizo Claude en el chat, sin compilar: **pasa `flutter analyze`** y mira las tres cinemáticas en el teléfono.
+
+- **Nuevo** `lib/ui/pantallas/cinematica_pantalla.dart`. Lee `assets/cinematicas/cinematicas.json`; los datos están en `assets/cinematicas/`, que ya está en `pubspec.yaml`.
+- **`partidas_pantalla.dart`:** `_nueva` muestra la cinemática `inicio` antes de `_jugar`.
+- **`juego_pantalla.dart`:** `_elegirFinal` muestra `final-encender` o `final-romper` y vuelve a la lista de partidas.
+- **Detalles:** `docs/cinematicas.md`.
+
 ## Tarea 1: Guardar qué diálogos leyó el jugador
 
 Hay que añadir un campo nuevo `dialogosLeidos: string[]` (ids como `oreste-3-2`) que recorra **exactamente el mismo camino que `fogatasEncendidas`**. Es un conjunto que solo crece: el servidor lo une, nunca lo reemplaza.

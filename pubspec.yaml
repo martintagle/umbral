@@ -1,7 +1,7 @@
 name: umbral
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.2.1+12
+version: 0.2.2+13
 
 environment:
   sdk: ^3.13.7
@@ -44,6 +44,7 @@ flutter:
     - assets/sprites/animaciones/npcs/
     - assets/minimapa/
     - assets/datos/
+    - assets/cinematicas/
 
 flutter_launcher_icons:
   android: true
