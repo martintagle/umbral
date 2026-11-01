@@ -45,11 +45,14 @@ abstract class Escenario extends World with HasGameReference<UmbralJuego> {
   String regionEn(Vector2 pies);
 
   /// [pies] es la caja de colisión; [enemigo] pide además las reglas de paso
-  /// de las criaturas, y [diminuto], las del jugador encogido.
-  bool libre(Rect pies, {bool enemigo = false, bool diminuto = false});
+  /// de las criaturas.
+  bool libre(Rect pies, {bool enemigo = false});
 
   /// Para proyectiles.
   bool bloquea(double x, double y);
+
+  /// Un ataque del jugador rompe los muros agrietados cuyo centro [alcanza].
+  void golpearMuros(bool Function(Vector2 centro) alcanza) {}
 
   Iterable<Enemigo> get enemigosVivos =>
       children.whereType<Enemigo>().where((e) => e.vivo);

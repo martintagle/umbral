@@ -101,7 +101,7 @@
  "requisitos": {
   "llegada": "hablarle por primera vez en esa zona",
   "fogata:<zonaId>": "haber encendido algún altar de brasas de esa zona (mundo.fogatasEncendidas tiene un altar:<zonaId>:<n>)",
-  "cofre:<zonaId>/<cofreId>": "haber abierto ese cofre secreto (está en mundo.cofresAbiertos); son los que solo se alcanzan diminuto",
+  "cofre:<zonaId>/<cofreId>": "haber abierto ese cofre secreto (está en mundo.cofresAbiertos); son los que están tras un muro agrietado o una pasarela hundida",
   "jefe:<id>": "haber vencido al jefe de esa zona",
   "leido:<id>": "haber leído antes ese diálogo (los de cada zona van en orden)",
   "todos": "haber leído los otros 21 diálogos"
@@ -405,7 +405,7 @@
    "lineas": [
     "Has escuchado todo lo que sé. Nadie lo había hecho antes.",
     "Lo que el primero trajo del Hueco es una astilla de nada. Lo único que la Brasa no puede quemar.",
-    "La escondió en su torre, sobre el vacío, al noreste del borde. Solo se llega siendo pequeño, por los troncos.",
+    "La escondió en su torre, sobre el vacío, al noreste del borde. En la isla de enfrente hay una palanca de hueso: si la bajas, el puente sube.",
     "Cuando caiga El Que Mira y pongas las ascuas en el Altar, no la enciendas. Clava la astilla.",
     "No te prometo que despiertes. Te prometo que vas a recordar.",
     "Yo me quedo aquí. Alguien tiene que apagar la última vela."
@@ -438,9 +438,9 @@
    "cofre": "umbral/cofre-secreto-astilla",
    "x": 98,
    "y": 10,
-   "soloDiminuto": true,
-   "lugar": "Torre del primer guardián, en el islote del noreste de El Umbral. Se llega por la hilera de troncos desde el portal de la isla N3, en tamaño diminuto.",
-   "apareceSolo": "el cofre del mapa lleva requiere: leido:oreste-6-4; mientras no se cumpla, no se dibuja ni bloquea"
+   "lugar": "Torre del primer guardián, en el islote del noreste de El Umbral. Se llega por el puente que sube al accionar la palanca palanca-1 de la isla N3 (75,16).",
+   "apareceSolo": "el cofre del mapa lleva requiere: leido:oreste-6-4; mientras no se cumpla, no se dibuja ni bloquea",
+   "oculto": true
   },
   "efecto": "Con el cofre umbral/cofre-secreto-astilla abierto, en el Altar Mayor aparece la opción «Romper la Brasa» junto a «Encender la Brasa»."
  },

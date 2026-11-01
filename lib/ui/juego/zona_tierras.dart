@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flame/cache.dart';
 import 'package:flame/components.dart';
 
+import '../sonido.dart';
 import '../tema/tema_umbral.dart';
 import 'efectos.dart';
 import 'enemigo.dart';
@@ -59,7 +60,11 @@ class ZonaTierras extends Escenario {
   final List<Rect> _obstaculos = [];
   final Map<int, _FilaAlta> _filas = {};
   late final Image _tileset;
+  late final _Suelo _suelo;
   Letrero? _letreroLeido;
+
+  /// Luz de brasa de cada muro agrietado aún en pie, por el id del mecanismo.
+  final Map<String, List<Luz>> _lucesGrietas = {};
   double _avisoReja = 0;
 
   /// Puertas de las estructuras que tienen interior: el punto justo delante
@@ -126,7 +131,12 @@ class ZonaTierras extends Escenario {
     _obstaculos.clear();
     _ponerPuertas(interiores);
 
-    add(_Suelo(mapa, _tileset));
+    // Lo que ya se abrió en la partida queda abierto antes de pintar nada.
+    for (final m in mapa.mecanismos) {
+      if (game.mecanismoActivado(_idMecanismo(m))) _resolver(m);
+    }
+
+    add(_suelo = _Suelo(mapa, _tileset));
     for (var y = 0; y < mapa.alto; y++) {
       add(_filas[y] = _FilaAlta(mapa, _tileset, y));
     }
@@ -224,11 +234,22 @@ class ZonaTierras extends Escenario {
       }
     }
 
-    // Las runas de los tocones brillan en azul.
-    for (final (x, y) in mapa.portales) {
-      iluminacion.fijas.add(
-        Luz(MapaMundo.centroDe(x, y), radio: 24, tinte: Colores.alma, parpadeo: 1),
-      );
+    // Por las grietas de los muros que siguen en pie escapa algo de brasa.
+    for (final m in mapa.mecanismos) {
+      if (m.tipo != 'grieta' || game.mecanismoActivado(_idMecanismo(m))) {
+        continue;
+      }
+      final luces = [
+        for (final (x, y) in m.celdas)
+          Luz(
+            MapaMundo.centroDe(x, y),
+            radio: 14,
+            tinte: Colores.brasa,
+            parpadeo: 1,
+          ),
+      ];
+      iluminacion.fijas.addAll(luces);
+      _lucesGrietas[m.id] = luces;
     }
     add(iluminacion);
 
@@ -321,6 +342,108 @@ class ZonaTierras extends Escenario {
   void _cambiar(int x, int y, int objeto) {
     mapa.cambiarObjeto(x, y, objeto);
     _poner(x, y, mapa.indiceObjetos + objeto);
+  }
+
+  /// Id del mecanismo en la partida: `zonaId/mecanismoId`.
+  String _idMecanismo(Mecanismo m) => '${mapa.id}/${m.id}';
+
+  /// Deja [m] resuelto en el mapa, sin efectos: la palanca accionada con su
+  /// pasarela arriba, o el muro roto. Para lo ya activado al cargar la zona.
+  void _resolver(Mecanismo m) {
+    if (m.tipo == 'palanca') {
+      mapa.cambiarObjeto(m.x!, m.y!, mapa.objeto('palanca-activa'));
+      for (final (x, y) in m.celdas) {
+        mapa.cambiarSuelo(x, y, mapa.sueloLlamado('puente'));
+      }
+    } else {
+      for (final (x, y) in m.celdas) {
+        _derribar(x, y);
+      }
+    }
+  }
+
+  /// El muro de (x, y) pasa al suelo de al lado, con escombros encima.
+  void _derribar(int x, int y) {
+    mapa.cambiarSuelo(x, y, mapa.sueloVecino(x, y));
+    mapa.cambiarObjeto(x, y, mapa.objeto('escombros'));
+  }
+
+  /// La palanca sin accionar a mano de [pies], si hay una.
+  Mecanismo? _palancaCerca(Vector2 pies) => mapa.mecanismos
+      .where(
+        (m) =>
+            m.tipo == 'palanca' &&
+            MapaMundo.centroDe(m.x!, m.y!).distanceTo(pies) <
+                _distanciaObjeto &&
+            !game.mecanismoActivado(_idMecanismo(m)),
+      )
+      .firstOrNull;
+
+  /// Baja la palanca [m]: su pasarela sube del agua tabla a tabla, desde la
+  /// orilla.
+  void _accionarPalanca(Mecanismo m) {
+    final id = _idMecanismo(m);
+    if (game.mecanismoActivado(id)) return;
+    game.activarMecanismo(id);
+    _cambiar(m.x!, m.y!, mapa.objeto('palanca-activa'));
+    add(Estallido(
+      MapaMundo.centroDe(m.x!, m.y!),
+      const [Colores.ceniza, Colores.hueso],
+    ));
+    Sonido.efecto(Audios.ataque(game.personaje.claseCodigo), volumen: 0.5);
+    game.mostrarAviso(m.texto);
+    final puente = mapa.sueloLlamado('puente');
+    var siguiente = 0;
+    late final TimerComponent tablas;
+    tablas = TimerComponent(
+      period: _esperaTabla,
+      repeat: true,
+      onTick: () {
+        final (x, y) = m.celdas[siguiente++];
+        mapa.cambiarSuelo(x, y, puente);
+        _suelo.repintar(x, y);
+        add(Estallido(
+          MapaMundo.centroDe(x, y),
+          const [Colores.alma, Colores.hueso],
+        ));
+        if (siguiente == m.celdas.length) tablas.removeFromParent();
+      },
+    );
+    add(tablas);
+  }
+
+  /// Entre una tabla de la pasarela y la siguiente.
+  static const _esperaTabla = 0.06;
+
+  /// Rompe los muros agrietados en pie cuyo centro [alcanza] el ataque.
+  @override
+  void golpearMuros(bool Function(Vector2 centro) alcanza) {
+    for (final m in mapa.mecanismos) {
+      if (m.tipo == 'grieta' &&
+          m.celdas.any((c) => alcanza(MapaMundo.centroDe(c.$1, c.$2)))) {
+        romperGrieta(m);
+      }
+    }
+  }
+
+  /// El muro agrietado [m] se desmorona y deja paso.
+  void romperGrieta(Mecanismo m) {
+    final id = _idMecanismo(m);
+    if (game.mecanismoActivado(id)) return;
+    game.activarMecanismo(id);
+    for (final (x, y) in m.celdas) {
+      _derribar(x, y);
+      _suelo.repintar(x, y);
+      add(Estallido(
+        MapaMundo.centroDe(x, y),
+        const [Colores.ceniza, Colores.hueso],
+      ));
+    }
+    for (final luz in _lucesGrietas.remove(m.id) ?? const <Luz>[]) {
+      luz.encendida = false;
+    }
+    Sonido.efecto(Audios.muerteEnemigo, volumen: 0.6);
+    game.mostrarAviso(m.texto);
   }
 
   @override
@@ -461,14 +584,12 @@ class ZonaTierras extends Escenario {
         descansar: () => game.descansar(altar: altar),
       );
     }
-    // De pie sobre un tocón con runas se encoge o se crece.
-    final celda = (pies.x ~/ _lado, (pies.y - 1) ~/ _lado);
-    if (mapa.portales.contains(celda)) {
-      final diminuto = game.jugador.diminuto;
+    if (_palancaCerca(pies) case final m?) {
       return [
         AccionContexto(
-          diminuto ? 'Crecer' : 'Encoger',
-          () => _cambiarTamano(celda),
+          'Accionar la palanca',
+          () => _accionarPalanca(m),
+          boton: 'abrir',
         ),
       ];
     }
@@ -505,17 +626,6 @@ class ZonaTierras extends Escenario {
       ];
     }
     return const [];
-  }
-
-  /// Encoge o devuelve al jugador a su tamaño en el portal de [celda].
-  void _cambiarTamano((int, int) celda) {
-    final jugador = game.jugador;
-    jugador.diminuto = !jugador.diminuto;
-    add(Estallido(MapaMundo.centroDe(celda.$1, celda.$2),
-        const [Colores.alma, Colores.hueso]));
-    game.mostrarAviso(jugador.diminuto
-        ? 'Las runas te encogen. Ahora cabes por el hueco y por los troncos.'
-        : 'Las runas te devuelven a tu tamaño.');
   }
 
   /// La celda más cercana a [pies] con el objeto [nombre], si está a mano.
@@ -579,21 +689,16 @@ class ZonaTierras extends Escenario {
     );
   }
 
-  /// [pies] es la caja de colisión; los enemigos además evitan los tocones.
+  /// [pies] es la caja de colisión. Las criaturas pasan por donde el jugador.
   @override
-  bool libre(Rect pies, {bool enemigo = false, bool diminuto = false}) {
-    final solido = enemigo
-        ? mapa.solidoEnemigo
-        : diminuto
-        ? mapa.solidoDiminuto
-        : mapa.solido;
+  bool libre(Rect pies, {bool enemigo = false}) {
     for (final esquina in [
       pies.topLeft,
       pies.topRight,
       pies.bottomLeft,
       pies.bottomRight,
     ]) {
-      if (solido(esquina.dx, esquina.dy)) return false;
+      if (mapa.solido(esquina.dx, esquina.dy)) return false;
     }
     for (final o in _obstaculos) {
       if (o.overlaps(pies)) return false;
@@ -616,10 +721,12 @@ class ZonaTierras extends Escenario {
   bool cercaDelAltar(Vector2 pies) => altarCerca(pies) != null;
 }
 
-/// Suelo y objetos bajos (troncos, pasto alto, escombros...), dibujados una
-/// vez en una imagen del tamaño del mapa.
+/// Suelo y objetos bajos (pasto alto, escombros...), dibujados una vez en una
+/// imagen del tamaño del mapa. Las celdas que cambian después (una pasarela
+/// que sube, un muro roto) se pintan encima cada cuadro.
 class _Suelo extends PositionComponent {
-  _Suelo(MapaMundo mapa, Image tileset) : super(priority: -1 << 20) {
+  _Suelo(this._mapa, this._tileset) : super(priority: -1 << 20) {
+    final mapa = _mapa, tileset = _tileset;
     final grabadora = PictureRecorder();
     final canvas = Canvas(grabadora);
     final pintura = Paint()
@@ -640,14 +747,28 @@ class _Suelo extends PositionComponent {
     );
   }
 
+  final MapaMundo _mapa;
+  final Image _tileset;
   late final Image _imagen;
+  final Set<(int, int)> _repintadas = {};
   final _pintura = Paint()
     ..filterQuality = FilterQuality.none
     ..isAntiAlias = false;
 
+  /// Vuelve a pintar la celda (x, y) con su suelo y su objeto bajo de ahora.
+  void repintar(int x, int y) => _repintadas.add((x, y));
+
   @override
-  void render(Canvas canvas) =>
-      canvas.drawImage(_imagen, Offset.zero, _pintura);
+  void render(Canvas canvas) {
+    canvas.drawImage(_imagen, Offset.zero, _pintura);
+    for (final (x, y) in _repintadas) {
+      _tile(canvas, _tileset, _mapa, _mapa.suelo[y][x], x, y, _pintura);
+      final o = _mapa.objetos[y][x];
+      if (o >= 0 && !_mapa.objetosAltos.contains(o)) {
+        _tile(canvas, _tileset, _mapa, _mapa.indiceObjetos + o, x, y, _pintura);
+      }
+    }
+  }
 }
 
 /// Árboles, rocas, cercas, rejas, cofres y letreros de una fila del mapa.

@@ -254,6 +254,8 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
         // Atrás cierra el diálogo sin darlo por leído, y el mapa.
         if (_juego.dialogo.value != null) {
           _juego.cerrarDialogo(leido: false);
+        } else if (_juego.menuFogata.value != null) {
+          _juego.cerrarMenuFogata();
         } else if (_juego.mapaAbierto.value != null) {
           _juego.cerrarMapa();
         } else {
@@ -342,6 +344,40 @@ class _JuegoPantallaState extends State<JuegoPantalla> {
               builder: (_, dialogo, _) => dialogo == null
                   ? const SizedBox.shrink()
                   : _CapaDialogo(_juego, dialogo),
+            ),
+            // El menú de la fogata: lo que antes eran varios botones sobre el
+            // de atacar. Mientras se guarda el descanso, las opciones esperan.
+            ListenableBuilder(
+              listenable: Listenable.merge([_juego.menuFogata, _juego.guardando]),
+              builder: (_, _) {
+                final opciones = _juego.menuFogata.value;
+                if (opciones == null) return const SizedBox.shrink();
+                final guardando = _juego.guardando.value;
+                return _Capa(
+                  titulo: 'Junto a las brasas',
+                  texto: guardando
+                      ? 'Descansas. Guardando la partida…'
+                      : 'Descansas. Las criaturas vuelven a sus sitios.',
+                  acciones: [
+                    for (final a in opciones) ...[
+                      BotonUmbral(
+                        texto: a.etiqueta,
+                        estilo: a.resaltada
+                            ? EstiloBoton.acento
+                            : EstiloBoton.secundario,
+                        alPulsar: guardando
+                            ? null
+                            : () => _juego.cerrarMenuFogata(a),
+                      ),
+                      const SizedBox(height: Espacios.paso4),
+                    ],
+                    BotonUmbral(
+                      texto: 'Levantarse',
+                      alPulsar: _juego.cerrarMenuFogata,
+                    ),
+                  ],
+                );
+              },
             ),
             ValueListenableBuilder(
               valueListenable: _juego.mapaAbierto,

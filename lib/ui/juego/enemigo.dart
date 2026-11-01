@@ -42,6 +42,10 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
         super(position: pies.clone());
 
   static const _distanciaMaximaDelHogar = 260.0;
+
+  /// Barridos seguidos del jefe furioso, y su descanso al acabar.
+  static const _rafagaFuriosa = 3;
+  static const _descansoFurioso = 1.6;
   static const _duracionGolpe = 0.28;
   static const _duracionDisparo = 0.3;
   static const _duracionHerido = 0.16;
@@ -109,6 +113,9 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
 
   /// Un jefe a media vida: más rápido y con más golpes.
   bool get furioso => tipo.jefe && vida < vidaMaxima / 2;
+
+  /// Recobrando el aliento tras atacar: no ataca.
+  bool get descansando => vivo && _estado == _Estado.recuperar;
 
   double get _velocidad => tipo.velocidad * (furioso ? 1.35 : 1);
   double get _preparacion => tipo.preparacion * (furioso ? 0.75 : 1);
@@ -261,6 +268,8 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
     if (tipo.jefe) {
       // El rey elige: barrido si estás cerca, salto o lluvia de ojos si no.
       if (distancia <= alcanceReal + 6) {
+        // Furioso encadena una ráfaga de barridos; luego descansa.
+        _comboRestante = furioso ? _rafagaFuriosa : 1;
         _prepararGolpe(_Golpe.barrido, hacia);
       } else if (distancia < 120 && _azar.nextDouble() < dt * 1.6) {
         _prepararGolpe(
@@ -336,7 +345,9 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
           _morder();
           jugador.recibirGolpe(dano, desde: centro);
         }
-        _siguienteDelCombo(hacia, furioso ? 2 : 1);
+        // Lo que queda de la ráfaga: antes se pasaba un 2 fijo y el combo
+        // furioso no terminaba nunca.
+        _siguienteDelCombo(hacia, _comboRestante);
       case _Golpe.cuerpo:
         _golpe = _duracionGolpe;
         _numeroImpacto = _numeroGolpe;
@@ -409,9 +420,11 @@ class Enemigo extends PositionComponent with HasGameReference<UmbralJuego> {
     game.zona.add(Zarpazo(jugador.centro.clone(), haciaLaDerecha: _lado > 0));
   }
 
+  /// Tras cada ataque furioso (la ráfaga, el salto o la lluvia), el jefe se
+  /// queda quieto recobrando el aliento: es el momento de pegarle.
   void _recuperar() {
     _estado = _Estado.recuperar;
-    _temporizador = tipo.recarga * (furioso ? 0.7 : 1);
+    _temporizador = furioso ? _descansoFurioso : tipo.recarga;
   }
 
   void _nuevoDestino() {

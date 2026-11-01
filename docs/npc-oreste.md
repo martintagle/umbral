@@ -194,7 +194,7 @@ Cada zona tiene los suyos y van en orden: el siguiente no aparece hasta leer el 
 
 > Has escuchado todo lo que sé. Nadie lo había hecho antes.  
 > Lo que el primero trajo del Hueco es una astilla de nada. Lo único que la Brasa no puede quemar.  
-> La escondió en su torre, sobre el vacío, al noreste del borde. Solo se llega siendo pequeño, por los troncos.  
+> La escondió en su torre, sobre el vacío, al noreste del borde. En la isla de enfrente hay una palanca de hueso: si la bajas, el puente sube.  
 > Cuando caiga El Que Mira y pongas las ascuas en el Altar, no la enciendas. Clava la astilla.  
 > No te prometo que despiertes. Te prometo que vas a recordar.  
 > Yo me quedo aquí. Alguien tiene que apagar la última vela.  
@@ -205,7 +205,7 @@ Cada zona tiene los suyos y van en orden: el siguiente no aparece hasta leer el 
 
 1. Leer los 22 diálogos. El último (`oreste-6-4`) exige haber leído los otros 21.
 2. Oreste dice dónde está la astilla: en la **Torre del primer guardián**, en el islote del noreste de El Umbral.
-3. Para llegar hay que **encogerse** en el portal de la isla N3 y cruzar la larga hilera de troncos sobre el vacío. Es exploración opcional: el camino principal no pasa por ahí.
+3. Para llegar hay que accionar la **palanca de hueso** de la isla N3 (75,16). Un puente de 22 tablas sube del vacío hasta el islote de la torre. Es exploración opcional: el camino principal no pasa por ahí.
 4. La astilla está en el cofre `cofre-secreto-astilla` de `zona-6-umbral.json` (x 98, y 10). Ese cofre lleva `requiere: leido:oreste-6-4` y no aparece hasta entonces.
 5. Con la astilla, Oreste dice: «La tienes. Pesa poco, ¿verdad? La nada nunca pesa.»
 

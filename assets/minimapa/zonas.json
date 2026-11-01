@@ -61,24 +61,28 @@
      "id": "cofre-cementerio"
     },
     {
-     "tipo": "portal",
-     "x": 52,
-     "y": 6
-    },
-    {
-     "tipo": "portal",
-     "x": 30,
-     "y": 29
-    },
-    {
-     "tipo": "portal",
+     "tipo": "palanca",
      "x": 12,
-     "y": 17
+     "y": 17,
+     "id": "palanca-1"
     },
     {
-     "tipo": "portal",
-     "x": 6,
-     "y": 35
+     "tipo": "grieta",
+     "x": 56,
+     "y": 5,
+     "id": "grieta-1"
+    },
+    {
+     "tipo": "grieta",
+     "x": 4,
+     "y": 35,
+     "id": "grieta-2"
+    },
+    {
+     "tipo": "grieta",
+     "x": 25,
+     "y": 27,
+     "id": "grieta-3"
     }
    ],
    "mundo": {
@@ -149,14 +153,16 @@
      "id": "cofre-este"
     },
     {
-     "tipo": "portal",
-     "x": 31,
-     "y": 41
+     "tipo": "palanca",
+     "x": 6,
+     "y": 24,
+     "id": "palanca-1"
     },
     {
-     "tipo": "portal",
-     "x": 6,
-     "y": 24
+     "tipo": "palanca",
+     "x": 31,
+     "y": 41,
+     "id": "palanca-2"
     }
    ],
    "mundo": {
@@ -227,14 +233,16 @@
      "id": "cofre-bocamina"
     },
     {
-     "tipo": "portal",
-     "x": 30,
-     "y": 16
+     "tipo": "palanca",
+     "x": 33,
+     "y": 34,
+     "id": "palanca-1"
     },
     {
-     "tipo": "portal",
-     "x": 33,
-     "y": 34
+     "tipo": "grieta",
+     "x": 27,
+     "y": 8,
+     "id": "grieta-1"
     }
    ],
    "mundo": {
@@ -305,14 +313,16 @@
      "id": "cofre-cementerio"
     },
     {
-     "tipo": "portal",
+     "tipo": "palanca",
      "x": 10,
-     "y": 35
+     "y": 35,
+     "id": "palanca-1"
     },
     {
-     "tipo": "portal",
-     "x": 22,
-     "y": 40
+     "tipo": "grieta",
+     "x": 25,
+     "y": 46,
+     "id": "grieta-1"
     }
    ],
    "mundo": {
@@ -383,14 +393,16 @@
      "id": "cofre-sureste"
     },
     {
-     "tipo": "portal",
-     "x": 20,
-     "y": 67
+     "tipo": "palanca",
+     "x": 82,
+     "y": 45,
+     "id": "palanca-1"
     },
     {
-     "tipo": "portal",
-     "x": 82,
-     "y": 45
+     "tipo": "grieta",
+     "x": 17,
+     "y": 66,
+     "id": "grieta-1"
     }
    ],
    "mundo": {
@@ -472,14 +484,16 @@
      "id": "cofre-isla-central"
     },
     {
-     "tipo": "portal",
+     "tipo": "palanca",
      "x": 75,
-     "y": 16
+     "y": 16,
+     "id": "palanca-1"
     },
     {
-     "tipo": "portal",
+     "tipo": "palanca",
      "x": 11,
-     "y": 34
+     "y": 34,
+     "id": "palanca-2"
     }
    ],
    "mundo": {

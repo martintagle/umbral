@@ -17,6 +17,18 @@ typedef Estructura = ({
   String? interior,
 });
 typedef Letrero = ({int x, int y, String texto});
+
+/// Una palanca o un muro agrietado (`docs/exploracion.md`). La palanca está
+/// en ([x], [y]) y sus [celdas] son las de su pasarela, de la orilla al otro
+/// extremo; las de una grieta son las de su muro, que se rompen juntas.
+typedef Mecanismo = ({
+  String id,
+  String tipo,
+  int? x,
+  int? y,
+  List<(int, int)> celdas,
+  String texto,
+});
 typedef EnemigoMapa = ({String tipo, int x, int y, int radio});
 typedef Region = ({String nombre, int x, int y, int w, int h});
 /// [requiere] es un requisito como los de Oreste (`leido:oreste-6-4`):
@@ -77,12 +89,13 @@ class MapaMundo {
   final int indiceEntidades;
   final List<String> nombresObjetos;
   final List<String> nombresEntidades;
+  final List<String> nombresSuelo;
   final List<List<int>> suelo;
   final List<List<int>> objetos;
   final List<Estructura> estructuras;
   final List<CofreMapa> cofres;
   final List<Letrero> letreros;
-  final List<(int, int)> portales;
+  final List<Mecanismo> mecanismos;
   final List<EnemigoMapa> enemigos;
   final List<Region> regiones;
   final Vector2 inicio;
@@ -102,30 +115,19 @@ class MapaMundo {
   late final Uint8List _fijo;
   late final Set<int> _sueloSolido;
 
-  /// El hueco: solo se cruza diminuto.
-  late final Set<int> _sueloSoloDiminuto;
-  late final int _tronco;
-
   /// Caminos, adoquines, losas y puentes: suelo duro bajo los pies.
   late final Set<int> _sueloPiedra;
   late final int _agua;
-  late final int _portal;
 
-  /// Celdas que no se pueden pisar a tamaño normal: el jugador aún no puede
-  /// encogerse ni tiene la Hoz o la Llave, así que todo lo cerrado bloquea.
+  /// Celdas que no se pueden pisar: el jugador aún no tiene la Hoz o la
+  /// Llave, así que todo lo cerrado bloquea.
   late final Uint8List _solido;
-
-  /// Diminuto se cruza el hueco y el agua con troncos (`reglas.aguaConTronco`).
-  late final Uint8List _solidoDiminuto;
-
-  /// Además de lo sólido, los enemigos no pisan los tocones con runas.
-  late final Uint8List _solidoEnemigo;
 
   /// Los proyectiles vuelan sobre el agua, pero no atraviesan muros ni árboles.
   late final Uint8List _bloqueaProyectil;
 
   /// Objetos que tapan a quien pasa por detrás: se ordenan con los sprites.
-  /// El resto (troncos, pasto alto, escombros...) se dibuja con el suelo.
+  /// El resto (pasto alto, escombros...) se dibuja con el suelo.
   late final Set<int> objetosAltos;
 
   MapaMundo._(Map<String, dynamic> m)
@@ -140,6 +142,7 @@ class MapaMundo {
       indiceEntidades = m['tiles']['indiceEntidades'] as int,
       nombresObjetos = List<String>.from(m['tiles']['objetos'] as List),
       nombresEntidades = List<String>.from(m['tiles']['entidades'] as List),
+      nombresSuelo = List<String>.from(m['tiles']['suelo'] as List),
       suelo = _rejilla(m['capas']['suelo']),
       objetos = _rejilla(m['capas']['objetos']),
       estructuras = [
@@ -172,7 +175,19 @@ class MapaMundo {
         for (final l in m['letreros'] as List)
           (x: l['x'] as int, y: l['y'] as int, texto: l['texto'] as String),
       ],
-      portales = _celdas(m['portales']),
+      mecanismos = [
+        for (final d in m['mecanismos'] as List? ?? const [])
+          (
+            id: d['id'] as String,
+            tipo: d['tipo'] as String,
+            x: d['x'] as int?,
+            y: d['y'] as int?,
+            celdas: [
+              for (final c in d['celdas'] as List) (c[0] as int, c[1] as int),
+            ],
+            texto: d['texto'] as String,
+          ),
+      ],
       enemigos = [
         for (final e in m['enemigos'] as List)
           (
@@ -209,17 +224,9 @@ class MapaMundo {
       enemigosDeLaZona = List<String>.from(
         m['enemigosDeLaZona'] as List? ?? const [],
       ) {
-    final nombresSuelo = List<String>.from(m['tiles']['suelo'] as List);
     final reglas = m['reglas'] as Map<String, dynamic>;
     _sueloSolido = {
-      for (final n in [
-        ...reglas['sueloBloquea'] as List,
-        ...reglas['sueloSoloDiminuto'] as List,
-      ])
-        nombresSuelo.indexOf(n as String),
-    };
-    _sueloSoloDiminuto = {
-      for (final n in reglas['sueloSoloDiminuto'] as List)
+      for (final n in reglas['sueloBloquea'] as List)
         nombresSuelo.indexOf(n as String),
     };
     _sueloPiedra = {
@@ -227,19 +234,18 @@ class MapaMundo {
         nombresSuelo.indexOf(n),
     }..remove(-1);
     _agua = nombresSuelo.indexOf('agua');
+    // Las palancas bloquean aunque las reglas del mapa no las nombren.
     objetosAltos = {
       for (final n in [
         ...reglas['objetosBloquean'] as List,
         ...(reglas['objetosConLlave'] as Map).keys,
+        'palanca',
+        'palanca-activa',
       ])
         nombresObjetos.indexOf(n as String),
-    };
-    _portal = nombresObjetos.indexOf('portal');
-    _tronco = nombresObjetos.indexOf('tronco');
+    }..remove(-1);
 
     _solido = Uint8List(ancho * alto);
-    _solidoEnemigo = Uint8List(ancho * alto);
-    _solidoDiminuto = Uint8List(ancho * alto);
     _bloqueaProyectil = Uint8List(ancho * alto);
     _fijo = Uint8List(ancho * alto);
     for (final e in estructuras) {
@@ -250,8 +256,8 @@ class MapaMundo {
       }
     }
     for (final (x, y) in [
-      // Un cofre con requisito no bloquea ni cuando aparece: está en un
-      // islote al que solo se llega diminuto.
+      // Un cofre con requisito no bloquea ni cuando aparece: está tras el
+      // puente de una palanca y no debe cortarle el paso.
       for (final c in cofres)
         if (c.requiere == null) (c.x, c.y),
       for (final l in letreros) (l.x, l.y),
@@ -272,15 +278,6 @@ class MapaMundo {
     final bloquea =
         _fijo[i] == 1 || _sueloSolido.contains(s) || objetosAltos.contains(o);
     _solido[i] = bloquea || s == _agua ? 1 : 0;
-    _solidoEnemigo[i] = _solido[i] == 1 || o == _portal ? 1 : 0;
-    final cruzaDiminuto =
-        _sueloSoloDiminuto.contains(s) || (s == _agua && o == _tronco);
-    _solidoDiminuto[i] =
-        _fijo[i] == 1 ||
-            objetosAltos.contains(o) ||
-            (_solido[i] == 1 && !cruzaDiminuto)
-        ? 1
-        : 0;
     // Los proyectiles vuelan sobre el agua.
     _bloqueaProyectil[i] = bloquea ? 1 : 0;
   }
@@ -293,6 +290,28 @@ class MapaMundo {
   void cambiarObjeto(int x, int y, int objeto) {
     objetos[y][x] = objeto;
     _calcular(x, y);
+  }
+
+  /// Índice del suelo [nombre], o -1.
+  int sueloLlamado(String nombre) => nombresSuelo.indexOf(nombre);
+
+  /// Cambia el suelo de la celda (x, y), por ejemplo la pasarela hundida por
+  /// el puente, y recalcula qué bloquea.
+  void cambiarSuelo(int x, int y, int suelo) {
+    this.suelo[y][x] = suelo;
+    _calcular(x, y);
+  }
+
+  /// El suelo de la primera celda vecina de (x, y) que se pisa (arriba,
+  /// abajo, izquierda o derecha): el que queda al romper un muro.
+  int sueloVecino(int x, int y) {
+    for (final (dx, dy) in const [(0, -1), (0, 1), (-1, 0), (1, 0)]) {
+      final vx = x + dx, vy = y + dy;
+      if (vx < 0 || vy < 0 || vx >= ancho || vy >= alto) continue;
+      final s = suelo[vy][vx];
+      if (!_sueloSolido.contains(s) && s != _agua) return s;
+    }
+    return sueloLlamado('camino');
   }
 
   static Future<MapaMundo> cargar([String zona = primera]) async => MapaMundo._(
@@ -321,10 +340,6 @@ class MapaMundo {
     for (final fila in capa as List) List<int>.from(fila as List),
   ];
 
-  static List<(int, int)> _celdas(Object? lista) => [
-    for (final c in lista as List) (c['x'] as int, c['y'] as int),
-  ];
-
   double get anchoPx => ancho * tile;
   double get altoPx => alto * tile;
 
@@ -333,8 +348,6 @@ class MapaMundo {
       Vector2(x * tile + tile / 2, y * tile + tile - 2);
 
   bool solido(double x, double y) => _celda(_solido, x, y);
-  bool solidoEnemigo(double x, double y) => _celda(_solidoEnemigo, x, y);
-  bool solidoDiminuto(double x, double y) => _celda(_solidoDiminuto, x, y);
   bool bloqueaProyectil(double x, double y) => _celda(_bloqueaProyectil, x, y);
 
   bool piedra(double x, double y) {

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../tema/tema_umbral.dart';
 import 'animacion.dart';
+import 'mapa_mundo.dart';
 import 'registro_progreso.dart';
 import 'umbral_juego.dart';
 
@@ -296,8 +297,19 @@ class Proyectil extends PositionComponent with HasGameReference<UmbralJuego> {
     position.add(paso);
     _recorrido += paso.length;
 
-    if (_recorrido >= distanciaMaxima ||
-        game.zona.bloquea(position.x, position.y)) {
+    if (_recorrido >= distanciaMaxima) {
+      removeFromParent();
+      return;
+    }
+    if (game.zona.bloquea(position.x, position.y)) {
+      // Los disparos del jugador también rompen los muros agrietados.
+      if (delJugador) {
+        game.zona.golpearMuros(
+          (c) =>
+              (c.x - position.x).abs() <= MapaMundo.tile / 2 &&
+              (c.y - position.y).abs() <= MapaMundo.tile / 2,
+        );
+      }
       removeFromParent();
       return;
     }

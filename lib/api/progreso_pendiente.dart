@@ -34,6 +34,10 @@ Map<String, dynamic> sumarProgresos(
       ..._dialogos(anterior),
       ..._dialogos(nuevo),
     }.toList(),
+    'mecanismosActivados': {
+      ..._mecanismos(anterior),
+      ..._mecanismos(nuevo),
+    }.toList(),
     // Las caídas son el estado completo: vale el más reciente.
     'enemigosCaidos': nuevo['enemigosCaidos'] ?? anterior['enemigosCaidos'],
   };
@@ -77,6 +81,11 @@ Map<String, dynamic> partidaConProgreso(
             ...(mundo['dialogosLeidos'] as List? ?? const []).cast<String>(),
             ..._dialogos(progreso),
           }.toList(),
+          'mecanismosActivados': {
+            ...(mundo['mecanismosActivados'] as List? ?? const [])
+                .cast<String>(),
+            ..._mecanismos(progreso),
+          }.toList(),
           'fogatasEncendidas': {
             ...(mundo['fogatasEncendidas'] as List? ?? const []).cast<String>(),
             ..._fogatas(progreso),
@@ -115,6 +124,10 @@ List<String> _fogatas(Map<String, dynamic> progreso) =>
 /// Ni los de antes de Oreste.
 List<String> _dialogos(Map<String, dynamic> progreso) =>
     (progreso['dialogosLeidos'] as List? ?? const []).cast<String>();
+
+/// Ni los de antes de las palancas.
+List<String> _mecanismos(Map<String, dynamic> progreso) =>
+    (progreso['mecanismosActivados'] as List? ?? const []).cast<String>();
 
 int _oroCofres(Map<String, dynamic> progreso) =>
     progreso['oroCofres'] as int? ?? 0;

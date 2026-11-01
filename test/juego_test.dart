@@ -115,13 +115,18 @@ void main() {
 
       // Altar: empieza apagado; encendido, se descansa, se sube de nivel y
       // se ve el mapa.
-      await correr(0.1);
+      await correr(0.3);
       expect(juego.acciones.value.map((a) => a.etiqueta),
           ['Encender la fogata']);
       juego.acciones.value.single.alPulsar();
-      await correr(0.1);
-      expect(juego.acciones.value.map((a) => a.etiqueta),
-          ['Descansar', 'Subir de nivel', 'Ver mapa']);
+      await correr(0.3);
+      // Un solo botón: al descansar, el menú de la fogata trae lo demás.
+      expect(juego.acciones.value.map((a) => a.etiqueta), ['Descansar']);
+      juego.acciones.value.single.alPulsar();
+      expect(juego.menuFogata.value?.map((a) => a.etiqueta),
+          ['Subir de nivel', 'Ver mapa']);
+      juego.cerrarMenuFogata();
+      expect(juego.menuFogata.value, isNull);
 
       // Cinco estructuras con interior; la choza del sur es la herrería.
       final puertas = {
@@ -137,7 +142,7 @@ void main() {
 
       // Entrar a la capilla por su puerta.
       juego.jugador.position.setFrom(puertas['capilla']!);
-      await correr(0.1);
+      await correr(0.3);
       expect(juego.acciones.value.single.etiqueta, 'Entrar');
       juego.acciones.value.single.alPulsar();
       await correr(0.6);
@@ -149,13 +154,13 @@ void main() {
       // El altar de la capilla abre las estadísticas.
       final altar = capilla.sala.punto('estadisticas')!;
       juego.jugador.position.setFrom(SalaInterior.piesEn(altar.x, altar.y + 1));
-      await correr(0.1);
+      await correr(0.3);
       expect(juego.acciones.value.single.etiqueta, 'Subir de nivel');
 
       // Pisar la salida devuelve al mundo, delante de la puerta.
       final salida = capilla.sala.punto('salida')!;
       juego.jugador.position.setFrom(SalaInterior.piesEn(salida.x, salida.y));
-      await correr(0.1);
+      await correr(0.3);
       expect(juego.world, juego.tierras);
       expect(juego.jugador.position, puertas['capilla']);
 
@@ -189,13 +194,12 @@ void main() {
       expect(galeria.sala.slug, 'cripta-galeria');
       juego.jugador.position.setFrom(galeria.junto('hoguera'));
       juego.vida.value = juego.vidaMaxima.value;
-      await correr(0.1);
+      await correr(0.3);
       expect(juego.acciones.value.map((a) => a.etiqueta),
           ['Encender la fogata']);
       juego.acciones.value.single.alPulsar();
-      await correr(0.1);
-      expect(juego.acciones.value.map((a) => a.etiqueta),
-          ['Descansar', 'Subir de nivel', 'Ver mapa']);
+      await correr(0.3);
+      expect(juego.acciones.value.map((a) => a.etiqueta), ['Descansar']);
       final trono = await bajar(galeria);
       expect(trono.sala.slug, 'cripta-sala-del-trono');
       final rey = trono.enemigosVivos.single;
@@ -213,7 +217,7 @@ void main() {
       juego.vida.value = juego.vidaMaxima.value;
       juego.jugador.position
           .setFrom(SalaInterior.piesEn(salidaTrono.x, salidaTrono.y));
-      await correr(0.1);
+      await correr(0.3);
       expect(juego.world, trono);
       expect(juego.aviso.value, contains('niebla'));
       juego.jugador.position.setFrom(trono.junto('jefe'));
@@ -225,11 +229,11 @@ void main() {
       expect(juego.jefesDerrotados, contains(Enemigos.reyHueco.id));
       expect(juego.titular.value, isNotNull);
       trono.reiniciarEnemigos();
-      await correr(0.1);
+      await correr(0.3);
       expect(trono.enemigosVivos, isEmpty);
       juego.jugador.position
           .setFrom(SalaInterior.piesEn(salidaTrono.x, salidaTrono.y));
-      await correr(0.1);
+      await correr(0.3);
       expect(juego.world, galeria);
       expect(juego.jugador.position, galeria.llegada('bajada'));
 
@@ -254,7 +258,7 @@ void main() {
       expect(juego.muerto.value, isTrue);
       expect(juego.lugarDeDescanso, 'junto a la hoguera');
       await juego.revivir();
-      await correr(0.1);
+      await correr(0.3);
       expect(juego.world, galeria);
       expect(juego.muerto.value, isFalse);
 
@@ -263,7 +267,7 @@ void main() {
         final salida = desde.sala.punto('salida')!;
         juego.vida.value = juego.vidaMaxima.value;
         juego.jugador.position.setFrom(SalaInterior.piesEn(salida.x, salida.y));
-        await correr(0.1);
+        await correr(0.3);
         await correr(0.5);
       }
 
@@ -276,7 +280,7 @@ void main() {
       // Descansar en el altar del mundo lo vuelve el lugar donde despertar.
       await juego.descansar();
       expect(juego.lugarDeDescanso, 'junto al altar');
-      await correr(0.1);
+      await correr(0.3);
 
       // Pelea en el mundo: el jugador lo sigue de cerca (la polilla huye) y
       // la criatura se anima y muere sin errores.
@@ -298,15 +302,15 @@ void main() {
       // invulnerable unas décimas: se insiste hasta que cae.
       for (var t = 0.0; t < 2 && !juego.muerto.value; t += 0.1) {
         juego.jugador.recibirGolpe(100000);
-        if (!juego.muerto.value) await correr(0.1);
+        if (!juego.muerto.value) await correr(0.3);
       }
       final dondeCae = juego.jugador.position.clone();
       expect(juego.exp.value, lessThan(expGanada));
       expect(juego.brasasPerdidas.value, contains('quedaron'));
       await juego.revivir();
-      await correr(0.1);
+      await correr(0.3);
       juego.jugador.position.setFrom(dondeCae);
-      await correr(0.1);
+      await correr(0.3);
       expect(juego.exp.value, expGanada);
     });
   });

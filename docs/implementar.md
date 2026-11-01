@@ -9,6 +9,7 @@ Los datos ya están en `assets/`; aquí solo hay código. Los documentos de dise
 | `docs/guion.md` | La historia, los dos finales y el tono. |
 | `docs/npc-oreste.md` | Los diálogos de Oreste, legibles. |
 | `docs/zonas.md` | El formato de los mapas de las zonas 2 a 6. |
+| `docs/exploracion.md` | Muros agrietados y palancas: cómo funcionan y dónde están. |
 | `docs/mazmorras.md` | El formato de las mazmorras. |
 | `assets/sprites/animaciones/README.md` | Las hojas de sprites y sus animaciones. |
 
@@ -35,6 +36,29 @@ Solo hay que recargarlos; el formato no cambia salvo donde se indica.
 - **`assets/sprites/animaciones/npcs/`:** `oreste.png` (hoja) y `oreste-retrato.png` (32×32). Ya están en `pubspec.yaml`.
 - **`assets/iconos/iconos.png` / `iconos.json`:** icono `astilla-de-nada` (índice 34).
 - **`assets/datos/npc-oreste.json`:** todo lo de Oreste. Diálogos, requisitos, posiciones, frases de espera y la misión.
+- **Encogerse ya no existe** (entrega del 31-10, por la noche). En los 6 mapas (`mundo.json` incluido):
+  - `hueco` pasa a ser `muro-agrietado`;
+  - los troncos sobre el agua pasan a ser `pasarela-hundida`;
+  - los tocones de runas pasan a ser `palanca`, o desaparecen si no tenían una pasarela cerca.
+
+  Cada mapa trae una lista nueva, `mecanismos`. Los tiles nuevos van al final de cada lista: `indiceObjetos` pasa a 13 e `indiceEntidades` a 28. Los 6 tilesets miden ahora 128×80. `reglas.sueloSoloDiminuto` se queda vacío y `portales` también, para que el código actual siga cargando. Ver tarea 10 y `docs/exploracion.md`.
+
+## Cambio ya hecho en el código: botones de acción del HUD (01-11)
+
+Lo hizo Claude en el chat, sin compilar: **pasa `flutter analyze` y pruébalo** antes de seguir con otra tarea.
+
+- **Fogatas: un solo botón, «Descansar».** Al pulsarlo, se descansa (igual que antes) y se abre el **menú de la fogata**. El menú es una capa a pantalla completa, con el estilo de la pausa, que reúne lo que antes eran varios botones apilados:
+  - Subir de nivel (resaltado si se puede);
+  - Ver mapa;
+  - Salir de la mazmorra o Bajar por el pasadizo, en las hogueras de los custodios;
+  - Levantarse.
+
+  Mientras se guarda el descanso, las opciones esperan. El botón «Descansar» se resalta cuando se puede subir de nivel.
+  - **`umbral_juego.dart`:** `accionesFogata` devuelve una sola acción, y hay nuevos `menuFogata`, `_descansarEnFogata` y `cerrarMenuFogata`.
+  - **`juego_pantalla.dart`:** la capa del menú, y el botón atrás la cierra.
+- **Como mucho dos botones de acción a la vez** (por ejemplo, Hablar y Descansar junto a Oreste): `_maximoAcciones`.
+- **Los botones ya no parpadean ni saltan.** `_ponerAcciones` solo cambia los botones si el cambio dura 0,25 s, o 0,05 s si antes no había ninguno. Antes, en la sala del custodio, la hoguera y el pasadizo se alternaban cada cuadro al moverse entre ellos.
+- **`sala_interior.dart`:** el pasadizo tras el trono del Rey Hueco va dentro del menú de la hoguera cuando está cerca, en lugar de competir con ella.
 
 ---
 
@@ -95,7 +119,7 @@ Un cofre del mapa puede traer `requiere`, con el mismo formato que los requisito
 
 **Hecho cuando:**
 - Con `oreste-6-4` sin leer, la casilla (98, 10) de la zona 6 está vacía.
-- Tras leerlo, aparece un cofre que solo se alcanza encogido, por los troncos desde el portal de la isla N3.
+- Tras leerlo, aparece un cofre que solo se alcanza por el puente que sube la palanca `palanca-1` de la isla N3 (tarea 10).
 - Al abrirlo, se anota `umbral/cofre-secreto-astilla`.
 
 ## Tarea 4: Cargar los datos de Oreste y evaluar requisitos
@@ -226,6 +250,80 @@ Los textos largos de los dos finales están en `docs/guion.md` → «Los dos fin
 - Con la astilla se ven las dos opciones.
 - El final de romper muestra el nombre del personaje.
 
+## Tarea 10: Grietas y palancas (sustituyen al encogimiento)
+
+Hazla antes de la comprobación final (tarea 9). La especificación completa está en `docs/exploracion.md`. Los mapas ya traen los datos; aquí se quita el encogimiento y se implementan los dos mecanismos.
+
+### 10.1 Quitar el encogimiento
+
+| Archivo | Qué quitar |
+| --- | --- |
+| `lib/ui/juego/jugador.dart` | El campo `diminuto`, el `diminuto:` que se pasa a `game.zona.libre(...)` y la escala `* (diminuto ? 0.5 : 1)`. |
+| `lib/ui/juego/zona_tierras.dart` | La acción «Encoger/Crecer» de `accionesEn` (bloque `mapa.portales.contains(celda)`), `_cambiarTamano`, las luces azules de los tocones (bucle sobre `mapa.portales`) y el parámetro `diminuto` de `libre`. |
+| `lib/ui/juego/escenario.dart` | El parámetro `diminuto` de `libre`, si está en la clase base. |
+| `lib/ui/juego/umbral_juego.dart` | `jugador.diminuto = false` en `_cambiarA`. |
+| `lib/ui/juego/mapa_mundo.dart` | `_sueloSoloDiminuto`, `_tronco`, `_solidoDiminuto` y `solidoDiminuto()`, y el caso `cruzaDiminuto` de `_calcular`. Se puede mantener la lectura de `portales` (llega vacía) o quitarla. `_portal` sigue existiendo en la lista de objetos, pero ningún mapa lo usa. |
+
+### 10.2 Datos de mecanismos (`mapa_mundo.dart`)
+
+- **Leer `m['mecanismos']`:**
+
+  ```dart
+  typedef Mecanismo = ({String id, String tipo, int? x, int? y, List<(int, int)> celdas, String texto});
+  ```
+
+  Expón `final List<Mecanismo> mecanismos;`.
+- **`cambiarSuelo(x, y, suelo)`:** como `cambiarObjeto`, cambia `suelo[y][x]` y llama a `_calcular(x, y)`.
+- **Paso:** `muro-agrietado` y `pasarela-hundida` ya están en `reglas.sueloBloquea`, así que bloquean sin código nuevo. `palanca` y `palanca-activa` bloquean como cualquier objeto que no esté en la lista de transitables. Comprueba que `_calcular` trata los objetos así; si solo bloquean los de `objetosBloquean`, añádelos allí en el código.
+
+### 10.3 Guardar los mecanismos activados
+
+Es el mismo camino que `dialogosLeidos` en la tarea 1: un campo `mecanismosActivados: string[]`, que solo crece, con ids `<zonaId>/<id>` (por ejemplo `umbral/palanca-1`).
+
+- **App:** `Mundo`, `Progreso`, `RegistroProgreso` (un `Set<String> mecanismos`), `progreso_pendiente.dart` y `UmbralJuego`.
+  - En `UmbralJuego`: `mecanismoActivado(String id)`, que mira lo guardado más la sesión, y `activarMecanismo(String id)`.
+- **Servidor:** `MundoDto`, `validacion.ts` (`z.array(z.string().max(48)).max(200).optional()`), `mundoNegocio.aplicar` (valida con `/^[a-z-]{1,40}\/(palanca|grieta)-\d{1,2}$/` y une) y `personaje.negocio.ts`.
+- **Al morir no se deshacen**, igual que las fogatas.
+
+### 10.4 Al preparar la zona (`ZonaTierras.preparar`)
+
+Para cada mecanismo ya activado en la partida, aplica su resultado **antes** de pintar el suelo:
+
+- **Palanca:** `cambiarObjeto(x, y, objeto('palanca-activa'))`, y cada celda a `puente`.
+- **Grieta:** cada celda pasa al suelo de una vecina transitable (la primera de arriba, abajo, izquierda o derecha que no bloquee) y lleva el objeto `escombros`.
+
+Añade una luz tenue color brasa (`Luz(..., radio: 14, tinte: Colores.brasa, parpadeo: 1)`) en cada grieta **sin** romper, como antes tenían los tocones.
+
+### 10.5 Palancas
+
+- En `accionesEn`, si a menos de `_distanciaObjeto` hay una palanca sin activar: `AccionContexto('Accionar la palanca', () => _accionarPalanca(m), boton: 'abrir')`.
+- **`_accionarPalanca`:**
+  1. `game.activarMecanismo('$zonaId/${m.id}')`.
+  2. El objeto pasa a `palanca-activa`.
+  3. Las `celdas` pasan a `puente` en el orden en que vienen, una cada 60 ms (con un `TimerComponent`), con un `Estallido` pequeño (`Colores.alma` y `Colores.hueso`) en cada una.
+  4. `game.mostrarAviso(m.texto)`.
+- Cada cambio de suelo tiene que repintar la casilla. Si `_Suelo` dibuja el suelo una sola vez en una imagen, añádele un método que repinte una celda, o vuelve a generar la imagen al terminar la pasarela.
+
+### 10.6 Muros agrietados
+
+- **Cuerpo a cuerpo** (`Jugador._impactar`, rama del tajo): además de los enemigos, mira las celdas de las grietas sin romper de la zona. Si el centro de alguna celda está dentro de `estilo.alcance + 8` y dentro del arco (el mismo cálculo de `diferencia` que con los enemigos), llama a `zona.romperGrieta(m)`.
+- **Proyectil del jugador** (`Proyectil`, con `delJugador: true`): al chocar con un sólido, si la celda del choque es de una grieta sin romper, llama a `zona.romperGrieta(m)`.
+- **`ZonaTierras.romperGrieta(m)`:**
+  1. `game.activarMecanismo('$zonaId/${m.id}')`.
+  2. Aplica el cambio de 10.4.
+  3. Hace un `Estallido(centro, [Colores.ceniza, Colores.hueso])` y una pequeña sacudida de cámara si ya existe una.
+  4. Quita la luz de la grieta y llama a `game.mostrarAviso(m.texto)`.
+- Rodar contra la pared no la rompe. Los enemigos tampoco.
+
+### 10.7 Minimapa
+
+`assets/minimapa/` está regenerado: la pasarela hundida se ve como agua y el muro agrietado como muro, así que los secretos no se delatan. `zonas.json` trae marcadores `palanca` y `grieta` en lugar de `portal`. Si `verMapa` dibuja marcadores de portales, cámbialos por palancas.
+
+**Hecho cuando:**
+- En la zona 1, un golpe al muro de (56,5) abre la arboleda del bosque, y la palanca de (12,17) sube la pasarela hasta la isla de la Llave.
+- En la zona 6, la palanca de (75,16) levanta tabla a tabla un puente de 22 casillas hasta la torre.
+- Al guardar, salir y volver, todo sigue abierto.
+
 ## Tarea 9: Comprobación final
 
 - [ ] `flutter analyze` sin avisos nuevos. Pasan las pruebas de la app y las del servidor (`npm test` en `servidor/`, si existen).
@@ -235,7 +333,13 @@ Los textos largos de los dos finales están en `docs/guion.md` → «Los dos fin
   - [ ] leer los 22 diálogos.
 - [ ] Salir y volver a entrar: los diálogos leídos siguen leídos y Oreste no repite ninguno.
 - [ ] Repetir un guardado sin conexión y comprobar que se sincroniza.
-- [ ] En la zona 6, encogerse en el portal de N3, cruzar los troncos y abrir el cofre de la astilla junto a la torre.
+- [ ] En la zona 6, accionar la palanca de N3 (75,16), cruzar el puente que sube y abrir el cofre de la astilla junto a la torre.
+- [ ] **En cada zona:**
+  - [ ] romper los muros agrietados con un ataque;
+  - [ ] accionar las palancas y ver subir sus pasarelas;
+  - [ ] salir y volver a entrar: siguen rotos y levantadas;
+  - [ ] los secretos de `docs/exploracion.md` → «Dónde está cada mecanismo» se alcanzan.
+- [ ] No queda ningún rastro de encogerse: `rg -i "diminut|encog|portal" lib` solo encuentra comentarios históricos o nada.
 - [ ] Vencer a El Que Mira, cruzar la salida y ver las dos opciones; elegir «Romper la Brasa».
 - [ ] **En otra partida, sin leer todo:** el cofre de la astilla no existe y el final solo ofrece «Encender».
 - [ ] En ninguna zona aparece un enemigo junto a Oreste nada más llegar.

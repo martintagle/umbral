@@ -24,9 +24,9 @@ Islas sobre agua de cera, unidas por pasarelas de tablas. Se entra por el oeste.
 - **El Bosque Goteante:** la isla grande del norte, con árboles de cera. Una pasarela lleva al islote de la llave.
 - **Islas del sur.**
 - **El Santuario de la Madre:** arena en la isla del noreste. Al vencer a la Madre Cirio se abre el embarcadero norte.
-- **Secretos (diminuto):**
-  - el islote de las Cunas, por troncos desde un portal de la isla sur;
-  - un nido al noroeste, por troncos desde la orilla.
+- **Secretos:**
+  - el islote de las Cunas, por la pasarela que sube la palanca de la isla sur;
+  - un nido al noroeste, por la pasarela que sube la palanca de la orilla.
 
 ### 3. Minas de Sal Negra: laberinto bajo roca
 
@@ -38,9 +38,9 @@ Todo es roca. Las cámaras se unen por galerías estrechas. Se entra por la Boca
   3. Se baja al Lago Salobre.
   4. Por una cámara con altar se llega a la Veta Profunda (arena).
 - **Salida:** la galería inundada al este.
-- **Secretos (diminuto):**
-  - una cámara sellada al norte, por una gatera (`hueco`);
-  - la isla del lago, por troncos.
+- **Secretos:**
+  - una cámara sellada al norte, tras un muro agrietado;
+  - la isla del lago, por la pasarela de una palanca.
 
 ### 4. Abadía Hundida: edificio con salas
 
@@ -53,9 +53,9 @@ Se entra por el oeste, sobre la pasarela del Atrio Inundado. La abadía es un re
 - **Claustro:** en el centro, con cuatro jardines y cuatro puertas.
 - **Cementerio de Campanas:** el ala este, con lápidas y campanas caídas. La llave está tras la fila de zarzas del norte.
 - **La Nave Mayor:** la arena, al sur. Detrás de ella, el portón trasero.
-- **Secretos (diminuto):**
-  - la cripta del ala oeste, por un hueco en el muro;
-  - una plataforma del atrio, por troncos.
+- **Secretos:**
+  - la cripta del ala oeste, tras un muro agrietado;
+  - una plataforma del atrio, por la pasarela de una palanca.
 
 ### 5. Páramo de Ceniza: llanura abierta
 
@@ -65,9 +65,9 @@ Campo abierto, con pocos obstáculos y casi sin protección. Se entra por el nor
 - **La Colina de los Estandartes:** al noreste. Es una meseta con dos rampas y guarda la llave en la cima.
 - **El Círculo del Juramento:** una arena redonda en el centro.
 - **Salida:** al vencer al Caballero se abre la grieta que corre hacia el este.
-- **Secretos (diminuto):**
-  - un búnker sellado al fondo de las trincheras;
-  - el islote de una charca de ceniza, por troncos.
+- **Secretos:**
+  - un búnker sellado al fondo de las trincheras, tras un muro agrietado;
+  - el islote de una charca de ceniza, por la pasarela de una palanca.
 
 ### 6. El Umbral: islas sobre el vacío
 
@@ -78,17 +78,20 @@ El agua de este tileset es el vacío: no se puede pisar. Las islas se unen por p
   - **Al norte:** la cadena de puentes llega a la puerta del Altar Mayor.
   - **Al sur:** lleva al Jardín de Ojos, donde está la llave.
 - **Salida:** detrás de la arena hay un nicho cerrado. Pisar su casilla de `salida` lanza el final.
-- **Secretos (diminuto):**
-  - la torre del primer guardián, por una larga hilera de troncos;
+- **Secretos:**
+  - la torre del primer guardián, por un puente de 22 tablas que sube del vacío al accionar la palanca de la isla N3;
   - un islote al norte de El Borde.
+
+> Los secretos se abren con **muros agrietados** y **palancas**: ver `docs/exploracion.md`. El encogimiento ya no existe.
 
 ## Qué cambia respecto a mundo.json
 
-- **Tilesets.** Tienen los mismos 30 tiles en el mismo orden que `tileset.png`; solo cambian los colores. Los índices de `capas` valen igual.
+- **Tilesets.** Tienen los mismos 34 tiles en el mismo orden que `tileset.png`; solo cambian los colores. Los índices de `capas` valen igual. Los 4 últimos que se añadieron son `muro-agrietado`, `pasarela-hundida`, `palanca` y `palanca-activa`.
 - **Campos nuevos:** `id`, `numero`, `bioma`, `entrada` (con `desde`), `salida` (con `hacia`) y `enemigosDeLaZona`.
 - **`salida` es una casilla.** Al pisarla se carga la zona siguiente, y el jugador aparece en su `inicio`. No siempre está en el borde del mapa: en la zona 6 está dentro del nicho del Altar Mayor.
 - **Llave de cada zona:** `llave-cera`, `llave-sal`, `llave-plegaria`, `llave-juramento` y `llave-ultima`. Abre la reja de entrada a la arena; `reglas.objetosConLlave.reja` dice cuál es.
 - **Rejas de salida.** Las de `salida.rejaSalida` **no se abren con la llave: se abren al vencer al jefe**. Es la única regla que el código tiene que distinguir de la zona 1.
+- **Mecanismos.** La lista `mecanismos` de cada mapa trae sus palancas y muros agrietados (`docs/exploracion.md`).
 - **Hoz.** Se supone ya conseguida en la zona 1.
 
 ## Validación
@@ -98,7 +101,7 @@ Cada mapa pasó una búsqueda de alcance que comprueba:
 - La llave se alcanza desde la entrada.
 - La arena está cerrada sin la llave y el jefe se alcanza con ella.
 - La salida está cerrada hasta vencer al jefe.
-- Los cofres secretos y los fragmentos solo se alcanzan en diminuto.
+- Los cofres secretos y los fragmentos solo se alcanzan tras romper su muro agrietado o accionar su palanca.
 - El resto de cofres y todos los letreros son alcanzables.
 - Todos los enemigos aparecen en casillas alcanzables.
 
@@ -118,7 +121,7 @@ Las hojas de sprites están en `assets/sprites/animaciones/enemigos/` y ya figur
 
 - **`minimapa-zona-1.png` a `minimapa-zona-6.png`:** el terreno de cada zona, a 1 px por tile.
 - **`mapa-mundo-1x.png`:** las seis zonas juntas a la misma escala, para un mapa global dentro del juego. Cada zona está colocada según el lado por el que se sale de la anterior.
-- **`mapa-mundo.png`:** el mapa ilustrado a 4x, con nombres, ruta, altares, jefes, cofres, portales y leyenda.
+- **`mapa-mundo.png`:** el mapa ilustrado a 4x, con nombres, ruta, altares, jefes, cofres, palancas, muros agrietados y leyenda.
 - **`zonas.json`:** el índice. Por cada zona trae:
   - el archivo del mapa y del minimapa;
   - su posición dentro de `mapa-mundo-1x.png` (`mundo.x/y`);

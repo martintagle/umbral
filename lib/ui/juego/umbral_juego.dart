@@ -151,6 +151,22 @@ class UmbralJuego extends FlameGame<Escenario>
     guardar(silencioso: true);
   }
 
+  /// Palancas accionadas y muros rotos en esta sesión (`<zonaId>/<id>`);
+  /// los guardados están en el personaje. No se deshacen al morir.
+  final Set<String> _mecanismos = {};
+
+  bool mecanismoActivado(String id) =>
+      personaje.mundo.mecanismosActivados.contains(id) ||
+      _mecanismos.contains(id);
+
+  /// Anota el mecanismo [id] como activado y guarda.
+  void activarMecanismo(String id) {
+    if (mecanismoActivado(id)) return;
+    _mecanismos.add(id);
+    _registro.mecanismos.add(id);
+    guardar(silencioso: true);
+  }
+
   /// Lo que dice Oreste en el cuadro de diálogo, o `null` si está cerrado.
   /// [id] es el diálogo que se marca como leído al terminarlo; `null` en la
   /// frase de espera.
@@ -443,12 +459,37 @@ class UmbralJuego extends FlameGame<Escenario>
         ),
       ];
     }
+    // Un solo botón en pantalla: al descansar se abre el menú de la fogata
+    // con lo demás (subir de nivel, el mapa, salir de la mazmorra...).
     return [
-      AccionContexto('Descansar', descansar, boton: 'descansar'),
-      accionSubirNivel(),
-      AccionContexto('Ver mapa', verMapa, boton: 'leer'),
-      ...ademas,
+      AccionContexto(
+        'Descansar',
+        () => _descansarEnFogata(descansar, [
+          accionSubirNivel(),
+          AccionContexto('Ver mapa', verMapa, boton: 'leer'),
+          ...ademas,
+        ]),
+        boton: 'descansar',
+        resaltada: puedeSubirNivel,
+      ),
     ];
+  }
+
+  /// Opciones del menú de la fogata mientras el jugador descansa, o `null`.
+  final menuFogata = ValueNotifier<List<AccionContexto>?>(null);
+
+  void _descansarEnFogata(VoidCallback descansar, List<AccionContexto> opciones) {
+    descansar();
+    soltarControles();
+    pauseEngine();
+    menuFogata.value = opciones;
+  }
+
+  /// Cierra el menú de la fogata y, si se eligió algo, lo hace.
+  void cerrarMenuFogata([AccionContexto? elegida]) {
+    menuFogata.value = null;
+    resumeEngine();
+    elegida?.alPulsar();
   }
 
   void _encenderFogata(String id, Vector2 donde) {
@@ -686,7 +727,7 @@ class UmbralJuego extends FlameGame<Escenario>
     region.value = zona.regionEn(pies);
     _esperaCruce = max(0, _esperaCruce - dt);
     if (jugador.vivo && _esperaCruce == 0) zona.pisando(pies);
-    _ponerAcciones(jugador.vivo ? zona.accionesEn(pies) : const []);
+    _ponerAcciones(jugador.vivo ? zona.accionesEn(pies) : const [], dt);
     _seguirJefe();
 
     final mancha = _mancha;
@@ -723,16 +764,46 @@ class UmbralJuego extends FlameGame<Escenario>
     Sonido.pista(Audios.jefe);
   }
 
+  /// Como mucho dos botones de acción a la vez (por ejemplo, Hablar y
+  /// Descansar): más tapan la pantalla.
+  static const _maximoAcciones = 2;
+
+  /// Acciones distintas de las que se muestran, esperando a mostrarse, y
+  /// cuánto llevan esperando.
+  List<AccionContexto>? _accionesPendientes;
+  double _esperaAcciones = 0;
+
+  static bool _mismasAcciones(List<AccionContexto> a, List<AccionContexto> b) =>
+      listEquals(
+        [for (final x in a) (x.etiqueta, x.resaltada)],
+        [for (final x in b) (x.etiqueta, x.resaltada)],
+      );
+
   /// Solo avisa a la pantalla si cambian las etiquetas o estilos: las
-  /// acciones se calculan cada cuadro.
-  void _ponerAcciones(List<AccionContexto> nuevas) {
-    if (listEquals(
-      [for (final a in acciones.value) (a.etiqueta, a.resaltada)],
-      [for (final a in nuevas) (a.etiqueta, a.resaltada)],
-    )) {
+  /// acciones se calculan cada cuadro. Un cambio tiene que durar un momento
+  /// antes de mostrarse, para que los botones no parpadeen ni salten al
+  /// pasar entre dos puntos cercanos (la hoguera del custodio junto a la
+  /// salida, por ejemplo).
+  void _ponerAcciones(List<AccionContexto> nuevas, double dt) {
+    if (nuevas.length > _maximoAcciones) {
+      nuevas = nuevas.sublist(0, _maximoAcciones);
+    }
+    if (_mismasAcciones(acciones.value, nuevas)) {
+      _accionesPendientes = null;
       return;
     }
-    acciones.value = nuevas;
+    final pendientes = _accionesPendientes;
+    if (pendientes == null || !_mismasAcciones(pendientes, nuevas)) {
+      _accionesPendientes = nuevas;
+      _esperaAcciones = 0;
+    }
+    _esperaAcciones += dt;
+    // Aparecer es casi inmediato; cambiar o quitar espera un poco más.
+    final espera = acciones.value.isEmpty ? 0.05 : 0.25;
+    if (_esperaAcciones >= espera) {
+      acciones.value = nuevas;
+      _accionesPendientes = null;
+    }
   }
 
   void _recuperarEstamina(double dt) {
@@ -948,8 +1019,6 @@ class UmbralJuego extends FlameGame<Escenario>
 
   void _cambiarA(Escenario destino, Vector2 pies) {
     if (!identical(destino, world)) {
-      // Se encoge y se crece en los portales: al cambiar de lugar, crece.
-      jugador.diminuto = false;
       jugador.parent = destino;
       world = destino;
       if (jefe.value == null) Sonido.pista(destino.pista, volumen: 0.6);

@@ -37,6 +37,9 @@ class RegistroProgreso {
   /// Diálogos de Oreste leídos. Tampoco se olvidan al morir.
   final Set<String> dialogos = {};
 
+  /// Palancas y muros agrietados. Tampoco se deshacen al morir.
+  final Set<String> mecanismos = {};
+
   void cofreAbierto(String id, int oro) {
     if (cofres.add(id)) oroCofres += oro;
   }
@@ -87,6 +90,7 @@ class RegistroProgreso {
       oroCofres: oroCofres,
       fogatasEncendidas: fogatas.toList(),
       dialogosLeidos: dialogos.toList(),
+      mecanismosActivados: mecanismos.toList(),
       enemigosCaidos: Map.of(caidos),
     );
   }
@@ -127,5 +131,6 @@ class RegistroProgreso {
     oroCofres = max(0, oroCofres - enviado.oroCofres);
     fogatas.removeAll(enviado.fogatasEncendidas);
     dialogos.removeAll(enviado.dialogosLeidos);
+    mecanismos.removeAll(enviado.mecanismosActivados);
   }
 }

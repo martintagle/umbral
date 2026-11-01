@@ -81,6 +81,8 @@ export interface Progreso {
   enemigosCaidos?: Record<string, number>;
   /** Diálogos de Oreste leídos desde el último guardado. */
   dialogosLeidos?: string[];
+  /** Palancas accionadas y muros rotos desde el último guardado. */
+  mecanismosActivados?: string[];
 }
 
 /**
@@ -280,6 +282,7 @@ export const personajeNegocio = {
         fogatasEncendidas: [],
         enemigosCaidos: {},
         dialogosLeidos: [],
+        mecanismosActivados: [],
       },
       estadisticas: { enemigosDerrotados: 0, muertes: 0, tiempoJugadoSeg: 0 },
     };
@@ -319,6 +322,7 @@ export const personajeNegocio = {
       progreso.fogatasEncendidas ?? [],
       progreso.enemigosCaidos,
       progreso.dialogosLeidos ?? [],
+      progreso.mecanismosActivados ?? [],
     );
     return {
       ...p,

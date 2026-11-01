@@ -15,4 +15,9 @@ export interface MundoDto {
   enemigosCaidos?: Record<string, number>;
   /** Diálogos de Oreste leídos (`oreste-<zona>-<n>`). Solo crece. */
   dialogosLeidos?: string[];
+  /**
+   * Palancas accionadas y muros agrietados rotos (`<zonaId>/<id>`, por
+   * ejemplo `cienaga/palanca-2`). Solo crece.
+   */
+  mecanismosActivados?: string[];
 }

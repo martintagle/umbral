@@ -70,10 +70,6 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
   bool _impactoPendiente = false;
 
   bool get vivo => game.vida.value > 0;
-
-  /// Encogido en un portal: cruza el hueco y los troncos sobre el agua, y
-  /// se dibuja a la mitad.
-  bool diminuto = false;
   bool get rodando => _rodar >= 0;
   bool get bebiendo => _beber >= 0;
   bool get _inmune =>
@@ -219,7 +215,7 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
   void _mover(double dx, double dy) {
     if (dx == 0 && dy == 0) return;
     final x = position.x + dx, y = position.y + dy;
-    if (game.zona.libre(diminuto: diminuto, Rect.fromCenter(
+    if (game.zona.libre(Rect.fromCenter(
         center: Offset(x, y - _altoPies / 2),
         width: _anchoPies,
         height: _altoPies))) {
@@ -254,8 +250,7 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
     } else {
       _modelo.reproducir('quieto');
     }
-    final escala = escalaSprites * (diminuto ? 0.5 : 1);
-    _modelo.scale.setValues(_lado * escala, escala);
+    _modelo.scale.setValues(_lado * escalaSprites, escalaSprites);
     _pintar();
   }
 
@@ -347,6 +342,14 @@ class Jugador extends PositionComponent with HasGameReference<UmbralJuego> {
         e.recibirGolpe(dano, critico, hacia.normalized());
       }
     }
+    // El mismo tajo rompe los muros agrietados que caen dentro del arco.
+    game.zona.golpearMuros((c) {
+      final hacia = c - centro;
+      if (hacia.length > estilo.alcance + 8) return false;
+      var diferencia = (atan2(hacia.y, hacia.x) - angulo).abs();
+      if (diferencia > pi) diferencia = 2 * pi - diferencia;
+      return diferencia <= estilo.arco / 2;
+    });
   }
 
   /// Un golpe de [desde]: quita vida, aturde un instante y empuja. Rodando a

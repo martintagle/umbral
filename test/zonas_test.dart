@@ -1,5 +1,6 @@
 // ignore_for_file: invalid_use_of_internal_member
 import 'dart:convert';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flame/components.dart';
@@ -31,6 +32,7 @@ PartidaJugable _partida({
   List<String> jefes = const [],
   Map<String, int> caidos = const {},
   List<String> leidos = const [],
+  List<String> mecanismos = const [],
 }) => PartidaJugable.fromMap({
   'partida': {
     'partidaId': 'p1',
@@ -60,6 +62,7 @@ PartidaJugable _partida({
         'jefesDerrotados': jefes,
         'enemigosCaidos': caidos,
         'dialogosLeidos': leidos,
+        'mecanismosActivados': mecanismos,
       },
       'estadisticas': {
         'enemigosDerrotados': 0,
@@ -303,6 +306,45 @@ void main() {
     });
   });
 
+  testWidgets('el jefe furioso ataca en ráfagas y descansa', (tester) async {
+    await tester.runAsync(() async {
+      final juego = _juego(_partida());
+      juego.onGameResize(Vector2(844, 390));
+      await juego.load();
+      juego.mount();
+      await juego.ready();
+      await Hojas.preparar(juego.images, [
+        for (final t in Enemigos.jefes) t.hoja,
+      ]);
+      final zona = juego.tierras;
+      for (final e in zona.enemigosVivos.toList()) {
+        e.removeFromParent();
+      }
+
+      for (final tipo in Enemigos.jefes) {
+        final jefe = Enemigo(tipo, juego.jugador.position + Vector2(20, 0));
+        zona.add(jefe);
+        await juego.ready();
+        jefe.vida = jefe.vidaMaxima / 2 - 1;
+        // Con el jugador pegado a él, el jefe furioso debe pararse a
+        // descansar: antes encadenaba barridos sin fin.
+        var descanso = 0.0, mayor = 0.0;
+        for (var t = 0.0; t < 8; t += 1 / 60) {
+          juego.vida.value = juego.vidaMaxima.value;
+          juego.jugador.position.setFrom(jefe.position + Vector2(12, 0));
+          juego.update(1 / 60);
+          await juego.ready();
+          descanso = jefe.descansando ? descanso + 1 / 60 : 0;
+          mayor = max(mayor, descanso);
+        }
+        expect(jefe.furioso, isTrue, reason: tipo.id);
+        expect(mayor, greaterThan(1.5), reason: tipo.id);
+        jefe.removeFromParent();
+        await juego.ready();
+      }
+    });
+  });
+
   testWidgets('las criaturas caídas no vuelven hasta descansar', (tester) async {
     await tester.runAsync(() async {
       // Se vuelve a entrar en una sala donde ya cayeron las criaturas del
@@ -342,7 +384,7 @@ void main() {
     });
   });
 
-  testWidgets('Oreste, el cofre de la astilla y los portales', (tester) async {
+  testWidgets('Oreste y el cofre de la astilla', (tester) async {
     await tester.runAsync(() async {
       Future<UmbralJuego> cargar(List<String> leidos) async {
         final juego = _juego(_partida(zonaId: 'umbral', leidos: leidos));
@@ -404,33 +446,6 @@ void main() {
         isNot(contains('Abrir el cofre')),
       );
 
-      // Sobre un portal se encoge: diminuto se cruza el hueco.
-      final (px, py) = umbral.mapa.portales.first;
-      final enPortal = MapaMundo.piesEnCelda(px, py);
-      expect(umbral.accionesEn(enPortal).single.etiqueta, 'Encoger');
-      umbral.accionesEn(enPortal).single.alPulsar();
-      expect(juego.jugador.diminuto, isTrue);
-      expect(umbral.accionesEn(enPortal).single.etiqueta, 'Crecer');
-      final mapa = umbral.mapa;
-      final hueco = mapa.nombresObjetos.isEmpty
-          ? null
-          : [
-              for (var y = 0; y < mapa.alto; y++)
-                for (var x = 0; x < mapa.ancho; x++)
-                  if (!mapa.solidoDiminuto(x * 16 + 8, y * 16 + 8) &&
-                      mapa.solido(x * 16 + 8, y * 16 + 8))
-                    (x, y),
-            ].firstOrNull;
-      expect(hueco, isNotNull, reason: 'hay suelo que solo se cruza diminuto');
-      final (hx, hy) = hueco!;
-      final caja = Rect.fromCenter(
-        center: Offset(hx * 16 + 8, hy * 16 + 8),
-        width: 4,
-        height: 2,
-      );
-      expect(umbral.libre(caja), isFalse);
-      expect(umbral.libre(caja, diminuto: true), isTrue);
-
       // Con los 22 diálogos leídos, el cofre aparece.
       final todos = [for (final d in juego.datosOreste.dialogos) d.id];
       final conTodo = await cargar(todos);
@@ -438,6 +453,101 @@ void main() {
         conTodo.tierras.accionesEn(junto).map((a) => a.etiqueta),
         contains('Abrir el cofre'),
       );
+    });
+  });
+
+  test('las palancas y los muros agrietados de cada mapa', () async {
+    for (final id in _zonas) {
+      final mapa = await MapaMundo.cargar(id);
+      expect(mapa.mecanismos, isNotEmpty, reason: id);
+      for (final m in mapa.mecanismos) {
+        final suelo = m.tipo == 'palanca' ? 'pasarela-hundida' : 'muro-agrietado';
+        if (m.tipo == 'palanca') {
+          expect(mapa.objetos[m.y!][m.x!], mapa.objeto('palanca'),
+              reason: '$id/${m.id}');
+        }
+        for (final (x, y) in m.celdas) {
+          expect(mapa.suelo[y][x], mapa.sueloLlamado(suelo),
+              reason: '$id/${m.id} ($x, $y)');
+          expect(mapa.solido(x * 16 + 8, y * 16 + 8), isTrue);
+        }
+      }
+    }
+  });
+
+  testWidgets('la palanca sube su pasarela y el muro cede al golpe',
+      (tester) async {
+    await tester.runAsync(() async {
+      Progreso? enviado;
+      Future<UmbralJuego> cargar(String zona, List<String> mecanismos) async {
+        final juego = _juego(
+          _partida(zonaId: zona, mecanismos: mecanismos),
+          alEnviar: (p) => enviado = p,
+        );
+        juego.onGameResize(Vector2(844, 390));
+        await juego.load();
+        juego.mount();
+        await juego.ready();
+        return juego;
+      }
+
+      bool abierta(ZonaTierras z, Mecanismo m) => m.celdas.every(
+        (c) => !z.mapa.solido(c.$1 * 16 + 8, c.$2 * 16 + 8),
+      );
+
+      // Zona 6: la palanca de N3 levanta el puente hasta la torre.
+      var juego = await cargar('umbral', const []);
+      var zona = juego.tierras;
+      final palanca = zona.mapa.mecanismos.firstWhere(
+        (m) => m.id == 'palanca-1',
+      );
+      expect(abierta(zona, palanca), isFalse);
+      final junto = MapaMundo.piesEnCelda(palanca.x!, palanca.y! + 1);
+      final accion = zona
+          .accionesEn(junto)
+          .firstWhere((a) => a.etiqueta == 'Accionar la palanca');
+      accion.alPulsar();
+      expect(juego.mecanismoActivado('umbral/palanca-1'), isTrue);
+      // Sube tabla a tabla: al principio no está entera.
+      juego.update(0.07);
+      await juego.ready();
+      expect(abierta(zona, palanca), isFalse);
+      for (var t = 0.0; t < 2; t += 1 / 60) {
+        juego.update(1 / 60);
+        await juego.ready();
+      }
+      expect(abierta(zona, palanca), isTrue);
+      expect(
+        zona.accionesEn(junto).map((a) => a.etiqueta),
+        isNot(contains('Accionar la palanca')),
+      );
+      expect(enviado?.mecanismosActivados, contains('umbral/palanca-1'));
+
+      // Al volver a cargar la partida, el puente sigue arriba.
+      juego = await cargar('umbral', const ['umbral/palanca-1']);
+      expect(abierta(juego.tierras, palanca), isTrue);
+
+      // Zona 1: un golpe rompe el muro de la arboleda.
+      juego = await cargar('tierras-del-umbral', const []);
+      zona = juego.tierras;
+      final grieta = zona.mapa.mecanismos.firstWhere(
+        (m) => m.id == 'grieta-1',
+      );
+      expect(abierta(zona, grieta), isFalse);
+      // Un golpe lejos no hace nada.
+      zona.golpearMuros((c) => false);
+      expect(abierta(zona, grieta), isFalse);
+      final (gx, gy) = grieta.celdas.first;
+      zona.golpearMuros((c) => c == MapaMundo.centroDe(gx, gy));
+      expect(abierta(zona, grieta), isTrue);
+      expect(zona.mapa.objetos[gy][gx], zona.mapa.objeto('escombros'));
+      expect(juego.mecanismoActivado('tierras-del-umbral/grieta-1'), isTrue);
+
+      juego = await cargar(
+        'tierras-del-umbral',
+        const ['tierras-del-umbral/grieta-1'],
+      );
+      expect(abierta(juego.tierras, grieta), isTrue);
     });
   });
 
@@ -465,12 +575,14 @@ void main() {
       expect(trono.accionesEn(fogata).map((a) => a.etiqueta),
           ['Encender la fogata']);
       trono.accionesEn(fogata).single.alPulsar();
-      expect(trono.accionesEn(fogata).map((a) => a.etiqueta), [
-        'Descansar',
+      expect(trono.accionesEn(fogata).map((a) => a.etiqueta), ['Descansar']);
+      trono.accionesEn(fogata).single.alPulsar();
+      expect(juego.menuFogata.value?.map((a) => a.etiqueta), [
         'Subir de nivel',
         'Ver mapa',
         'Salir de la mazmorra',
       ]);
+      juego.cerrarMenuFogata();
 
       await juego.cruzarFrontera('cienaga', adelante: true);
       expect(juego.tierras.zonaId, 'cienaga');

@@ -32,6 +32,9 @@ class Progreso {
   /// Diálogos de Oreste leídos desde el último guardado.
   final List<String> dialogosLeidos;
 
+  /// Palancas accionadas y muros rotos desde el último guardado.
+  final List<String> mecanismosActivados;
+
   const Progreso({
     required this.enemigosDerrotados,
     required this.exp,
@@ -45,6 +48,7 @@ class Progreso {
     this.fogatasEncendidas = const [],
     this.enemigosCaidos = const {},
     this.dialogosLeidos = const [],
+    this.mecanismosActivados = const [],
   });
 
   Map<String, dynamic> toMap() {
@@ -61,6 +65,7 @@ class Progreso {
       'fogatasEncendidas': fogatasEncendidas,
       'enemigosCaidos': enemigosCaidos,
       'dialogosLeidos': dialogosLeidos,
+      'mecanismosActivados': mecanismosActivados,
     };
   }
 }

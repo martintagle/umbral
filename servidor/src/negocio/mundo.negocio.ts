@@ -59,7 +59,10 @@ const MAXIMO_PUNTOS = 500;
 /** Un diálogo de Oreste: `oreste-<zona>-<orden>`. */
 const DIALOGO = /^oreste-[1-6]-[1-9]$/;
 
-/** Reglas del mundo de una partida: cofres, fogatas, diálogos y zonas. No accede a la base de datos. */
+/** Una palanca o un muro agrietado de un mapa: `<zonaId>/<id>`. */
+const MECANISMO = /^[a-z-]{1,40}\/(palanca|grieta)-\d{1,2}$/;
+
+/** Reglas del mundo de una partida: cofres, fogatas, diálogos, mecanismos y zonas. No accede a la base de datos. */
 export const mundoNegocio = {
   /**
    * Anota los [cofres] recién abiertos, las [fogatas] encendidas y los
@@ -73,9 +76,13 @@ export const mundoNegocio = {
     fogatas: string[] = [],
     caidos?: Record<string, number>,
     dialogos: string[] = [],
+    mecanismos: string[] = [],
   ): { mundo: MundoDto; oro: number } {
     for (const id of dialogos) {
       if (!DIALOGO.test(id)) throw new NegocioError(`El diálogo "${id}" no existe.`);
+    }
+    for (const id of mecanismos) {
+      if (!MECANISMO.test(id)) throw new NegocioError(`El mecanismo "${id}" no existe.`);
     }
     if (caidos) {
       const puntos = Object.keys(caidos);
@@ -108,6 +115,7 @@ export const mundoNegocio = {
         // Es el estado completo desde el último descanso: reemplaza al anterior.
         enemigosCaidos: caidos ?? mundo.enemigosCaidos ?? {},
         dialogosLeidos: [...new Set([...(mundo.dialogosLeidos ?? []), ...dialogos])],
+        mecanismosActivados: [...new Set([...(mundo.mecanismosActivados ?? []), ...mecanismos])],
       },
       oro,
     };

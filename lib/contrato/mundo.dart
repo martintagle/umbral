@@ -14,6 +14,10 @@ class Mundo {
   /// Diálogos de Oreste leídos (`oreste-<zona>-<n>`). Solo crece.
   final List<String> dialogosLeidos;
 
+  /// Palancas accionadas y muros agrietados rotos (`<zonaId>/<id>`). Solo
+  /// crece.
+  final List<String> mecanismosActivados;
+
   const Mundo({
     required this.zonasDesbloqueadas,
     required this.cofresAbiertos,
@@ -21,6 +25,7 @@ class Mundo {
     this.fogatasEncendidas = const [],
     this.enemigosCaidos = const {},
     this.dialogosLeidos = const [],
+    this.mecanismosActivados = const [],
   });
 
   factory Mundo.fromMap(Map<String, dynamic> map) {
@@ -37,6 +42,9 @@ class Mundo {
       dialogosLeidos: List<String>.from(
         map['dialogosLeidos'] as List? ?? const [],
       ),
+      mecanismosActivados: List<String>.from(
+        map['mecanismosActivados'] as List? ?? const [],
+      ),
     );
   }
 
@@ -48,6 +56,7 @@ class Mundo {
       'fogatasEncendidas': fogatasEncendidas,
       'enemigosCaidos': enemigosCaidos,
       'dialogosLeidos': dialogosLeidos,
+      'mecanismosActivados': mecanismosActivados,
     };
   }
 }

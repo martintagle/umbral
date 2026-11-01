@@ -160,7 +160,7 @@ class SalaInterior extends Escenario {
   }
 
   @override
-  bool libre(Rect pies, {bool enemigo = false, bool diminuto = false}) {
+  bool libre(Rect pies, {bool enemigo = false}) {
     for (final esquina in [
       pies.topLeft,
       pies.topRight,
@@ -298,25 +298,30 @@ class SalaInterior extends Escenario {
   @override
   List<AccionContexto> accionesEn(Vector2 pies) {
     // Vencido el Rey Hueco, tras el trono baja un pasadizo hacia la ciénaga.
-    if (sala.punto('jefe') case final j?
-        when mapa.zona == null &&
-            game.jefesDerrotados.contains(tipoJefe.id) &&
-            piesEn(j.x, j.y).distanceTo(pies) < 32) {
-      return [
+    final pasadizo = switch (sala.punto('jefe')) {
+      final j?
+          when mapa.zona == null &&
+              game.jefesDerrotados.contains(tipoJefe.id) &&
+              piesEn(j.x, j.y).distanceTo(pies) < 32 =>
         AccionContexto('Bajar por el pasadizo', game.bajarPorElPasadizo),
-      ];
-    }
+      _ => null,
+    };
     // Junto a Oreste se le habla, además de lo que haya a mano.
     if (oreste case final o? when o.position.distanceTo(pies) < 24) {
       return [
         AccionContexto('Hablar', game.hablarConOreste, boton: 'hablar'),
-        ..._accionesDelLugar(pies),
+        ..._accionesDelLugar(pies, pasadizo),
       ];
     }
-    return _accionesDelLugar(pies);
+    return _accionesDelLugar(pies, pasadizo);
   }
 
-  List<AccionContexto> _accionesDelLugar(Vector2 pies) {
+  /// Lo que hay a mano en la sala. Si la hoguera del custodio está cerca, el
+  /// [pasadizo] va dentro de su menú en lugar de alternarse con ella.
+  List<AccionContexto> _accionesDelLugar(
+    Vector2 pies, [
+    AccionContexto? pasadizo,
+  ]) {
     PuntoSala? cerca;
     var mejor = _distanciaInteraccion;
     for (final p in sala.puntos) {
@@ -331,6 +336,7 @@ class SalaInterior extends Escenario {
         cerca = p;
       }
     }
+    if (pasadizo != null && cerca?.tipo != 'hoguera') return [pasadizo];
     return switch (cerca?.tipo) {
       'herreria' => [
         AccionContexto(
@@ -345,6 +351,7 @@ class SalaInterior extends Escenario {
         donde: Vector2((cerca!.x + 0.5) * _lado, (cerca.y + 0.5) * _lado - 6),
         descansar: () => game.descansar(enSala: this),
         ademas: [
+          if (pasadizo != null) pasadizo,
           if (sala.punto('jefe') != null)
             AccionContexto(
               'Salir de la mazmorra',
