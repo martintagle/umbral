@@ -1,4 +1,7 @@
+import { randomBytes, randomInt } from 'node:crypto';
+
 import bcrypt from 'bcryptjs';
+import { OAuth2Client } from 'google-auth-library';
 import { ObjectId } from 'mongodb';
 
 import type { AjustesDto } from '../dto/ajustes.dto.js';
@@ -48,13 +51,18 @@ function validarRegistro(username: string, email: string, password: string): voi
       'El nombre de usuario debe tener entre 3 y 20 caracteres: letras, números, punto, guion o guion bajo.',
     );
   }
-  if (email.length > 254 || !EMAIL.test(email)) {
+  if (email.length > 254 || !EMAIL.test(email) || /['"`;\\]/.test(email)) {
     throw new NegocioError('El correo no es válido.');
   }
   // bcrypt solo usa los primeros 72 bytes de la contraseña.
   if (password.length < 8 || password.length > 72) {
     throw new NegocioError('La contraseña debe tener entre 8 y 72 caracteres.');
   }
+}
+
+/** Si [valor] tiene la forma de un username o de un correo. */
+function esIdentificador(valor: string): boolean {
+  return USERNAME.test(valor) || (valor.length <= 254 && EMAIL.test(valor) && !/['"`;\\]/.test(valor));
 }
 
 /** Comprueba la contraseña y el estado de la cuenta. */
@@ -64,6 +72,11 @@ async function comprobarAcceso(usuario: UsuarioDto | null, password: string): Pr
   if (!usuario || !valida) {
     throw new NegocioError('Usuario o contraseña incorrectos.', 'autenticacion');
   }
+  return estadoValido(usuario);
+}
+
+/** Rechaza las cuentas baneadas o eliminadas. */
+function estadoValido(usuario: UsuarioDto): UsuarioDto {
   if (usuario.estado === 'baneado') {
     throw new NegocioError('La cuenta está baneada.', 'prohibido');
   }
@@ -74,6 +87,59 @@ async function comprobarAcceso(usuario: UsuarioDto | null, password: string): Pr
 }
 
 const noExiste = () => new NegocioError('El usuario no existe.', 'no-encontrado');
+
+const google = new OAuth2Client();
+
+/**
+ * Comprueba con Google que [idToken] es suyo, está vigente y se emitió para
+ * esta app (`GOOGLE_CLIENT_ID`, varios separados por comas), y devuelve su
+ * correo verificado en minúsculas.
+ */
+async function correoDeGoogle(idToken: string): Promise<string> {
+  const audience = (process.env.GOOGLE_CLIENT_ID ?? '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+  if (audience.length === 0) {
+    throw new NegocioError('El inicio con Google no está configurado en el servidor.', 'prohibido');
+  }
+  let correo: string | undefined;
+  try {
+    const datos = (await google.verifyIdToken({ idToken, audience })).getPayload();
+    if (datos?.email_verified) correo = datos.email?.trim().toLowerCase();
+  } catch {
+    // Firma, emisor, audiencia o caducidad no válidos.
+  }
+  if (!correo || correo.length > 254 || !EMAIL.test(correo)) {
+    throw new NegocioError('Google no confirmó tu cuenta. Vuelve a intentarlo.', 'autenticacion');
+  }
+  return correo;
+}
+
+/**
+ * Usuario nuevo para el correo de Google. El username sale del correo; en
+ * cada [intento] tras el primero lleva un número al azar.
+ */
+async function nuevoDeGoogle(correo: string, intento: number, ahora: Date): Promise<UsuarioDto> {
+  let base = (correo.split('@')[0] ?? '').replace(/[^A-Za-z0-9_.-]/g, '').slice(0, 15);
+  if (base.length < 3) base = `${base}jugador`.slice(0, 15);
+  const username = intento === 0 ? base : `${base}${randomInt(1000, 100000)}`;
+  return {
+    _id: new ObjectId(),
+    username,
+    email: correo,
+    passwordHash: await bcrypt.hash(randomBytes(32).toString('base64'), RONDAS_BCRYPT),
+    estado: 'activo',
+    rol: 'jugador',
+    creadoEn: ahora,
+    ultimoLogin: ahora,
+    actualizadoEn: ahora,
+    versionEsquema: VERSION_ESQUEMA,
+    ajustes: AJUSTES_POR_DEFECTO,
+    partidaActiva: null,
+    partidas: [],
+  };
+}
 
 /** Usuario de la copia local; sin Atlas, es la única fuente. */
 function usuarioLocal(id: string): UsuarioDto {
@@ -133,6 +199,11 @@ export const usuarioNegocio = {
     if (!valor || !password) {
       throw new NegocioError('Escribe tu correo o usuario y tu contraseña.');
     }
+    // Solo llega a la consulta lo que puede ser un username o un correo: un
+    // intento de inyección (comillas, `OR 1=1`, `--`...) no pasa de aquí.
+    if (!esIdentificador(valor)) {
+      throw new NegocioError('Usuario o contraseña incorrectos.', 'autenticacion');
+    }
     const ahora = new Date();
     return sincronizacion.conRespaldo(
       async () => {
@@ -154,6 +225,61 @@ export const usuarioNegocio = {
         const actualizado = { ...usuario, ultimoLogin: ahora, actualizadoEn: ahora };
         respaldoLocal.guardarCambio(actualizado);
         return publico(actualizado);
+      },
+    );
+  },
+
+  /**
+   * Entra con la cuenta de Google del teléfono. [idToken] lo firma Google y
+   * se comprueba aquí: si su correo ya tiene cuenta, se entra en ella; si
+   * no, se crea una con un username sacado del correo y una contraseña al
+   * azar que nadie conoce.
+   */
+  async iniciarConGoogle(idToken: string): Promise<UsuarioPublico> {
+    const correo = await correoDeGoogle(idToken);
+    const ahora = new Date();
+    return sincronizacion.conRespaldo(
+      async () => {
+        const coleccion = await usuarios();
+        const documento = await coleccion.findOne({ email: correo });
+        if (documento) {
+          const usuario = estadoValido(usuarioDto(documento));
+          await coleccion.updateOne(
+            { _id: usuario._id },
+            { $set: { ultimoLogin: ahora, actualizadoEn: ahora } },
+          );
+          const actualizado = { ...usuario, ultimoLogin: ahora, actualizadoEn: ahora };
+          respaldoLocal.guardarDeMongo(actualizado);
+          return publico(actualizado);
+        }
+        for (let intento = 0; ; intento++) {
+          const usuario = await nuevoDeGoogle(correo, intento, ahora);
+          try {
+            await conErroresMongo(() => coleccion.insertOne(documentoUsuario(usuario)));
+            respaldoLocal.guardarDeMongo(usuario);
+            return publico(usuario);
+          } catch (e) {
+            // El username sacado del correo ya lo tiene otro: se prueba con un número.
+            if (!(e instanceof NegocioError && e.tipo === 'conflicto') || intento >= 5) throw e;
+          }
+        }
+      },
+      async () => {
+        const local = respaldoLocal.usuarioPorIdentificador(correo);
+        if (local) {
+          const actualizado = { ...estadoValido(local), ultimoLogin: ahora, actualizadoEn: ahora };
+          respaldoLocal.guardarCambio(actualizado);
+          return publico(actualizado);
+        }
+        for (let intento = 0; ; intento++) {
+          const usuario = await nuevoDeGoogle(correo, intento, ahora);
+          try {
+            respaldoLocal.guardarCambio(usuario);
+            return publico(usuario);
+          } catch (e) {
+            if (!(e instanceof NegocioError && e.tipo === 'conflicto') || intento >= 5) throw e;
+          }
+        }
       },
     );
   },

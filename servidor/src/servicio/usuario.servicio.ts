@@ -19,6 +19,12 @@ usuarioServicio.post('/login', limiteAcceso, async (req, res) => {
   res.json({ token: firmarToken(usuario.id), usuario });
 });
 
+usuarioServicio.post('/google', limiteAcceso, async (req, res) => {
+  const { idToken } = v.google.parse(req.body);
+  const usuario = await usuarioNegocio.iniciarConGoogle(idToken);
+  res.json({ token: firmarToken(usuario.id), usuario });
+});
+
 usuarioServicio.get('/yo', requiereSesion, async (_req, res) => {
   res.json(await usuarioNegocio.obtenerPorId(idDeSesion(res)));
 });

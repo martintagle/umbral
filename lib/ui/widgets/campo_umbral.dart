@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../tema/tema_umbral.dart';
 
-class CampoUmbral extends StatelessWidget {
+/// Campo de texto del juego. Si es [oculto] (una contraseña), trae un botón
+/// para mostrar u ocultar lo escrito.
+class CampoUmbral extends StatefulWidget {
   final String etiqueta;
   final TextEditingController controlador;
   final String? Function(String?)? validador;
@@ -32,20 +34,29 @@ class CampoUmbral extends StatelessWidget {
   );
 
   @override
+  State<CampoUmbral> createState() => _CampoUmbralState();
+}
+
+class _CampoUmbralState extends State<CampoUmbral> {
+  bool _visible = false;
+
+  @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: controlador,
-      validator: validador,
-      obscureText: oculto,
-      keyboardType: teclado,
-      textInputAction: accion,
-      autofillHints: autocompletar,
-      onFieldSubmitted: alEnviar,
-      maxLength: maximo,
+      controller: widget.controlador,
+      validator: widget.validador,
+      obscureText: widget.oculto && !_visible,
+      keyboardType: widget.oculto && _visible
+          ? TextInputType.visiblePassword
+          : widget.teclado,
+      textInputAction: widget.accion,
+      autofillHints: widget.autocompletar,
+      onFieldSubmitted: widget.alEnviar,
+      maxLength: widget.maximo,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       style: Textos.cuerpo(),
       decoration: InputDecoration(
-        labelText: etiqueta,
+        labelText: widget.etiqueta,
         labelStyle: Textos.cuerpo(color: Colores.ceniza),
         floatingLabelStyle: Textos.etiqueta(color: Colores.brasa),
         errorStyle: Textos.etiqueta(color: Colores.brasa),
@@ -53,8 +64,8 @@ class CampoUmbral extends StatelessWidget {
         counterStyle: Textos.etiqueta(color: Colores.ceniza),
         filled: true,
         fillColor: Colores.abismo,
-        border: _bordeNormal,
-        enabledBorder: _bordeNormal,
+        border: CampoUmbral._bordeNormal,
+        enabledBorder: CampoUmbral._bordeNormal,
         focusedBorder: const OutlineInputBorder(
           borderRadius: Radios.astilla,
           borderSide: BorderSide(color: Colores.brasa, width: 2),
@@ -68,6 +79,16 @@ class CampoUmbral extends StatelessWidget {
           borderSide: BorderSide(color: Colores.brasa, width: 2),
         ),
         prefixIcon: null,
+        suffixIcon: widget.oculto
+            ? IconButton(
+                tooltip: _visible ? 'Ocultar contraseña' : 'Mostrar contraseña',
+                icon: Icon(
+                  _visible ? Icons.visibility_off : Icons.visibility,
+                  color: Colores.ceniza,
+                ),
+                onPressed: () => setState(() => _visible = !_visible),
+              )
+            : null,
       ),
     );
   }

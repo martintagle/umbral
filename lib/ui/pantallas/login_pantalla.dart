@@ -93,6 +93,30 @@ class _LoginPantallaState extends State<LoginPantalla> {
     }
   }
 
+  /// Sirve igual para entrar y para crear la cuenta: si el correo de Google
+  /// no tiene cuenta, el servidor la crea.
+  Future<void> _entrarConGoogle() async {
+    if (_cargando) return;
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _cargando = true;
+      _error = null;
+    });
+    try {
+      final usuario = await _api.iniciarConGoogle();
+      if (usuario == null) return;
+      Sonido.aplicarAjustes(usuario.ajustes);
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const PartidasPantalla()),
+      );
+    } on ApiExcepcion catch (e) {
+      if (mounted) setState(() => _error = e.mensaje);
+    } finally {
+      if (mounted) setState(() => _cargando = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // En horizontal: el título a la izquierda y el formulario, que se
@@ -167,6 +191,14 @@ class _LoginPantallaState extends State<LoginPantalla> {
                     cargando: _cargando,
                     alPulsar: _enviar,
                   ),
+                  if (UsuarioApi.googleDisponible) ...[
+                    const SizedBox(height: Espacios.paso4),
+                    BotonUmbral(
+                      texto: 'Continuar con Google',
+                      estilo: EstiloBoton.secundario,
+                      alPulsar: _cargando ? null : _entrarConGoogle,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -194,8 +226,7 @@ class _LoginPantallaState extends State<LoginPantalla> {
         CampoUmbral(
           etiqueta: 'Correo o usuario',
           controlador: _identificador,
-          validador: (v) =>
-              Validaciones.requerido(v, campo: 'El correo o usuario'),
+          validador: Validaciones.identificador,
           autocompletar: const [AutofillHints.username, AutofillHints.email],
         ),
         separacion,

@@ -2,6 +2,8 @@
 
 NPC de las zonas seguras. No ataca y no se le puede atacar. Espera bajo techo, en la choza o la capilla más cercana al primer altar de brasas de cada zona: sentado mientras nadie se acerca, de pie para recibir al jugador.
 
+Está en **un solo sitio a la vez**: el refugio de la zona de su primer diálogo sin leer (la 6 si se leyeron todos). No se mueve de ahí hasta que el jugador lee lo que toca. Desde la zona 2, si se sigue su misión y lo único que le queda en la zona es el diálogo del jefe, al vencerlo Oreste sale a esperar **a la puerta de la mazmorra**, y ese último diálogo se tiene ahí mismo.
+
 | Zona | Dónde espera |
 | --- | --- |
 | 1 | La capilla de la aldea Cenizal. |

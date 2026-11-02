@@ -202,15 +202,14 @@ class UmbralJuego extends FlameGame<Escenario>
   }
 
   /// Cierra el diálogo. Si [leido], lo anota (el botón atrás lo cierra sin
-  /// leerlo). Si Oreste ya no tiene nada que decir en esta zona y no es la
-  /// más avanzada, se desvanece.
+  /// leerlo). Si con él Oreste pasa a otro sitio, se desvanece.
   void cerrarDialogo({bool leido = true}) {
     final abierto = dialogo.value;
     if (abierto == null) return;
     dialogo.value = null;
     soltarControles();
     if (leido && abierto.id != null) leerDialogo(abierto.id!);
-    if (!oresteEnZona(tierras.mapa.numero)) zona.oreste?.desvanecerse();
+    if (!_oresteSeQueda) zona.oreste?.desvanecerse();
   }
 
   bool get _enDialogo => dialogo.value != null;
@@ -228,20 +227,18 @@ class UmbralJuego extends FlameGame<Escenario>
     return d.sala == null && d.zona == zonaId;
   }
 
-  /// Oreste espera en la zona [n] si le quedan diálogos en ella, si es la
-  /// más avanzada a la que se llegó o, en la 6, si el jugador ya tiene la
-  /// astilla.
-  bool oresteEnZona(int n) =>
-      datosOreste.tienePendientes(n, this) ||
-      n >= zonaMasAvanzada ||
-      (n == 6 && cofreAbierto(DatosOreste.cofreAstilla));
+  /// Oreste está en un solo sitio a la vez (`DatosOreste.zonaDe`): en el
+  /// refugio de la zona [n] o, vencido su jefe, a la puerta de la mazmorra.
+  bool oresteEnRefugio(int n) => datosOreste.enRefugio(n, this);
+  bool oresteAnteLaMazmorra(int n) => datosOreste.anteLaMazmorra(n, this);
 
-  /// Orden de la zona más avanzada a la que llegó el jugador, contando la
-  /// actual.
-  int get zonaMasAvanzada => [
-    tierras.mapa.numero,
-    for (final z in personaje.mundo.zonasDesbloqueadas) MapaMundo.numeroDe(z),
-  ].reduce(max);
+  /// Si Oreste sigue donde está el jugador tras leer un diálogo.
+  bool get _oresteSeQueda {
+    final n = tierras.mapa.numero;
+    return identical(zona, tierras)
+        ? oresteAnteLaMazmorra(n)
+        : oresteEnRefugio(n);
+  }
 
   // Estado que dibuja el HUD de Flutter.
   final vida = ValueNotifier<int>(1);
@@ -1128,8 +1125,10 @@ class UmbralJuego extends FlameGame<Escenario>
       jugador.parent = destino;
       world = destino;
       if (jefe.value == null) Sonido.pista(destino.pista, volumen: 0.6);
-      // Las salas sirven a varias zonas: Oreste está o no según esta.
+      // Las salas sirven a varias zonas: Oreste está o no según esta. Al
+      // salir de la mazmorra con el jefe vencido, espera en la puerta.
       if (destino is SalaInterior && destino.isLoaded) destino.ponerOreste();
+      if (destino is ZonaTierras && destino.isLoaded) destino.ponerOreste();
     }
     jugador.position.setFrom(pies);
     _seguirConCamara();
@@ -1222,12 +1221,6 @@ class UmbralJuego extends FlameGame<Escenario>
     }
     _mostrarProgreso();
     guardar(silencioso: true);
-  }
-
-  /// Un tajo de la Hoz: hojas y espinas por el aire.
-  void cortarZarza(Vector2 donde) {
-    zona.add(Estallido(donde, const [Colores.podredumbre, Colores.ceniza]));
-    Sonido.efecto(Audios.ataque(personaje.claseCodigo), volumen: 0.5);
   }
 
   void jugadorMuerto() {

@@ -93,6 +93,36 @@ void main() {
     expect(estado.dialogosLeidos, hasLength(22));
   });
 
+  test('está en un solo sitio y sale a la mazmorra tras el jefe', () {
+    final estado = _Estado();
+    // Sin leer nada, espera en la zona 1 aunque se haya llegado más lejos.
+    expect(datos.zonaDe(estado), 1);
+    expect(datos.enRefugio(1, estado), isTrue);
+    expect(datos.enRefugio(2, estado), isFalse);
+    estado.dialogosLeidos.addAll(['oreste-1-1', 'oreste-1-2', 'oreste-1-3']);
+    expect(datos.zonaDe(estado), 2);
+
+    // Vencido el jefe de la ciénaga sin seguir la misión, no sale.
+    estado.jefesDerrotados.add('jefe-madre-cirio');
+    expect(datos.anteLaMazmorra(2, estado), isFalse);
+    expect(datos.enRefugio(2, estado), isTrue);
+
+    // Siguiéndola, solo queda el diálogo del jefe: espera fuera.
+    estado.dialogosLeidos.addAll(['oreste-2-1', 'oreste-2-2']);
+    expect(datos.anteLaMazmorra(2, estado), isTrue);
+    expect(datos.enRefugio(2, estado), isFalse);
+    estado.dialogosLeidos.add('oreste-2-3');
+    expect(datos.zonaDe(estado), 3);
+    expect(datos.anteLaMazmorra(2, estado), isFalse);
+
+    // En la zona 1 el diálogo del jefe se da en la capilla.
+    final otro = _Estado()
+      ..dialogosLeidos.addAll(['oreste-1-1', 'oreste-1-2'])
+      ..jefesDerrotados.add('jefe-rey-hueco');
+    expect(datos.anteLaMazmorra(1, otro), isFalse);
+    expect(datos.enRefugio(1, otro), isTrue);
+  });
+
   test('«todos» solo se cumple con los otros 21 leídos', () {
     final estado = _Estado();
     final otros = [

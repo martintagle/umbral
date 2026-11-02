@@ -23,3 +23,6 @@ services:
         sync: false
       - key: JWT_SECRETO
         sync: false
+      # Id de cliente OAuth «Aplicación web» de Google, para entrar con Google.
+      - key: GOOGLE_CLIENT_ID
+        sync: false

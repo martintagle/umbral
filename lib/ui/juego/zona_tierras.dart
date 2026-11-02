@@ -13,6 +13,7 @@ import 'escenario.dart';
 import 'iluminacion.dart';
 import 'mapa_interiores.dart';
 import 'mapa_mundo.dart';
+import 'oreste.dart';
 import 'tipos_enemigo.dart';
 import 'umbral_juego.dart';
 
@@ -24,8 +25,8 @@ const _lado = MapaMundo.tile;
 /// izquierda del mapa.
 ///
 /// En las zonas 2 a 6 la arena del jefe está tras una reja que abre la llave
-/// de un cofre, y la salida tras otra que se abre al vencer al jefe. La Hoz se
-/// da por conseguida: las zarzas se cortan.
+/// de un cofre, y la salida tras otra que se abre al vencer al jefe. En la
+/// zona 1, la reja de la cripta la abre la llave del cofre del lago.
 class ZonaTierras extends Escenario {
   /// La primera zona, donde empieza la partida.
   static const id = MapaMundo.primera;
@@ -278,6 +279,42 @@ class ZonaTierras extends Escenario {
 
     abrirCerrojos();
     reiniciarEnemigos();
+    ponerOreste();
+  }
+
+  Oreste? _oreste;
+
+  @override
+  Oreste? get oreste => switch (_oreste) {
+    final o? when !o.isRemoved && !o.desvaneciendose => o,
+    _ => null,
+  };
+
+  /// Pone a Oreste a la puerta de la mazmorra si se sigue su misión y el
+  /// jefe ya cayó (`DatosOreste.anteLaMazmorra`); si no, lo quita. Se llama
+  /// al cargar y al volver al mundo.
+  void ponerOreste() {
+    final toca = game.oresteAnteLaMazmorra(mapa.numero);
+    final actual = oreste;
+    if (toca && actual == null) {
+      if (_anteLaMazmorra() case final pies?) add(_oreste = Oreste(pies));
+    } else if (!toca && actual != null) {
+      actual.removeFromParent();
+      _oreste = null;
+    }
+  }
+
+  /// Un sitio libre a un lado de la puerta de la mazmorra del jefe.
+  Vector2? _anteLaMazmorra() {
+    final entrada = mapa.jefe?.entrada;
+    final e = mapa.estructuras.where((e) => e.sprite == entrada).firstOrNull;
+    if (e == null) return null;
+    final puerta = _puertaDe(e);
+    for (final (dx, dy) in const [(28, 8), (-28, 8), (28, 22), (-28, 22)]) {
+      final pies = puerta + Vector2(dx.toDouble(), dy.toDouble());
+      if (libre(_caja(pies))) return pies;
+    }
+    return puerta + Vector2(0, 28);
   }
 
   /// Un cofre sin requisito, con el requisito cumplido o ya abierto.
@@ -394,8 +431,10 @@ class ZonaTierras extends Escenario {
     _entidad(game.cofreAbierto(idCofre(c)) ? 'cofre-abierto' : 'cofre'),
   );
 
-  /// Abre lo que ya no debe estar cerrado: la reja de la arena si se tiene
-  /// la llave de la zona, y la de la salida si cayó su jefe.
+  /// Abre lo que ya no debe estar cerrado: la reja de la arena (o de la
+  /// cripta) si se tiene la llave de la zona, y la de la salida si cayó su
+  /// jefe. Vencido el jefe, la de la arena también: así no queda encerrado
+  /// quien llegó a él antes de que la cripta tuviera reja.
   void abrirCerrojos() {
     final reja = mapa.objeto('reja'), abierta = mapa.objeto('reja-abierta');
     if (reja < 0) return;
@@ -410,7 +449,7 @@ class ZonaTierras extends Escenario {
     for (var y = 0; y < mapa.alto; y++) {
       for (var x = 0; x < mapa.ancho; x++) {
         if (mapa.objetos[y][x] != reja) continue;
-        if (salida.contains((x, y)) ? jefeVencido : llave) {
+        if (salida.contains((x, y)) ? jefeVencido : llave || jefeVencido) {
           _cambiar(x, y, abierta);
         }
       }
@@ -659,6 +698,17 @@ class ZonaTierras extends Escenario {
 
   @override
   List<AccionContexto> accionesEn(Vector2 pies) {
+    // Junto a Oreste se le habla, además de lo que haya a mano.
+    if (oreste case final o? when o.position.distanceTo(pies) < 24) {
+      return [
+        AccionContexto('Hablar', game.hablarConOreste, boton: 'hablar'),
+        ..._accionesDelLugar(pies),
+      ];
+    }
+    return _accionesDelLugar(pies);
+  }
+
+  List<AccionContexto> _accionesDelLugar(Vector2 pies) {
     final altar = altarCerca(pies);
     if (altar != null) {
       return game.accionesFogata(
@@ -677,7 +727,7 @@ class ZonaTierras extends Escenario {
       ];
     }
     for (final (punto, sala) in puertas) {
-      if (punto.distanceTo(pies) < _distanciaPuerta) {
+      if (punto.distanceTo(pies) < _distanciaPuerta && !_rejaEnPuerta(punto)) {
         return [AccionContexto('Entrar', () => game.entrar(sala, punto))];
       }
     }
@@ -690,15 +740,6 @@ class ZonaTierras extends Escenario {
         ];
       }
     }
-    if (_objetoCerca(pies, 'zarza') case (final x, final y)) {
-      return [
-        AccionContexto(
-          'Cortar la zarza',
-          () => _cortarZarza(x, y),
-          boton: 'abrir',
-        ),
-      ];
-    }
     if (_objetoCerca(pies, 'reja') case (final x, final y)) {
       return [
         AccionContexto(
@@ -709,6 +750,13 @@ class ZonaTierras extends Escenario {
       ];
     }
     return const [];
+  }
+
+  /// Si una reja cerrada tapa la puerta que está delante de [punto]: la de
+  /// la cripta, hasta tener la llave del lago.
+  bool _rejaEnPuerta(Vector2 punto) {
+    final x = punto.x ~/ _lado, y = (punto.y - 4) ~/ _lado;
+    return mapa.objeto('reja') >= 0 && mapa.objetos[y][x] == mapa.objeto('reja');
   }
 
   /// La celda más cercana a [pies] con el objeto [nombre], si está a mano.
@@ -744,20 +792,6 @@ class ZonaTierras extends Escenario {
     game.abrirCofre(id, c.texto, oro: oro, curar: c.contenido == 'pocion-vida');
     _ponerCofre(c);
     if (c.contenido.startsWith('llave')) abrirCerrojos();
-  }
-
-  /// Corta la zarza de (x, y) y las que la tocan: una mata entera de un tajo.
-  void _cortarZarza(int x, int y) {
-    final zarza = mapa.objeto('zarza'), cortada = mapa.objeto('zarza-cortada');
-    final pendientes = [(x, y)];
-    while (pendientes.isNotEmpty) {
-      final (cx, cy) = pendientes.removeLast();
-      if (cx < 0 || cy < 0 || cx >= mapa.ancho || cy >= mapa.alto) continue;
-      if (mapa.objetos[cy][cx] != zarza) continue;
-      _cambiar(cx, cy, cortada);
-      pendientes.addAll([(cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)]);
-    }
-    game.cortarZarza(MapaMundo.centroDe(x, y));
   }
 
   void _examinarReja(int x, int y) {

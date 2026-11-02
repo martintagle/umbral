@@ -13,6 +13,7 @@ import 'package:umbral/ui/juego/animacion.dart';
 import 'package:umbral/ui/juego/enemigo.dart';
 import 'package:umbral/ui/juego/mapa_interiores.dart';
 import 'package:umbral/ui/juego/mapa_mundo.dart';
+import 'package:umbral/ui/juego/oreste.dart';
 import 'package:umbral/ui/juego/sala_interior.dart';
 import 'package:umbral/ui/juego/tipos_enemigo.dart';
 import 'package:umbral/ui/juego/umbral_juego.dart';
@@ -189,7 +190,7 @@ void main() {
       expect(mapa.objetos[3][61], reja);
 
       // El oro de un cofre se ve en el acto.
-      final conOro = mapa.cofres.firstWhere((c) => c.contenido == 'oro');
+      final conOro = mapa.cofres.firstWhere((c) => c.id == 'cofre-sur');
       final oroAntes = juego.oro.value;
       cienaga.accionesEn(MapaMundo.piesEnCelda(conOro.x, conOro.y + 1)).single.alPulsar();
       expect(juego.oro.value, oroAntes + 200);
@@ -227,23 +228,9 @@ void main() {
       expect(juego.world, juego.tierras);
       expect(juego.jugador.position, juego.tierras.inicio);
 
-      // Las zarzas se cortan.
+      // Ya no hay zarzas que cortar: el paso está libre.
       final minas = juego.tierras;
-      final zarza = minas.mapa.objeto('zarza');
-      expect(minas.mapa.objetos[12][47], zarza);
-      final junto = [
-        for (final (x, y) in const [(46, 12), (49, 12), (47, 11), (47, 14), (46, 13)])
-          MapaMundo.piesEnCelda(x, y),
-      ].firstWhere(
-        (p) => minas.libre(
-          Rect.fromCenter(center: Offset(p.x, p.y - 1.5), width: 8, height: 3),
-        ),
-      );
-      final cortar = minas.accionesEn(junto);
-      expect(cortar.map((a) => a.etiqueta), ['Cortar la zarza']);
-      cortar.single.alPulsar();
-      expect(minas.mapa.objetos[12][47], minas.mapa.objeto('zarza-cortada'));
-      expect(minas.mapa.objetos[13][48], minas.mapa.objeto('zarza-cortada'));
+      expect(minas.mapa.objetos[12][47], -1);
 
       // De vuelta a la ciénaga se llega junto a su salida, y sigue como estaba.
       await juego.cruzarFrontera('cienaga', adelante: false);
@@ -399,9 +386,13 @@ void main() {
         return juego;
       }
 
-      // La zona 6 es la más avanzada: Oreste no está al aire libre, sino en
-      // la choza del Refugio del Apagador, junto al primer altar.
-      final juego = await cargar(const []);
+      // Leído todo hasta la zona 5, Oreste espera en la 6: no al aire libre,
+      // sino en la choza del Refugio del Apagador, junto al primer altar.
+      final previos = [
+        for (final d in (await DatosOreste.cargar()).dialogos)
+          if (d.zona < 6) d.id,
+      ];
+      final juego = await cargar(previos);
       final umbral = juego.tierras;
       expect(umbral.mapa.numero, 6);
       expect(umbral.oreste, isNull);
@@ -434,7 +425,7 @@ void main() {
       expect(juego.dialogo.value?.lineas, [juego.datosOreste.espera[6]]);
       // Atrás lo cierra sin marcar nada.
       juego.cerrarDialogo(leido: false);
-      expect(juego.dialogosLeidos, ['oreste-6-1']);
+      expect(juego.dialogosLeidos, unorderedEquals([...previos, 'oreste-6-1']));
 
       // El cofre de la astilla no existe hasta leer oreste-6-4.
       final astilla = umbral.mapa.cofres.firstWhere(
@@ -454,6 +445,66 @@ void main() {
         contains('Abrir el cofre'),
       );
     });
+  });
+
+  testWidgets('vencido el jefe, Oreste espera a la puerta de la mazmorra', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      Future<UmbralJuego> cargar(List<String> leidos) async {
+        final juego = _juego(
+          _partida(leidos: leidos, jefes: const ['jefe-madre-cirio']),
+        );
+        juego.onGameResize(Vector2(844, 390));
+        await juego.load();
+        juego.mount();
+        await juego.ready();
+        for (var i = 0; i < 3; i++) {
+          juego.update(1 / 60);
+          await juego.ready();
+        }
+        return juego;
+      }
+
+      final zona1 = ['oreste-1-1', 'oreste-1-2', 'oreste-1-3'];
+      // Sin seguir su misión en la ciénaga, sigue en otra parte.
+      final sinMision = await cargar(zona1);
+      expect(sinMision.tierras.oreste, isNull);
+
+      final juego = await cargar([...zona1, 'oreste-2-1', 'oreste-2-2']);
+      final cienaga = juego.tierras;
+      expect(juego.oresteEnRefugio(2), isFalse);
+      final oreste = cienaga.oreste!;
+      final (puerta, _) = cienaga.puertas.firstWhere(
+        (p) => p.$2.slug == 'cienaga-vestibulo-de-los-cirios',
+      );
+      expect(oreste.position.distanceTo(puerta), lessThan(3 * 16));
+
+      final cerca = oreste.position + Vector2(10, 0);
+      final hablar = cienaga.accionesEn(cerca).first;
+      expect(hablar.etiqueta, 'Hablar');
+      hablar.alPulsar();
+      expect(juego.dialogo.value?.id, 'oreste-2-3');
+      juego.cerrarDialogo();
+      // Dicho lo último de la zona, se va a esperar a las minas.
+      expect(oreste.desvaneciendose, isTrue);
+      expect(juego.datosOreste.zonaDe(juego), 3);
+    });
+  });
+
+  test('sin zarzas ni cofres de la Hoz o de esquirlas', () async {
+    for (final id in _zonas) {
+      final mapa = await MapaMundo.cargar(id);
+      final zarza = mapa.objeto('zarza');
+      expect(
+        mapa.objetos.expand((f) => f).where((o) => o == zarza),
+        isEmpty,
+        reason: id,
+      );
+      for (final c in mapa.cofres) {
+        expect(c.contenido, isNot(anyOf('hoz', 'esquirla')), reason: c.id);
+      }
+    }
   });
 
   test('las palancas y los muros agrietados de cada mapa', () async {

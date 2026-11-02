@@ -53,7 +53,9 @@ jobs:
       - run: flutter pub get
 
       - name: Compilar APK
-        run: flutter build apk --release --dart-define=API_URL=$API_URL
+        # GOOGLE_CLIENT_ID es una variable del repositorio (no es secreta). Sin
+        # ella, la app compila igual pero no muestra el botón de Google.
+        run: flutter build apk --release --dart-define=API_URL=$API_URL --dart-define=GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}
 
       # Nombre fijo para que .../releases/latest/download/umbral.apk siempre sirva.
       - run: mv build/app/outputs/flutter-apk/app-release.apk umbral.apk

@@ -34,7 +34,7 @@ Todo es roca. Las cámaras se unen por galerías estrechas. Se entra por la Boca
 
 - **Recorrido:**
   1. Se sube por las galerías.
-  2. Se cruza al este hasta la cámara de la llave, al fondo noreste y tras unas zarzas de sal.
+  2. Se cruza al este hasta la cámara de la llave, al fondo noreste.
   3. Se baja al Lago Salobre.
   4. Por una cámara con altar se llega a la Veta Profunda (arena).
 - **Salida:** la galería inundada al este.
@@ -51,7 +51,7 @@ Se entra por el oeste, sobre la pasarela del Atrio Inundado. La abadía es un re
   - un pasillo;
   - una cripta sellada al sur.
 - **Claustro:** en el centro, con cuatro jardines y cuatro puertas.
-- **Cementerio de Campanas:** el ala este, con lápidas y campanas caídas. La llave está tras la fila de zarzas del norte.
+- **Cementerio de Campanas:** el ala este, con lápidas y campanas caídas. La llave está al norte.
 - **La Nave Mayor:** la arena, al sur. Detrás de ella, el portón trasero.
 - **Secretos:**
   - la cripta del ala oeste, tras un muro agrietado;
@@ -92,7 +92,6 @@ El agua de este tileset es el vacío: no se puede pisar. Las islas se unen por p
 - **Llave de cada zona:** `llave-cera`, `llave-sal`, `llave-plegaria`, `llave-juramento` y `llave-ultima`. Abre la reja de entrada a la arena; `reglas.objetosConLlave.reja` dice cuál es.
 - **Rejas de salida.** Las de `salida.rejaSalida` **no se abren con la llave: se abren al vencer al jefe**. Es la única regla que el código tiene que distinguir de la zona 1.
 - **Mecanismos.** La lista `mecanismos` de cada mapa trae sus palancas y muros agrietados (`docs/exploracion.md`).
-- **Hoz.** Se supone ya conseguida en la zona 1.
 
 ## Validación
 

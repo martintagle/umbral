@@ -150,15 +150,15 @@ class SalaInterior extends Escenario {
     _ => null,
   };
 
-  /// Pone a Oreste si esta sala es su refugio en la zona actual y aún tiene
-  /// algo que hacer en ella; si no, lo quita. Las salas comunes (la capilla,
-  /// la herrería, el refugio) sirven a varias zonas: se llama al entrar.
+  /// Pone a Oreste si esta sala es su refugio en la zona actual y él espera
+  /// en ella; si no, lo quita. Las salas comunes (la capilla, la herrería, el
+  /// refugio) sirven a varias zonas: se llama al entrar.
   void ponerOreste() {
     final zona = game.tierras.mapa.numero;
     final refugio = game.datosOreste.refugios[zona];
     final toca = refugio != null &&
         refugio.sala == sala.slug &&
-        game.oresteEnZona(zona);
+        game.oresteEnRefugio(zona);
     final actual = oreste;
     if (toca && actual == null) {
       add(_oreste = Oreste(piesEn(refugio.x, refugio.y)));

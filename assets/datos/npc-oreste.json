@@ -7,7 +7,7 @@
  "comportamiento": {
   "enZonaSegura": true,
   "hostil": false,
-  "presencia": "Espera bajo techo, en la choza o la capilla más cercana al primer altar de cada zona (posiciones[n].interior; x, y es el sitio de fuera de referencia), en la que el jugador tenga diálogos pendientes (y siempre en la zona más avanzada a la que haya llegado). Al leer el último diálogo disponible de una zona, usa «desvanecerse».",
+  "presencia": "Espera bajo techo, en la choza o la capilla más cercana al primer altar de cada zona (posiciones[n].interior; x, y es el sitio de fuera de referencia), Está en un solo sitio a la vez: el de la zona de su primer diálogo sin leer (la 6 si se leyeron todos), y no se mueve hasta que se lee. Desde la zona 2, si lo único que le queda en la zona es el diálogo del jefe y el jefe ya cayó, espera fuera, a la puerta de la mazmorra. Al leer el último diálogo de un sitio, usa «desvanecerse».",
   "animaciones": {
    "esperando": [
     "quieto",

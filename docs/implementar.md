@@ -187,12 +187,9 @@ class DatosOreste {
    - **Posición:** `MapaMundo.piesEnCelda(x, y)` con la celda de `posiciones[numeroDeZona]`.
    - **Dirección:** mira al jugador volteando en horizontal (`scale.x = -1`), igual que los enemigos.
    - **No es un enemigo y no se le puede golpear.** No lo añadas a las listas de enemigos ni a sus colisiones. No bloquea el paso.
-3. **Cuándo está presente.** En `ZonaTierras.preparar`, se añade si se cumple alguna de estas:
-   - `datos.tienePendientes(mapa.numero)`;
-   - la zona es la más avanzada que el jugador ha desbloqueado (`personaje.mundo.zonasDesbloqueadas`);
-   - la zona es la 6 y el jugador ya tiene la astilla (para decir `trasAstilla`).
+3. **Cuándo está presente.** Solo en un sitio: `DatosOreste.zonaDe` es la zona de su primer diálogo sin leer (la 6 si no queda ninguno). Ahí espera en su refugio (`SalaInterior.ponerOreste`, con `enRefugio`) o, desde la zona 2 y con el jefe vencido cuando solo le queda el diálogo del jefe, a la puerta de la mazmorra (`ZonaTierras.ponerOreste`, con `anteLaMazmorra`).
 
-   Si al cerrar un diálogo no le quedan pendientes en esa zona y no es la más avanzada, reproduce `desvanecerse` y quítalo al terminar. Las salas interiores no tienen Oreste.
+   Si al cerrar un diálogo deja de tocarle ese sitio, reproduce `desvanecerse` y se quita al terminar.
 4. **Animaciones** (los nombres están en `npc-oreste.json` → `comportamiento.animaciones`):
 
 | Momento | Animación |

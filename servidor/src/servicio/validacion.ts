@@ -3,7 +3,34 @@
  * caben en un `int` de 32 bits. Las reglas de dominio (longitudes, formatos,
  * rangos del juego) las comprueba la capa de negocio.
  */
+import type { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
+
+import { NegocioError } from '../negocio/negocio-error.js';
+
+/**
+ * Rechaza los cuerpos con claves de operador de Mongo (`$gt`, `$where`...) o
+ * con caracteres nulos, a cualquier profundidad: así ningún dato del cliente
+ * puede convertirse en parte de una consulta. Las consultas de SQLite ya van
+ * con parámetros (`?`) y nunca pegan texto del cliente.
+ */
+export function sinInyeccion(req: Request, _res: Response, next: NextFunction): void {
+  const pendientes: unknown[] = [req.body];
+  while (pendientes.length > 0) {
+    const valor = pendientes.pop();
+    if (typeof valor === 'string') {
+      if (valor.includes('\0')) throw new NegocioError('Datos no válidos.');
+    } else if (valor !== null && typeof valor === 'object') {
+      for (const [clave, hijo] of Object.entries(valor)) {
+        if (clave.startsWith('$') || clave.includes('\0')) {
+          throw new NegocioError('Datos no válidos.');
+        }
+        pendientes.push(hijo);
+      }
+    }
+  }
+  next();
+}
 
 // Mensajes de error por defecto en español.
 z.config(z.locales.es());
@@ -14,6 +41,9 @@ const texto = z.string().max(1000);
 export const registro = z.object({ username: texto, email: texto, password: texto });
 
 export const login = z.object({ identificador: texto, password: texto });
+
+/** El token que da Google al elegir la cuenta en el teléfono. */
+export const google = z.object({ idToken: z.string().min(1).max(4096) });
 
 export const ajustes = z.object({ idioma: texto, musica: z.number(), efectos: z.number() });
 

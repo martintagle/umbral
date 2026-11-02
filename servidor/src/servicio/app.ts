@@ -7,6 +7,7 @@ import { enemigoServicio } from './enemigo.servicio.js';
 import { limiteGeneral } from './limites.js';
 import { partidaServicio } from './partida.servicio.js';
 import { usuarioServicio } from './usuario.servicio.js';
+import { sinInyeccion } from './validacion.js';
 
 const ESTADO_HTTP: Record<TipoError, number> = {
   validacion: 400,
@@ -25,6 +26,7 @@ export function crearApp() {
   if (proxies > 0) app.set('trust proxy', proxies);
   app.use(limiteGeneral);
   app.use(express.json({ limit: '100kb' }));
+  app.use(sinInyeccion);
 
   app.get('/api/salud', (_req, res) => {
     res.json({ ok: true });

@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:umbral/contrato/partida_jugable.dart';
 import 'package:umbral/contrato/recompensa.dart';
 import 'package:umbral/ui/juego/enemigo.dart';
+import 'package:umbral/ui/juego/mapa_mundo.dart';
 import 'package:umbral/ui/juego/sala_interior.dart';
 import 'package:umbral/ui/juego/tipos_enemigo.dart';
 import 'package:umbral/ui/juego/umbral_juego.dart';
@@ -163,6 +164,18 @@ void main() {
       await correr(0.3);
       expect(juego.world, juego.tierras);
       expect(juego.jugador.position, puertas['capilla']);
+
+      // La reja de la cripta no deja entrar hasta abrir el cofre del lago.
+      final cripta = puertas['cripta-antecamara']!;
+      expect(juego.tierras.accionesEn(cripta).map((a) => a.etiqueta),
+          ['Examinar la reja']);
+      final lago = juego.tierras.mapa.cofres.firstWhere((c) => c.contenido == 'llave');
+      juego.tierras
+          .accionesEn(MapaMundo.piesEnCelda(lago.x, lago.y + 1))
+          .single
+          .alPulsar();
+      expect(juego.tierras.accionesEn(cripta).map((a) => a.etiqueta),
+          ['Entrar']);
 
       // Cripta: de la antecámara se baja al osario, a la galería (con su
       // hoguera) y por fin a la sala del trono, donde espera el jefe.

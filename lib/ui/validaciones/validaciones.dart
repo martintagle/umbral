@@ -9,10 +9,28 @@ abstract final class Validaciones {
     return null;
   }
 
+  /// Comillas, punto y coma y barra invertida: nada de eso cabe en un correo
+  /// ni en un usuario de Umbral, y son lo primero de una inyección SQL.
+  static final _peligrosos = RegExp(r'''['"`;\\]''');
+
   static String? email(String? valor) {
     final error = requerido(valor, campo: 'El correo');
     if (error != null) return error;
-    if (!_email.hasMatch(valor!.trim())) return 'Escribe un correo válido.';
+    final v = valor!.trim();
+    if (!_email.hasMatch(v) || _peligrosos.hasMatch(v)) {
+      return 'Escribe un correo válido.';
+    }
+    return null;
+  }
+
+  /// El campo del login: un correo o un nombre de usuario.
+  static String? identificador(String? valor) {
+    final error = requerido(valor, campo: 'El correo o usuario');
+    if (error != null) return error;
+    final v = valor!.trim();
+    final esUsuario = v.length >= 3 && v.length <= 20 && _username.hasMatch(v);
+    final esCorreo = _email.hasMatch(v) && !_peligrosos.hasMatch(v);
+    if (!esUsuario && !esCorreo) return 'Escribe tu correo o tu nombre de usuario.';
     return null;
   }
 

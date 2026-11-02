@@ -128,10 +128,32 @@ class DatosOreste {
   bool tienePendientes(int zona, EstadoMundo estado) => dialogos.any(
     (d) => d.zona == zona && !estado.dialogosLeidos.contains(d.id),
   );
+
+  /// La única zona en la que está Oreste: la del primer diálogo sin leer, en
+  /// el orden del recorrido. No se mueve de ahí hasta que se leen. Con todos
+  /// leídos se queda en la 6.
+  int zonaDe(EstadoMundo estado) {
+    final leidos = estado.dialogosLeidos;
+    return dialogos.where((d) => !leidos.contains(d.id)).firstOrNull?.zona ??
+        6;
+  }
+
+  /// Si Oreste espera a la puerta de la mazmorra de la [zona] en vez de en su
+  /// refugio: desde la zona 2, cuando se sigue su misión (está en esa zona)
+  /// y lo que toca es el diálogo del jefe, ya vencido.
+  bool anteLaMazmorra(int zona, EstadoMundo estado) =>
+      zona >= 2 &&
+      zonaDe(estado) == zona &&
+      (siguiente(zona, estado)?.requiere.any((r) => r.startsWith('jefe:')) ??
+          false);
+
+  /// Si Oreste espera en su refugio de la [zona].
+  bool enRefugio(int zona, EstadoMundo estado) =>
+      zonaDe(estado) == zona && !anteLaMazmorra(zona, estado);
 }
 
 /// Oreste en su refugio: la choza o la capilla más cercana al primer altar de
-/// la zona. No es un enemigo: no se le golpea, no bloquea el paso y los
+/// la zona; o, vencido el jefe, a la puerta de su mazmorra. No es un enemigo: no se le golpea, no bloquea el paso y los
 /// enemigos no lo ven. Su `position` son los pies.
 ///
 /// Se sienta cuando el jugador está lejos y se levanta cuando se acerca.

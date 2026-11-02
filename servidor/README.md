@@ -48,6 +48,18 @@ npm run dev               # API en http://localhost:3000 con recarga automática
 
 La cadena de Atlas y la clave JWT viven solo en el `.env` del servidor; nunca van dentro de la app.
 
+## Entrar con Google
+
+`POST /api/usuarios/google` recibe el `idToken` que da Google en el teléfono, lo comprueba y entra en la cuenta con ese correo (o la crea). Para activarlo:
+
+1. En [Google Cloud Console](https://console.cloud.google.com/apis/credentials), crea un ID de cliente OAuth de tipo **Aplicación web** (su id es el que se usa abajo) y otro de tipo **Android** con el paquete `com.example.umbral` y la huella SHA-1 de la clave con que se firma el APK (`keytool -list -v -keystore ...`; la de depuración y la de release son distintas).
+2. En el servidor: `GOOGLE_CLIENT_ID=<id de la aplicación web>` en `.env` (o en Render). Admite varios separados por comas.
+3. En la app: `flutter run --dart-define=GOOGLE_CLIENT_ID=<el mismo id>`. En GitHub Actions es la variable de repositorio `GOOGLE_CLIENT_ID`. Sin ella, el botón «Continuar con Google» no aparece.
+
+## Inyección
+
+Ninguna consulta pega texto del cliente: SQLite usa parámetros (`?`) y Mongo recibe valores ya tipados por zod. Además, `servicio/validacion.ts` rechaza cualquier cuerpo con claves de operador (`$ne`, `$where`...) y el login rechaza en negocio un identificador que no tenga forma de usuario o correo.
+
 Al arrancar, la API lee `rpg.clases` una vez y la guarda en memoria: si se cambia una clase en Atlas hay que reiniciarla. Si falta alguna de las cinco clases, no arranca.
 
 ## Sin conexión con Atlas

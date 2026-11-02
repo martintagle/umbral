@@ -46,7 +46,6 @@ Los sprites de personajes, enemigos y estructuras son los de `assets/sprites/` (
 | `pasarela-hundida` | Bloquea como el agua hasta accionar su palanca; entonces pasa a `puente` |
 | `palanca` | Bloquea; «Accionar» la pasa a `palanca-activa` y sube su pasarela |
 | `pino`, `arbol-seco`, `roca`, `cerca` | Bloquean |
-| `zarza` | Bloquea; con la **Hoz**, Acción la corta (pasa a `zarza-cortada`) |
 | `reja` | Bloquea; con la **Llave de hueso**, Acción la abre (pasa a `reja-abierta`) |
 | `piedra-sellada` | Bloquea hasta entregar 4 fragmentos a la estatua de la aldea (pasa a `escombros`) |
 | Cofres y letreros | Bloquean; Acción los abre o los lee |
@@ -57,23 +56,21 @@ Los sprites de personajes, enemigos y estructuras son los de `assets/sprites/` (
 | Zona | Tiles | Qué hay | Bloqueo |
 | --- | --- | --- | --- |
 | Aldea Cenizal (centro) | 22–41 × 15–31 | Inicio en el altar de brasas, capilla, dos chozas, pozo, estatua sin rostro que recibe los fragmentos, jardín amurallado con un muro agrietado | Ninguno |
-| Bosque Podrido (norte) | 0–63 × 0–14 | Senderos entre pinos, el cofre de la **Hoz** (9,4) y una arboleda secreta tras un muro agrietado | Ninguno |
-| Cementerio de los Callados (este) | 43–62 × 15–34 | Lápidas, árbol de la jaula, cofre de oro y la cripta del jefe | Ninguno por ahora: las zarzas de la entrada (42,23–24) ya están cortadas y la reja de la cripta abierta, hasta que el juego tenga la Hoz y la Llave |
+| Bosque Podrido (norte) | 0–63 × 0–14 | Senderos entre pinos, un cofre con una poción (9,4) y una arboleda secreta tras un muro agrietado | Ninguno |
+| Cementerio de los Callados (este) | 43–62 × 15–34 | Lápidas, árbol de la jaula, cofre de oro y la cripta del jefe | La reja de la cripta se abre con la **Llave de hueso** del lago |
 | Lago Negro (oeste) | 0–20 × 15–38 | Puente roto, pasarela hundida hacia la isla con el cofre de la **Llave de hueso** (10,26), alcoba de roca con un muro agrietado | La pasarela sube con la palanca de la orilla (12,17); la alcoba se abre rompiendo su muro |
 | Ruinas del Sur | 14–62 × 33–46 | Torre derruida dentro de un recinto amurallado y el cofre del **Corazón de ceniza** (34,43) | La piedra sellada se abre con 4 fragmentos |
 
 Recorrido previsto:
 
-1. Bosque: conseguir la Hoz.
-2. Cortar las zarzas del cementerio.
-3. Accionar la palanca de la orilla del lago, cruzar la pasarela que sube y abrir el cofre de la Llave.
-4. Reunir los 4 fragmentos de umbral:
+1. Accionar la palanca de la orilla del lago, cruzar la pasarela que sube y abrir el cofre de la Llave.
+2. Reunir los 4 fragmentos de umbral:
    - arboleda del bosque (romper el muro agrietado de (56,5));
    - jardín de la aldea (romper el muro agrietado de (25,27));
    - alcoba del lago (romper el muro agrietado de (4,35));
    - junto al árbol de la jaula (normal).
-5. Llevar los fragmentos a la estatua para abrir el sur y conseguir el Corazón de ceniza.
-6. Abrir la reja de la cripta y enfrentar al Rey Hueco.
+3. Llevar los fragmentos a la estatua para abrir el sur y conseguir el Corazón de ceniza.
+4. Abrir la reja de la cripta con la Llave y enfrentar al Rey Hueco.
 
 Mecanismos: palanca en (12,17) y muros agrietados en (56,5), (25,27) y (4,35). Comprobé por búsqueda en la rejilla que cada uno se alcanza sin activar nada y que cada secreto queda cerrado hasta activarlo.
 
